@@ -32,7 +32,15 @@ node --version
 - macOS：双击 `Start WorkWeb.command`
 - Windows：双击 `Start WorkWeb.vbs`
 
+如果已经安装依赖，启动器会优先打开 Electron 桌面窗口，任务栏 / Dock 会显示独立的 WorkWeb 图标。没有 Electron 依赖时，会自动回退到原来的本地服务 + 浏览器模式。
+
 如果 Windows 启动失败，双击 `Start WorkWeb.bat`，窗口不会一闪而过，会停下来显示错误信息。
+
+也可以在终端里直接运行桌面版：
+
+```powershell
+npm run desktop
+```
 
 ## 3 数据保存位置
 

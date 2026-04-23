@@ -1444,14 +1444,21 @@ let notes = [];
 let infoPanels = [];
 let projects = [];
 let serverOnline = false;
+const desktopAPI = window.workwebDesktop || null;
 
 async function apiGet(key) {
+  if (desktopAPI?.readData) {
+    return desktopAPI.readData(key);
+  }
   const res = await fetch(`/api/${key}`);
   if (!res.ok) throw new Error(res.statusText);
   return res.json();
 }
 
 async function apiSave(key, data) {
+  if (desktopAPI?.writeData) {
+    return desktopAPI.writeData(key, data);
+  }
   const res = await fetch(`/api/${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1466,7 +1473,7 @@ async function loadData() {
     notes = await apiGet('notes');
     infoPanels = await apiGet('info');
     projects = normalizeProjectList(await apiGet('projects'));
-    serverOnline = true;
+    serverOnline = !desktopAPI;
   } catch {
     serverOnline = false;
     // 离线回退到 localStorage
