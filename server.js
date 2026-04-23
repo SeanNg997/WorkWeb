@@ -4,18 +4,33 @@ const path = require('path');
 
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILES = {
+  'notes.json': [],
+  'info.json': [],
+  'projects.json': []
+};
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-function readJSON(file) {
+function ensureDataFile(file) {
   const fp = path.join(DATA_DIR, file);
-  if (!fs.existsSync(fp)) return null;
+  if (!fs.existsSync(fp)) {
+    const fallback = Object.prototype.hasOwnProperty.call(DATA_FILES, file) ? DATA_FILES[file] : [];
+    fs.writeFileSync(fp, JSON.stringify(fallback, null, 2), 'utf-8');
+  }
+  return fp;
+}
+
+Object.keys(DATA_FILES).forEach(ensureDataFile);
+
+function readJSON(file) {
+  const fp = ensureDataFile(file);
   try { return JSON.parse(fs.readFileSync(fp, 'utf-8')); }
   catch { return null; }
 }
 
 function writeJSON(file, data) {
-  const fp = path.join(DATA_DIR, file);
+  const fp = ensureDataFile(file);
   fs.writeFileSync(fp, JSON.stringify(data, null, 2), 'utf-8');
 }
 

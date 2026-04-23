@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "start": "node scripts/launch.js",
+    "server": "node server.js",
     "build:novel": "vite build --config vite.novel.config.mjs"
   },
   "dependencies": {

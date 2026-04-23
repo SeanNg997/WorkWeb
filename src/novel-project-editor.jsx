@@ -40,7 +40,7 @@ function ToolbarButton({ active, children, onClick, title }) {
   );
 }
 
-function NovelToolbar() {
+function NovelToolbar({ sourceMode, onToggleSourceMode }) {
   const { editor } = useEditor();
   const tick = useSyncExternalStore(
     callback => {
@@ -73,11 +73,12 @@ function NovelToolbar() {
       <ToolbarButton title="编号列表" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>1. 列表</ToolbarButton>
       <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
       <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
+      <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
     </div>
   );
 }
 
-function NovelProjectEditor({ value, onChange, placeholder }) {
+function NovelProjectEditor({ value, onChange, placeholder, sourceMode, onToggleSourceMode }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
 
   const extensions = useMemo(() => [
@@ -103,7 +104,7 @@ function NovelProjectEditor({ value, onChange, placeholder }) {
           class: 'novel-project-editor-prose'
         }
       }}
-      slotBefore={<NovelToolbar />}
+      slotBefore={<NovelToolbar sourceMode={sourceMode} onToggleSourceMode={onToggleSourceMode} />}
       onUpdate={({ editor }) => onChange?.(editor.getHTML())}
       />
     </EditorRoot>
@@ -124,6 +125,8 @@ function mountNovelProjectEditor(el, options = {}) {
     value: options.value || '',
     onChange: options.onChange,
     placeholder: options.placeholder,
+    sourceMode: Boolean(options.sourceMode),
+    onToggleSourceMode: options.onToggleSourceMode,
     version: 0
   };
 
@@ -134,6 +137,8 @@ function mountNovelProjectEditor(el, options = {}) {
         value={state.value}
         onChange={state.onChange}
         placeholder={state.placeholder}
+        sourceMode={state.sourceMode}
+        onToggleSourceMode={state.onToggleSourceMode}
       />
     );
   }
@@ -143,6 +148,11 @@ function mountNovelProjectEditor(el, options = {}) {
   const api = {
     setValue(nextValue) {
       state.value = nextValue || '';
+      state.version += 1;
+      render();
+    },
+    setSourceMode(nextMode) {
+      state.sourceMode = Boolean(nextMode);
       state.version += 1;
       render();
     },
