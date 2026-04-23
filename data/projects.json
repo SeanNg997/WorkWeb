@@ -1,0 +1,14 @@
+[
+  {
+    "id": "p1",
+    "title": "Novel 编辑器测试项目",
+    "summary": "用于测试项目内容编辑器的标题、加粗、斜体、列表、引用、代码块等功能。",
+    "pages": [
+      "<h1>一级标题：项目总览</h1><p>这是一段普通正文，包含 <strong>加粗文字</strong>、<em>斜体文字</em> 和 <s>删除线文字</s>。</p><h2>二级标题：任务列表</h2><ul><li><p>无序列表第一项</p></li><li><p>无序列表第二项</p></li></ul><ol><li><p>编号列表第一步</p></li><li><p>编号列表第二步</p></li></ol>",
+      "<h1>引用与代码测试</h1><blockquote><p>这是一段引用内容，用来测试引用样式。</p></blockquote><p>下面是代码块：</p><pre><code>function helloProject() {\n  return 'Novel editor works';\n}</code></pre><p>也可以继续输入普通段落。</p>",
+      "<h1>混合内容页</h1><h2>小节标题</h2><p>这一页用于测试翻页、保存和继续编辑。</p><ul><li><p>检查页面切换</p></li><li><p>检查新增一页</p></li><li><p>检查返回书架后数据是否保留</p></li></ul>"
+    ],
+    "createdAt": 1776946738303,
+    "updatedAt": 1776952213618
+  }
+]

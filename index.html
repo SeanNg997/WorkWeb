@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人工作面板</title>
+<link rel="stylesheet" href="vendor/workweb.css">
+<!-- 传统 .ico 格式 -->
+<link rel="icon" type="image/x-icon" href="image/icon.ico">
+<!-- 现代浏览器 PNG 格式 -->
+<link rel="icon" type="image/png" href="image/icon_32.png">
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/novel-project-editor.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --sidebar-bg: #26312d;
+  --sidebar-hover: rgba(255,255,255,0.07);
+  --sidebar-active: #dbe5dd;
+  --sidebar-text: #b8c4bd;
+  --sidebar-text-active: #26312d;
+  --bg: #edf0eb;
+  --bg-glow: rgba(225,233,227,0.85);
+  --bg-start: #f4f2ec;
+  --bg-end: #e7ece6;
+  --card-bg: #fbfaf6;
+  --surface-muted: #f4f3ee;
+  --secondary-hover: #eaeee8;
+  --line: #dfe3dc;
+  --card-shadow: 0 1px 2px rgba(35,45,41,0.05);
+  --card-shadow-hover: 0 10px 26px rgba(35,45,41,0.1);
+  --text: #2f3834;
+  --text-light: #75817a;
+  --accent: #70857a;
+  --accent-hover: #5f7368;
+  --accent-soft: #e1e9e3;
+  --danger: #b86d62;
+  --danger-hover: #a75f55;
+  --success: #729b7b;
+  --book-start: #8fa196;
+  --book-mid: #70857a;
+  --book-end: #596c62;
+  --book-text: #f8faf6;
+  --project-left-start: #d8e3da;
+  --project-left-end: #c8d6cc;
+  --radius: 12px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --col-unit: 270px;
+}
+
+body[data-theme="sand"] {
+  --sidebar-bg: #3a332b;
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active: #efe5d5;
+  --sidebar-text: #d6cbbb;
+  --sidebar-text-active: #3a332b;
+  --bg: #f1ede5;
+  --bg-glow: rgba(239,229,213,0.9);
+  --bg-start: #faf6ee;
+  --bg-end: #e9dfd1;
+  --card-bg: #fffdf7;
+  --surface-muted: #f4eee4;
+  --secondary-hover: #ece4d8;
+  --line: #e3d8c8;
+  --card-shadow: 0 1px 2px rgba(55,45,32,0.05);
+  --card-shadow-hover: 0 10px 26px rgba(55,45,32,0.1);
+  --text: #3d3933;
+  --text-light: #81786d;
+  --accent: #8b806f;
+  --accent-hover: #756b5d;
+  --accent-soft: #ebe4d8;
+  --danger: #a86e64;
+  --danger-hover: #965f57;
+  --success: #7d8f73;
+  --book-start: #b9ad9a;
+  --book-mid: #8f8372;
+  --book-end: #6f6558;
+  --book-text: #fffdf7;
+  --project-left-start: #e7d8bf;
+  --project-left-end: #d8c5a8;
+}
+
+body[data-theme="blue"] {
+  --sidebar-bg: #26323d;
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active: #d8e4ec;
+  --sidebar-text: #b8c6cf;
+  --sidebar-text-active: #26323d;
+  --bg: #eaf0f2;
+  --bg-glow: rgba(216,228,236,0.88);
+  --bg-start: #f4f7f7;
+  --bg-end: #dfe9ed;
+  --card-bg: #fbfcfb;
+  --surface-muted: #eef3f4;
+  --secondary-hover: #e2ebee;
+  --line: #d9e3e6;
+  --card-shadow: 0 1px 2px rgba(31,44,53,0.05);
+  --card-shadow-hover: 0 10px 26px rgba(31,44,53,0.1);
+  --text: #2d3940;
+  --text-light: #6f7e86;
+  --accent: #6f8796;
+  --accent-hover: #5d7482;
+  --accent-soft: #dfeaf0;
+  --danger: #ac706d;
+  --danger-hover: #9b625f;
+  --success: #6b927d;
+  --book-start: #91a7b3;
+  --book-mid: #6f8796;
+  --book-end: #586f7d;
+  --book-text: #f7fbfc;
+  --project-left-start: #d5e3ea;
+  --project-left-end: #c3d5de;
+}
+
+body[data-theme="stone"] {
+  --sidebar-bg: #2f3030;
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active: #deded8;
+  --sidebar-text: #c4c4be;
+  --sidebar-text-active: #2f3030;
+  --bg: #ececea;
+  --bg-glow: rgba(222,222,216,0.88);
+  --bg-start: #f6f5f1;
+  --bg-end: #e2e3df;
+  --card-bg: #fbfaf7;
+  --surface-muted: #f0f0ec;
+  --secondary-hover: #e5e5df;
+  --line: #dcded8;
+  --card-shadow: 0 1px 2px rgba(38,39,38,0.05);
+  --card-shadow-hover: 0 10px 26px rgba(38,39,38,0.1);
+  --text: #333634;
+  --text-light: #777b77;
+  --accent: #747a74;
+  --accent-hover: #626862;
+  --accent-soft: #e4e6e1;
+  --danger: #a66f67;
+  --danger-hover: #965f58;
+  --success: #758f72;
+  --book-start: #9b9f99;
+  --book-mid: #747a74;
+  --book-end: #5d635d;
+  --book-text: #fbfaf7;
+  --project-left-start: #ddddd4;
+  --project-left-end: #cccec5;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 18% 12%, var(--bg-glow), transparent 32%),
+    linear-gradient(135deg, var(--bg-start) 0%, var(--bg) 55%, var(--bg-end) 100%);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* === 侧边栏 === */
+.sidebar {
+  width: 240px; min-width: 240px;
+  background: var(--sidebar-bg);
+  display: flex; flex-direction: column;
+  user-select: none;
+  padding-bottom: 20px;
+}
+
+.sidebar-header {
+  padding: 28px 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-align: center;
+}
+
+.sidebar-header h1 { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+.sidebar-header p { font-size: 14px; color: var(--sidebar-text); margin-top: 8px; }
+
+.sidebar-nav { padding: 12px 12px; flex: 1; }
+
+.theme-panel {
+  padding: 14px 16px 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  color: var(--sidebar-text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.theme-btn:hover,
+.theme-btn.active {
+  background: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--dot-color);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.16);
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: 10px;
+  color: var(--sidebar-text); cursor: pointer;
+  transition: all var(--transition); font-size: 14px; margin-bottom: 4px;
+}
+
+.nav-item:hover { background: var(--sidebar-hover); color: #f3f6f2; }
+.nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 500; }
+
+.nav-icon {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+
+/* === 工作区 === */
+.workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.workspace-header {
+  padding: 24px 32px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.workspace-header h2 { font-size: 22px; font-weight: 600; color: var(--text); }
+
+.workspace-body {
+  flex: 1; overflow-y: auto; padding: 12px 32px 32px;
+  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+
+.workspace-body::-webkit-scrollbar { width: 6px; }
+.workspace-body::-webkit-scrollbar-track { background: transparent; }
+.workspace-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
+.page { display: none; }
+.page.active { display: flex; flex-direction: column; height: 100%; }
+
+/* === 按钮 === */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border: 1px solid transparent; border-radius: 10px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all var(--transition); white-space: nowrap;
+}
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(95,115,104,0.18); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-danger-solid { background: var(--danger); color: #fff; }
+.btn-danger-solid:hover { background: var(--danger-hover); }
+
+.btn-danger { background: transparent; color: var(--danger); padding: 4px 8px; }
+.btn-danger:hover { background: rgba(184,109,98,0.1); }
+
+.btn-ghost { background: transparent; color: var(--text-light); padding: 4px 8px; }
+.btn-ghost:hover { background: rgba(47,56,52,0.06); color: var(--text); }
+
+.btn-secondary { background: var(--surface-muted); color: var(--text); border-color: var(--line); }
+.btn-secondary:hover { background: var(--secondary-hover); }
+
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* === 便笺网格 === */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--col-unit), 1fr));
+  gap: 16px; align-items: start;
+}
+
+.note-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  position: relative;
+  max-height: calc(50vh - 100px);
+  display: flex; flex-direction: column;
+  animation: noteIn 0.3s ease;
+  grid-column: span var(--card-span, 1);
+  transition: box-shadow var(--transition), transform var(--transition), width 0.12s linear;
+}
+
+.note-card.resizing-active {
+  grid-column: var(--resize-grid-column);
+  width: var(--resize-width);
+  min-width: var(--resize-min-width, var(--col-unit));
+  max-width: var(--resize-max-width, none);
+  justify-self: start;
+  z-index: 3;
+  transform: none;
+  box-shadow: 0 16px 30px rgba(0,0,0,0.12);
+}
+
+.note-card.resize-snap {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.note-card[data-span="1"] { --card-span: 1; }
+.note-card[data-span="2"] { --card-span: 2; }
+.note-card[data-span="3"] { --card-span: 3; }
+
+@keyframes noteIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.note-card:not(.dragging):hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
+
+.note-card.dragging { opacity: 0.4; transform: scale(0.96); cursor: grabbing; }
+
+.note-card.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+
+.project-book-card.dragging,
+.info-tag-group.dragging,
+.info-panel.dragging {
+  opacity: 0.45;
+}
+
+.project-book-card.drag-over,
+.info-tag-group.drag-over,
+.info-panel.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+}
+
+/* 拖拽调整宽度手柄 */
+.note-resize-handle {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 8px; cursor: col-resize; z-index: 5;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  transition: background var(--transition);
+}
+
+.note-resize-handle:hover { background: rgba(112,133,122,0.16); }
+
+.note-resize-indicator {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(38,49,45,0.92);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.note-card.resizing-active .note-resize-indicator {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.note-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; flex-shrink: 0;
+}
+
+.note-title {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+
+.note-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); }
+.note-card:hover .note-actions { opacity: 1; }
+
+.note-content {
+  flex: 1; overflow-y: auto;
+  font-size: 13px; line-height: 1.7; color: var(--text);
+  word-break: break-word;
+  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+
+.note-content::-webkit-scrollbar { width: 4px; }
+.note-content::-webkit-scrollbar-track { background: transparent; }
+.note-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+
+.note-content h1 { font-size: 16px; margin: 8px 0 4px; }
+.note-content h2 { font-size: 15px; margin: 6px 0 4px; }
+.note-content h3 { font-size: 14px; margin: 4px 0 2px; }
+.note-content p { margin: 4px 0; }
+.note-content ul, .note-content ol { padding-left: 20px; margin: 4px 0; }
+.note-content code { background: var(--surface-muted); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.note-content pre { background: var(--surface-muted); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
+.note-content pre code { background: none; padding: 0; }
+.note-content blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text-light); margin: 8px 0; }
+.note-content a { color: var(--accent); text-decoration: none; }
+.note-content a:hover { text-decoration: underline; }
+.note-content hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
+.note-content table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+.note-content th, .note-content td { border: 1px solid var(--line); padding: 6px 10px; font-size: 12px; }
+.note-content th { background: var(--surface-muted); }
+.note-content img { max-width: 100%; border-radius: 6px; }
+.note-content input[type="checkbox"] { margin-right: 4px; }
+
+/* === 空状态 === */
+.empty-state { text-align: center; padding: 80px 20px; color: var(--text-light); }
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+.empty-state p { font-size: 13px; }
+
+.empty-page {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; text-align: center; color: var(--text-light);
+}
+
+.empty-page-inner { padding: 40px; }
+.empty-page-inner .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.3; }
+.empty-page-inner h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+.empty-page-inner p { font-size: 13px; }
+
+/* === 项目书架 === */
+.projects-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+  align-items: start;
+  padding-top: 28px;
+}
+
+.project-book-card {
+  position: relative;
+  min-height: 260px;
+  padding: 26px 22px 22px;
+  border-radius: 18px 14px 14px 18px;
+  background: linear-gradient(145deg, var(--book-start) 0%, var(--book-mid) 48%, var(--book-end) 100%);
+  color: var(--book-text);
+  box-shadow: 0 14px 30px rgba(59,76,68,0.14);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.project-book-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08));
+}
+
+.project-book-card::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.project-book-card:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+  box-shadow: 0 18px 38px rgba(59,76,68,0.18);
+  z-index: 3;
+}
+
+.project-book-cover {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.project-book-cover-title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 1px;
+  word-break: break-word;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.18);
+}
+
+.project-book-view {
+  display: none;
+}
+
+.project-book-view.active {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.project-book-view.closing .project-book-spread {
+  animation: bookCloseOut 0.34s cubic-bezier(0.55, 0, 0.45, 1) forwards;
+}
+
+.project-book-return-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0;
+}
+
+.project-book-return {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text-light);
+}
+
+.project-book-return:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.project-book-spread {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--card-bg);
+  box-shadow: 0 18px 46px rgba(35,45,41,0.1);
+  transform-origin: center;
+}
+
+.project-book-view.opening .project-book-spread {
+  animation: bookOpenIn 0.58s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes bookOpenIn {
+  from {
+    opacity: 0;
+    transform: perspective(1600px) rotateY(-18deg) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1600px) rotateY(0) scale(1);
+  }
+}
+
+@keyframes bookCloseOut {
+  from {
+    opacity: 1;
+    transform: perspective(1600px) rotateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: perspective(1600px) rotateY(16deg) scale(0.94);
+  }
+}
+
+.project-left-page,
+.project-right-page {
+  padding: 30px 28px;
+  position: relative;
+  min-height: 0;
+}
+
+.project-left-page {
+  background: linear-gradient(180deg, var(--project-left-start), var(--project-left-end));
+}
+
+.project-right-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.project-title-kicker {
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+.project-book-title {
+  font-size: 30px;
+  line-height: 1.25;
+  color: var(--text);
+  margin-bottom: 18px;
+  word-break: break-word;
+}
+
+.project-book-summary {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text-light);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.project-book-summary:empty::before {
+  content: "还没有项目简介";
+  color: var(--text-light);
+}
+
+.project-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.project-page-indicator {
+  min-width: 78px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.project-editor-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-page-editor {
+  flex: 1;
+  min-height: 240px;
+}
+
+.project-page-editor .novel-project-editor-content {
+  height: 100%;
+  min-height: 240px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.74);
+  overflow: auto;
+}
+
+.project-page-editor .novel-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-muted) 82%, white);
+}
+
+.project-page-editor .novel-toolbar-button {
+  min-width: 34px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.project-page-editor .novel-toolbar-button:hover,
+.project-page-editor .novel-toolbar-button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.project-page-editor .novel-project-editor-prose {
+  min-height: 100%;
+  padding: 20px 22px;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.project-page-editor .novel-project-editor-prose p {
+  margin: 0.5em 0;
+}
+
+.project-page-editor .novel-project-editor-prose h1,
+.project-page-editor .novel-project-editor-prose h2,
+.project-page-editor .novel-project-editor-prose h3 {
+  margin: 0.8em 0 0.35em;
+  line-height: 1.3;
+}
+
+.project-page-editor .novel-project-editor-prose ul,
+.project-page-editor .novel-project-editor-prose ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+}
+
+.project-page-editor .novel-project-editor-prose blockquote {
+  margin: 0.7em 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+  color: var(--text-light);
+}
+
+.project-page-editor .novel-project-editor-prose pre {
+  padding: 12px;
+  border-radius: 10px;
+  overflow-x: auto;
+  background: var(--surface-muted);
+}
+
+.project-page-editor .novel-project-editor-prose code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-muted);
+}
+
+.project-page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 0;
+}
+
+.project-summary-input {
+  min-height: 160px !important;
+  font-family: inherit !important;
+}
+
+@media (max-width: 980px) {
+  .project-book-spread {
+    grid-template-columns: 1fr;
+  }
+
+  .project-left-page {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+/* === 模态框 === */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; opacity: 0; visibility: hidden;
+  transition: all var(--transition);
+}
+
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  width: 560px; max-width: 90vw; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 18px 54px rgba(35,45,41,0.14);
+  transform: translateY(20px) scale(0.96);
+  transition: transform var(--transition);
+}
+
+.modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+.modal-header {
+  padding: 20px 24px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-header h3 { font-size: 16px; font-weight: 600; }
+
+.modal-close {
+  width: 32px; height: 32px; border: none; background: transparent;
+  border-radius: 8px; cursor: pointer; font-size: 18px; color: var(--text-light);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+
+.modal-close:hover { background: var(--surface-muted); color: var(--text); }
+
+.modal-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
+
+.form-group { margin-bottom: 16px; }
+
+.form-group.with-suggestions {
+  position: relative;
+}
+
+.form-group label {
+  display: block; font-size: 13px; font-weight: 500;
+  margin-bottom: 6px; color: var(--text);
+}
+
+.form-input {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--line); border-radius: 8px;
+  font-size: 14px; color: var(--text); background: #f8faf6;
+  transition: all var(--transition); outline: none; font-family: inherit;
+}
+
+.form-input:focus {
+  border-color: var(--accent); background: #fff;
+  box-shadow: 0 0 0 3px rgba(112,133,122,0.12);
+}
+
+.tag-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 12;
+  display: none;
+  max-height: 170px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card-bg);
+  box-shadow: 0 12px 28px rgba(35,45,41,0.12);
+}
+
+.tag-suggestions.active {
+  display: block;
+}
+
+.tag-suggestion-item {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tag-suggestion-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+textarea.form-input {
+  min-height: 240px; resize: none;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 13px; line-height: 1.6;
+}
+
+.form-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+.modal-footer {
+  padding: 16px 24px 20px;
+  display: flex; justify-content: flex-end; gap: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* === 确认框 === */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,36,32,0.28);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; opacity: 0; visibility: hidden;
+  transition: all var(--transition);
+}
+
+.confirm-overlay.active { opacity: 1; visibility: visible; }
+
+.confirm-box {
+  background: var(--card-bg);
+  border-radius: 14px; padding: 24px;
+  width: 340px; text-align: center;
+  box-shadow: 0 18px 54px rgba(35,45,41,0.14);
+  transform: scale(0.9); transition: transform var(--transition);
+}
+
+.confirm-overlay.active .confirm-box { transform: scale(1); }
+
+.confirm-box h4 { font-size: 15px; margin-bottom: 8px; }
+.confirm-box p { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* === 常用个人信息 === */
+#infoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.info-panels { display: flex; flex-direction: column; gap: 10px; }
+
+.info-tag-group {
+  margin-bottom: 20px;
+  width: min(100%, var(--col-unit));
+  cursor: grab;
+}
+
+.info-tag-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; cursor: pointer; user-select: none;
+}
+
+.info-tag-arrow {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text-light);
+  transition: transform var(--transition); flex-shrink: 0;
+}
+
+.info-tag-group.collapsed .info-tag-arrow { transform: rotate(-90deg); }
+
+.info-tag-name { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.info-tag-count {
+  font-size: 11px; color: var(--text-light);
+  background: var(--surface-muted); padding: 1px 8px; border-radius: 10px;
+}
+
+.info-tag-group.collapsed .info-tag-body { display: none; }
+
+.info-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden; transition: box-shadow var(--transition);
+  animation: noteIn 0.3s ease;
+  margin-bottom: 0;
+  width: 100%;
+  cursor: grab;
+}
+
+.info-panel:hover { box-shadow: var(--card-shadow-hover); }
+
+.info-panel-header {
+  display: flex; align-items: center;
+  padding: 14px 20px; cursor: pointer; gap: 10px; user-select: none;
+  transition: background var(--transition);
+}
+
+.info-panel-header:hover { background: rgba(47,56,52,0.035); }
+
+.info-panel-arrow {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-light);
+  transition: transform var(--transition); flex-shrink: 0;
+}
+
+.info-panel.expanded .info-panel-arrow { transform: rotate(90deg); }
+
+.info-panel-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+
+.info-panel-tag {
+  font-size: 11px; color: var(--accent); background: var(--accent-soft);
+  padding: 2px 8px; border-radius: 6px;
+}
+
+.info-panel-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); }
+.info-panel:hover .info-panel-actions { opacity: 1; }
+
+.info-panel-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-panel.expanded .info-panel-body { max-height: 800px; }
+
+.info-panel-content { padding: 4px 20px 18px; }
+
+.info-field {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+
+.info-field:last-child { border-bottom: none; }
+
+.info-field-label { font-size: 12px; color: var(--text-light); min-width: 70px; flex-shrink: 0; }
+.info-field-value { flex: 1; font-size: 13px; color: var(--text); word-break: break-all; }
+.info-field-value.is-masked { letter-spacing: 0.12em; }
+
+.info-field-copy {
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: transparent; color: var(--text-light); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); flex-shrink: 0;
+}
+
+.info-field-copy:hover { background: var(--accent-soft); color: var(--accent); }
+.info-field-copy.copied { color: var(--success); }
+
+/* === 信息编辑器字段 === */
+.field-row {
+  display: grid;
+  grid-template-columns: 28px 120px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.field-row .form-input { width: 100%; }
+.field-row-label { font-size: 11px; color: var(--text-light); min-width: 28px; text-align: right; flex-shrink: 0; }
+
+.field-encrypt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.field-encrypt input { accent-color: var(--accent); }
+
+.field-remove {
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: transparent; color: var(--danger); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); flex-shrink: 0;
+}
+
+.field-remove:hover { background: rgba(184,109,98,0.1); }
+
+.add-field-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; border: 1.5px dashed var(--line); border-radius: 8px;
+  background: transparent; color: var(--text-light); font-size: 12px;
+  cursor: pointer; transition: all var(--transition); margin-top: 4px;
+}
+
+.add-field-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+.field-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .field-row {
+    grid-template-columns: 28px 1fr;
+  }
+
+  .field-row .form-input,
+  .field-encrypt,
+  .field-remove {
+    grid-column: 2;
+  }
+}
+
+/* === Toast === */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--card-bg); border-radius: 10px; padding: 12px 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12); font-size: 13px; color: var(--text);
+  z-index: 999; transform: translateY(20px); opacity: 0;
+  transition: all 0.3s ease; pointer-events: none;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* === Toast === */
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>工作面板</h1>
+    <p id="dateDisplay"></p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="todo" onclick="switchPage('todo')">
+      <span class="nav-icon">&#9745;</span><span>TODO</span>
+    </div>
+    <div class="nav-item" data-page="progress" onclick="switchPage('progress')">
+      <span class="nav-icon">&#9783;</span><span>项目书架</span>
+    </div>
+    <div class="nav-item" data-page="info" onclick="switchPage('info')">
+      <span class="nav-icon">&#9786;</span><span>常用个人信息</span>
+    </div>
+  </nav>
+  <div class="theme-panel">
+    <div class="theme-options">
+      <button class="theme-btn" data-theme="sage" onclick="setTheme('sage')">
+        <span class="theme-dot" style="--dot-color:#70857a"></span>雾灰绿
+      </button>
+      <button class="theme-btn" data-theme="sand" onclick="setTheme('sand')">
+        <span class="theme-dot" style="--dot-color:#a4835f"></span>暖沙
+      </button>
+      <button class="theme-btn" data-theme="blue" onclick="setTheme('blue')">
+        <span class="theme-dot" style="--dot-color:#6f8796"></span>静谧蓝
+      </button>
+      <button class="theme-btn" data-theme="stone" onclick="setTheme('stone')">
+        <span class="theme-dot" style="--dot-color:#747a74"></span>岩灰
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- 工作区 -->
+<main class="workspace">
+  <!-- TODO -->
+  <div class="page active" id="page-todo">
+    <div class="workspace-header">
+      <h2>TODO</h2>
+      <button class="btn btn-primary" onclick="openNoteEditor()"><span>&#43;</span> 新建便笺</button>
+    </div>
+    <div class="workspace-body">
+      <div class="notes-grid" id="notesGrid"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-state-icon">&#128221;</div>
+        <h3>还没有便笺</h3>
+        <p>点击右上角「新建便笺」开始记录</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 项目书架 -->
+  <div class="page" id="page-progress">
+    <div class="workspace-header">
+      <h2>项目书架</h2>
+      <button class="btn btn-primary" onclick="openProjectEditor()"><span>&#43;</span> 添加项目</button>
+    </div>
+    <div class="workspace-body" style="flex:1;">
+      <div class="projects-shell">
+        <div id="projectShelfView">
+          <div class="project-shelf" id="projectShelf"></div>
+          <div class="empty-state" id="projectEmptyState" style="display:none;">
+            <div class="empty-state-icon">&#128218;</div>
+            <h3>还没有项目</h3>
+            <p>点击右上角「添加项目」创建你的第一本书</p>
+          </div>
+        </div>
+
+        <div class="project-book-view" id="projectBookView">
+          <div class="project-book-spread" id="projectBookSpread">
+            <section class="project-left-page">
+              <div class="project-title-kicker">PROJECT OVERVIEW</div>
+              <h3 class="project-book-title" id="projectBookTitle"></h3>
+              <p class="project-book-summary" id="projectBookSummary"></p>
+            </section>
+
+            <section class="project-right-page">
+              <div class="project-page-header">
+                <div class="project-page-title">项目内容</div>
+                <div class="project-book-return-bar">
+                  <button class="btn btn-secondary btn-sm project-book-return" onclick="closeProjectBook()">返回书架</button>
+                </div>
+              </div>
+
+              <div class="project-editor-wrap">
+                <div class="project-page-editor" id="projectPageEditor"></div>
+              </div>
+
+              <div class="project-page-footer">
+                <button class="btn btn-secondary btn-sm" id="projectPrevBtn" onclick="prevProjectPage()">上一页</button>
+                <span class="project-page-indicator" id="projectPageIndicator">第 1 页</span>
+                <button class="btn btn-secondary btn-sm" id="projectNextBtn" onclick="nextProjectPage()">下一页</button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 常用个人信息 -->
+  <div class="page" id="page-info">
+    <div class="workspace-header">
+      <h2>常用个人信息</h2>
+      <button class="btn btn-primary" onclick="openInfoEditor()"><span>&#43;</span> 添加信息</button>
+    </div>
+    <div class="workspace-body" style="flex:1;">
+      <div id="infoContainer"></div>
+      <div class="empty-state" id="infoEmptyState" style="display:none;">
+        <div class="empty-state-icon">&#128100;</div>
+        <h3>还没有信息面板</h3>
+        <p>点击右上角「添加信息」添加常用信息</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 便笺编辑模态框 -->
+<div class="modal-overlay" id="editorModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modalTitle">新建便笺</h3>
+      <button class="modal-close" onclick="closeNoteEditor()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>标题</label>
+        <input type="text" class="form-input" id="noteTitle" placeholder="输入便笺标题..." maxlength="50">
+      </div>
+      <div class="form-group">
+        <label>内容</label>
+        <textarea class="form-input" id="noteContent" placeholder="支持 Markdown 语法..."></textarea>
+        <p class="form-hint">支持 Markdown：**粗体**、*斜体*、- 列表、`代码`、&gt; 引用 等</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeNoteEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveNote()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 信息面板编辑模态框 -->
+<div class="modal-overlay" id="infoEditorModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="infoModalTitle">添加信息</h3>
+      <button class="modal-close" onclick="closeInfoEditor()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>标题</label>
+        <input type="text" class="form-input" id="infoTitle" placeholder="输入面板标题..." maxlength="50">
+      </div>
+      <div class="form-group with-suggestions">
+        <label>标签</label>
+        <input
+          type="text"
+          class="form-input"
+          id="infoTag"
+          placeholder="输入标签分类，如：账号、证件..."
+          maxlength="20"
+          autocomplete="off"
+          onfocus="showInfoTagSuggestions()"
+          oninput="showInfoTagSuggestions()">
+        <div class="tag-suggestions" id="infoTagSuggestions"></div>
+      </div>
+      <div class="form-group">
+        <label>信息条目</label>
+        <div id="infoFieldsContainer"></div>
+        <div class="field-actions">
+          <button class="add-field-btn" onclick="addInfoFieldRow()"><span>&#43;</span> 添加一行</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeInfoEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveInfoPanel()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 项目编辑模态框 -->
+<div class="modal-overlay" id="projectEditorModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="projectModalTitle">添加项目</h3>
+      <button class="modal-close" onclick="closeProjectEditor()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>项目名称</label>
+        <input type="text" class="form-input" id="projectTitle" placeholder="输入项目名称..." maxlength="60">
+      </div>
+      <div class="form-group">
+        <label>项目简介</label>
+        <textarea class="form-input project-summary-input" id="projectSummary" placeholder="输入项目简介..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeProjectEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveProject()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认框 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h4>确认删除</h4>
+    <p id="confirmText">删除后无法恢复，确定要删除吗？</p>
+    <div class="confirm-actions">
+      <button class="btn btn-danger-solid" onclick="confirmAction()">确认</button>
+      <button class="btn btn-secondary" onclick="closeConfirm()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== 数据层（API） ==================== */
+let notes = [];
+let infoPanels = [];
+let projects = [];
+let serverOnline = false;
+
+async function apiGet(key) {
+  const res = await fetch(`/api/${key}`);
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
+
+async function apiSave(key, data) {
+  const res = await fetch(`/api/${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
+
+async function loadData() {
+  try {
+    notes = await apiGet('notes');
+    infoPanels = await apiGet('info');
+    projects = normalizeProjectList(await apiGet('projects'));
+    serverOnline = true;
+  } catch {
+    serverOnline = false;
+    // 离线回退到 localStorage
+    try { notes = JSON.parse(localStorage.getItem('wb_notes') || '[]'); } catch { notes = []; }
+    try { infoPanels = JSON.parse(localStorage.getItem('wb_info') || '[]'); } catch { infoPanels = []; }
+    try { projects = normalizeProjectList(JSON.parse(localStorage.getItem('wb_projects') || '[]')); } catch { projects = []; }
+  }
+}
+
+async function persistNotes() {
+  try {
+    if (serverOnline) await apiSave('notes', notes);
+    else localStorage.setItem('wb_notes', JSON.stringify(notes));
+  } catch { localStorage.setItem('wb_notes', JSON.stringify(notes)); }
+}
+
+async function persistInfo() {
+  try {
+    if (serverOnline) await apiSave('info', infoPanels);
+    else localStorage.setItem('wb_info', JSON.stringify(infoPanels));
+  } catch { localStorage.setItem('wb_info', JSON.stringify(infoPanels)); }
+}
+
+async function persistProjects() {
+  try {
+    if (serverOnline) await apiSave('projects', projects);
+    else localStorage.setItem('wb_projects', JSON.stringify(projects));
+  } catch { localStorage.setItem('wb_projects', JSON.stringify(projects)); }
+}
+
+/* ==================== 初始化 ==================== */
+let editingNoteId = null;
+let editingInfoId = null;
+let editingProjectId = null;
+let pendingAction = null;
+let draggedId = null;
+let draggedProjectId = null;
+let draggedInfoTag = null;
+let draggedInfoPanelId = null;
+let suppressProjectOpen = false;
+let activeProjectId = null;
+let activeProjectPageIndex = 0;
+let projectPersistTimer = null;
+let projectCloseTimer = null;
+let projectEditor = null;
+let isSettingProjectEditor = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  loadTheme();
+  await loadData();
+  renderNotes();
+  renderProjects();
+  renderInfoPanels();
+  updateDateDisplay();
+  setInterval(updateDateDisplay, 60000);
+});
+
+function setTheme(theme) {
+  const safeTheme = ['sage', 'sand', 'blue', 'stone'].includes(theme) ? theme : 'sage';
+  document.body.dataset.theme = safeTheme;
+  localStorage.setItem('wb_theme', safeTheme);
+  document.querySelectorAll('.theme-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.theme === safeTheme));
+}
+
+function loadTheme() {
+  setTheme(localStorage.getItem('wb_theme') || 'sage');
+}
+
+function updateDateDisplay() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('dateDisplay').textContent =
+    `${now.getMonth()+1}月${now.getDate()}日 星期${days[now.getDay()]}`;
+}
+
+/* ==================== 页面切换 ==================== */
+function switchPage(page) {
+  if (page !== 'progress') flushProjectPersist();
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.page').forEach(el =>
+    el.classList.toggle('active', el.id === `page-${page}`));
+}
+
+/* ==================== 通用工具 ==================== */
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function escAttr(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderMd(text) {
+  if (!text) return '<span style="color:var(--text-light);">空便笺</span>';
+  try { return marked.parse(text, { breaks: true }); }
+  catch { return escHtml(text); }
+}
+
+function maskValue(text) {
+  return '*'.repeat(Array.from(text || '').length);
+}
+
+function normalizeProject(project) {
+  if (!project || typeof project !== 'object') return null;
+  const pages = Array.isArray(project.pages) && project.pages.length
+    ? project.pages.map(page => String(page ?? ''))
+    : [''];
+  return {
+    id: project.id || genId('p'),
+    title: String(project.title || ''),
+    summary: String(project.summary || ''),
+    pages,
+    createdAt: project.createdAt || Date.now(),
+    updatedAt: project.updatedAt || Date.now()
+  };
+}
+
+function normalizeProjectList(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(normalizeProject).filter(Boolean);
+}
+
+function genId(prefix) {
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function isModalContentEmpty(modalId) {
+  if (modalId === 'editorModal') {
+    return !document.getElementById('noteTitle').value.trim()
+        && !document.getElementById('noteContent').value.trim();
+  }
+  if (modalId === 'infoEditorModal') {
+    return !document.getElementById('infoTitle').value.trim()
+        && !document.getElementById('infoTag').value.trim()
+        && editorFields.every(f => !f.label.trim() && !f.value.trim());
+  }
+  if (modalId === 'projectEditorModal') {
+    return !document.getElementById('projectTitle').value.trim()
+        && !document.getElementById('projectSummary').value.trim();
+  }
+  return true;
+}
+
+/* ==================== 确认框 ==================== */
+function openConfirm(text, action) {
+  document.getElementById('confirmText').textContent = text;
+  pendingAction = action;
+  document.getElementById('confirmOverlay').classList.add('active');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('active');
+  pendingAction = null;
+}
+
+function confirmAction() {
+  if (pendingAction) pendingAction();
+  closeConfirm();
+}
+
+/* ==================== TODO 便笺 ==================== */
+function renderNotes() {
+  const grid = document.getElementById('notesGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (notes.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  grid.style.display = 'grid';
+  empty.style.display = 'none';
+  grid.innerHTML = '';
+
+  notes.forEach(note => {
+    const span = note.span || 1;
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.dataset.id = note.id;
+    card.dataset.span = span;
+    card.draggable = true;
+
+    card.innerHTML = `
+      <div class="note-resize-handle"></div>
+      <div class="note-resize-indicator"></div>
+      <div class="note-header">
+        <div class="note-title">${escHtml(note.title || '无标题')}</div>
+        <div class="note-actions">
+          <button class="btn btn-ghost" title="编辑" onclick="event.stopPropagation();openNoteEditor('${note.id}')">&#9998;</button>
+          <button class="btn btn-danger" title="删除" onclick="event.stopPropagation();askDeleteNote('${note.id}')">&#10005;</button>
+        </div>
+      </div>
+      <div class="note-content">${renderMd(note.content)}</div>
+    `;
+
+    // 双击进入编辑
+    card.addEventListener('dblclick', e => {
+      if (e.target.closest('.note-actions') || e.target.closest('.note-resize-handle')) return;
+      openNoteEditor(note.id);
+    });
+
+    // 拖拽排序
+    let dragCounter = 0;
+    card.addEventListener('dragstart', e => {
+      draggedId = note.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      draggedId = null;
+      dragCounter = 0;
+      card.classList.remove('dragging');
+      card.classList.remove('drag-over');
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    card.addEventListener('dragenter', e => {
+      e.preventDefault();
+      dragCounter++;
+      if (note.id !== draggedId) card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => {
+      dragCounter--;
+      if (dragCounter <= 0) { dragCounter = 0; card.classList.remove('drag-over'); }
+    });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      dragCounter = 0;
+      card.classList.remove('drag-over');
+      if (draggedId && draggedId !== note.id) reorderNotes(draggedId, note.id);
+    });
+
+    // 右边缘拖拽调整宽度
+    const handle = card.querySelector('.note-resize-handle');
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.draggable = false;
+
+      const gridEl = document.getElementById('notesGrid');
+      const gridStyle = getComputedStyle(gridEl);
+      const gridGap = parseFloat(gridStyle.gap) || 16;
+      const gridCols = gridStyle.gridTemplateColumns.split(' ').filter(Boolean);
+      const colW = parseFloat(gridCols[0]) || 270;
+      const gridColCount = gridCols.length || 1;
+
+      const cardRect = card.getBoundingClientRect();
+      const gridRect = gridEl.getBoundingClientRect();
+      const startWidth = cardRect.width;
+      const startX = e.clientX;
+      const unitWidth = colW + gridGap;
+      const startCol = Math.max(1, Math.min(gridColCount, Math.round((cardRect.left - gridRect.left) / unitWidth) + 1));
+      const maxSpan = Math.max(1, Math.min(3, gridColCount - startCol + 1));
+      const maxWidth = maxSpan * colW + (maxSpan - 1) * gridGap;
+      const indicator = card.querySelector('.note-resize-indicator');
+
+      card.classList.add('resizing-active');
+      card.style.setProperty('--resize-width', startWidth + 'px');
+      card.style.setProperty('--resize-min-width', colW + 'px');
+      card.style.setProperty('--resize-max-width', maxWidth + 'px');
+      card.style.setProperty('--resize-grid-column', `${startCol} / span ${maxSpan}`);
+      card.style.setProperty('--resize-max-span', maxSpan);
+      card.dataset.snapSpan = Math.min(note.span || 1, maxSpan);
+      indicator.textContent = `${Math.round(startWidth)}px`;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const newWidth = Math.max(colW, Math.min(maxWidth, startWidth + dx));
+
+        const span = Math.max(1, Math.min(maxSpan, Math.round(newWidth / unitWidth)));
+
+        card.style.setProperty('--resize-width', newWidth + 'px');
+        card.dataset.snapSpan = span;
+        indicator.textContent = `${Math.round(newWidth)}px`;
+      }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+
+        const finalSpan = parseInt(card.dataset.snapSpan, 10) || Math.min(note.span || 1, maxSpan);
+        const finalWidth = finalSpan * colW + (finalSpan - 1) * gridGap;
+
+        card.classList.add('resize-snap');
+        card.style.setProperty('--resize-width', finalWidth + 'px');
+        card.dataset.span = finalSpan;
+        indicator.textContent = `${Math.round(finalWidth)}px`;
+
+        setTimeout(() => {
+          card.classList.remove('resizing-active');
+          card.classList.remove('resize-snap');
+          card.style.removeProperty('--resize-width');
+          card.style.removeProperty('--resize-min-width');
+          card.style.removeProperty('--resize-max-width');
+          card.style.removeProperty('--resize-grid-column');
+          card.style.removeProperty('--resize-max-span');
+        }, 220);
+
+        card.draggable = true;
+        delete card.dataset.snapSpan;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+
+        if (finalSpan !== (note.span || 1)) {
+          note.span = finalSpan;
+          persistNotes();
+        }
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function reorderNotes(fromId, toId) {
+  const fromIdx = notes.findIndex(n => n.id === fromId);
+  const toIdx = notes.findIndex(n => n.id === toId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = notes.splice(fromIdx, 1);
+  notes.splice(toIdx, 0, moved);
+  persistNotes();
+  renderNotes();
+}
+
+function openNoteEditor(id) {
+  editingNoteId = id || null;
+  const title = document.getElementById('noteTitle');
+  const content = document.getElementById('noteContent');
+  const modalTitle = document.getElementById('modalTitle');
+
+  if (id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    title.value = note.title;
+    content.value = note.content;
+    modalTitle.textContent = '编辑便笺';
+  } else {
+    title.value = '';
+    content.value = '';
+    modalTitle.textContent = '新建便笺';
+  }
+
+  document.getElementById('editorModal').classList.add('active');
+  setTimeout(() => title.focus(), 150);
+}
+
+function closeNoteEditor() {
+  document.getElementById('editorModal').classList.remove('active');
+  editingNoteId = null;
+}
+
+async function saveNote() {
+  const title = document.getElementById('noteTitle').value.trim();
+  const content = document.getElementById('noteContent').value.trim();
+
+  if (!title && !content) {
+    document.getElementById('noteTitle').focus();
+    return;
+  }
+
+  if (editingNoteId) {
+    const note = notes.find(n => n.id === editingNoteId);
+    if (note) {
+      note.title = title;
+      note.content = content;
+      note.updatedAt = Date.now();
+    }
+  } else {
+    notes.push({
+      id: genId('n'), title, content, span: 1,
+      createdAt: Date.now(), updatedAt: Date.now()
+    });
+  }
+
+  await persistNotes();
+  renderNotes();
+  closeNoteEditor();
+}
+
+function askDeleteNote(id) {
+  const note = notes.find(n => n.id === id);
+  openConfirm(
+    `确定要删除便笺「${note ? note.title || '无标题' : ''}」吗？`,
+    async () => {
+      notes = notes.filter(n => n.id !== id);
+      await persistNotes();
+      renderNotes();
+    }
+  );
+}
+
+/* ==================== 项目书架 ==================== */
+function getProjectById(id) {
+  return projects.find(project => project.id === id) || null;
+}
+
+function queuePersistProjects() {
+  if (projectPersistTimer) clearTimeout(projectPersistTimer);
+  projectPersistTimer = setTimeout(() => {
+    projectPersistTimer = null;
+    persistProjects();
+  }, 260);
+}
+
+function flushProjectPersist() {
+  if (!projectPersistTimer) return;
+  clearTimeout(projectPersistTimer);
+  projectPersistTimer = null;
+  persistProjects();
+}
+
+function renderProjects() {
+  const shelf = document.getElementById('projectShelf');
+  const empty = document.getElementById('projectEmptyState');
+  const shelfView = document.getElementById('projectShelfView');
+
+  if (!projects.length) {
+    shelf.innerHTML = '';
+    shelf.style.display = 'none';
+    empty.style.display = 'block';
+  } else {
+    shelf.style.display = 'grid';
+    empty.style.display = 'none';
+    shelf.innerHTML = projects.map(project => `
+      <article class="project-book-card" data-id="${escAttr(project.id)}" draggable="true" onclick="handleProjectBookClick('${project.id}')">
+        <div class="project-book-cover">
+          <h3 class="project-book-cover-title">${escHtml(project.title || '未命名项目')}</h3>
+        </div>
+      </article>
+    `).join('');
+    bindProjectShelfDrag();
+  }
+
+  if (activeProjectId && !getProjectById(activeProjectId)) {
+    activeProjectId = null;
+    activeProjectPageIndex = 0;
+  }
+
+  shelfView.style.display = activeProjectId || projectCloseTimer ? 'none' : 'block';
+  renderProjectBook();
+}
+
+function handleProjectBookClick(id) {
+  if (suppressProjectOpen) return;
+  openProjectBook(id);
+}
+
+function bindProjectShelfDrag() {
+  document.querySelectorAll('.project-book-card').forEach(card => {
+    let dragCounter = 0;
+
+    card.addEventListener('dragstart', e => {
+      draggedProjectId = card.dataset.id;
+      suppressProjectOpen = true;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      draggedProjectId = null;
+      dragCounter = 0;
+      card.classList.remove('dragging', 'drag-over');
+      setTimeout(() => { suppressProjectOpen = false; }, 0);
+    });
+
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    card.addEventListener('dragenter', e => {
+      e.preventDefault();
+      dragCounter++;
+      if (draggedProjectId && draggedProjectId !== card.dataset.id) card.classList.add('drag-over');
+    });
+
+    card.addEventListener('dragleave', () => {
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        card.classList.remove('drag-over');
+      }
+    });
+
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      dragCounter = 0;
+      card.classList.remove('drag-over');
+      if (draggedProjectId && draggedProjectId !== card.dataset.id) {
+        reorderProjects(draggedProjectId, card.dataset.id);
+      }
+    });
+  });
+}
+
+function reorderProjects(fromId, toId) {
+  const fromIdx = projects.findIndex(project => project.id === fromId);
+  const toIdx = projects.findIndex(project => project.id === toId);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const [moved] = projects.splice(fromIdx, 1);
+  projects.splice(toIdx, 0, moved);
+  persistProjects();
+  renderProjects();
+}
+
+function renderProjectBook() {
+  const view = document.getElementById('projectBookView');
+  const project = getProjectById(activeProjectId);
+
+  if (!project) {
+    if (!projectCloseTimer) view.classList.remove('active', 'opening', 'closing');
+    return;
+  }
+
+  const pageCount = project.pages.length || 1;
+  activeProjectPageIndex = Math.max(0, Math.min(activeProjectPageIndex, pageCount - 1));
+
+  document.getElementById('projectBookTitle').textContent = project.title || '未命名项目';
+  document.getElementById('projectBookSummary').textContent = project.summary || '';
+  document.getElementById('projectPageIndicator').textContent = `第 ${activeProjectPageIndex + 1} / ${pageCount} 页`;
+  document.getElementById('projectPrevBtn').disabled = activeProjectPageIndex === 0;
+  document.getElementById('projectNextBtn').textContent =
+    activeProjectPageIndex >= pageCount - 1 ? '新增一页' : '下一页';
+
+  view.classList.add('active');
+  setProjectEditorMarkdown(project.pages[activeProjectPageIndex] || '');
+}
+
+function openProjectEditor(id) {
+  editingProjectId = id || null;
+  const title = document.getElementById('projectTitle');
+  const summary = document.getElementById('projectSummary');
+  const modalTitle = document.getElementById('projectModalTitle');
+
+  if (id) {
+    const project = getProjectById(id);
+    if (!project) return;
+    title.value = project.title;
+    summary.value = project.summary;
+    modalTitle.textContent = '编辑项目';
+  } else {
+    title.value = '';
+    summary.value = '';
+    modalTitle.textContent = '添加项目';
+  }
+
+  document.getElementById('projectEditorModal').classList.add('active');
+  setTimeout(() => title.focus(), 150);
+}
+
+function closeProjectEditor() {
+  document.getElementById('projectEditorModal').classList.remove('active');
+  editingProjectId = null;
+}
+
+async function saveProject() {
+  const title = document.getElementById('projectTitle').value.trim();
+  const summary = document.getElementById('projectSummary').value.trim();
+
+  if (!title && !summary) {
+    document.getElementById('projectTitle').focus();
+    return;
+  }
+
+  if (editingProjectId) {
+    const project = getProjectById(editingProjectId);
+    if (project) {
+      project.title = title;
+      project.summary = summary;
+      project.updatedAt = Date.now();
+    }
+  } else {
+    projects.push(normalizeProject({
+      id: genId('p'),
+      title,
+      summary,
+      pages: [''],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }));
+  }
+
+  await persistProjects();
+  closeProjectEditor();
+  renderProjects();
+}
+
+function openProjectBook(id) {
+  const project = getProjectById(id);
+  if (!project) return;
+
+  if (projectCloseTimer) {
+    clearTimeout(projectCloseTimer);
+    projectCloseTimer = null;
+  }
+
+  activeProjectId = id;
+  activeProjectPageIndex = 0;
+  renderProjects();
+
+  const view = document.getElementById('projectBookView');
+  view.classList.remove('opening', 'closing');
+  void view.offsetWidth;
+  view.classList.add('opening');
+  setTimeout(() => view.classList.remove('opening'), 620);
+  setTimeout(focusProjectEditor, 120);
+}
+
+function closeProjectBook() {
+  flushProjectPersist();
+  if (projectCloseTimer) return;
+
+  const view = document.getElementById('projectBookView');
+  view.classList.remove('opening');
+  view.classList.add('closing');
+
+  projectCloseTimer = setTimeout(() => {
+    projectCloseTimer = null;
+    activeProjectId = null;
+    activeProjectPageIndex = 0;
+    view.classList.remove('active', 'closing');
+    renderProjects();
+  }, 340);
+}
+
+function ensureProjectEditor() {
+  if (projectEditor) return projectEditor;
+
+  const el = document.getElementById('projectPageEditor');
+  if (!el || !window.mountNovelProjectEditor) return null;
+
+  projectEditor = window.mountNovelProjectEditor(el, {
+    value: '',
+    placeholder: '输入项目内容...',
+    onChange: value => {
+      if (isSettingProjectEditor) return;
+      handleProjectPageInput(value);
+    }
+  });
+
+  return projectEditor;
+}
+
+function setProjectEditorMarkdown(value) {
+  const editor = ensureProjectEditor();
+  if (!editor) return;
+
+  isSettingProjectEditor = true;
+  editor.setValue(value || '');
+  isSettingProjectEditor = false;
+}
+
+function focusProjectEditor() {
+  const editor = ensureProjectEditor();
+  if (editor) editor.focus();
+}
+
+function handleProjectPageInput(value) {
+  const project = getProjectById(activeProjectId);
+  if (!project) return;
+  project.pages[activeProjectPageIndex] = value;
+  project.updatedAt = Date.now();
+  queuePersistProjects();
+}
+
+function prevProjectPage() {
+  if (activeProjectPageIndex <= 0) return;
+  flushProjectPersist();
+  activeProjectPageIndex -= 1;
+  renderProjectBook();
+  focusProjectEditor();
+}
+
+function nextProjectPage() {
+  const project = getProjectById(activeProjectId);
+  if (!project) return;
+  if (activeProjectPageIndex >= project.pages.length - 1) {
+    addProjectPage();
+    return;
+  }
+
+  flushProjectPersist();
+  activeProjectPageIndex += 1;
+  renderProjectBook();
+  focusProjectEditor();
+}
+
+async function addProjectPage() {
+  const project = getProjectById(activeProjectId);
+  if (!project) return;
+
+  flushProjectPersist();
+  project.pages.push('');
+  project.updatedAt = Date.now();
+  activeProjectPageIndex = project.pages.length - 1;
+  await persistProjects();
+  renderProjectBook();
+  focusProjectEditor();
+}
+
+/* ==================== 常用个人信息 ==================== */
+function renderInfoPanels() {
+  const container = document.getElementById('infoContainer');
+  const empty = document.getElementById('infoEmptyState');
+
+  if (infoPanels.length === 0) {
+    container.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  container.style.display = 'flex';
+  empty.style.display = 'none';
+
+  // 按标签分组，并保留用户拖拽后的标签顺序。
+  const groups = {};
+  const tagOrder = [];
+  infoPanels.forEach(p => {
+    const tag = p.tag || '未分类';
+    if (!groups[tag]) {
+      groups[tag] = [];
+      tagOrder.push(tag);
+    }
+    groups[tag].push(p);
+  });
+
+  container.innerHTML = '';
+  tagOrder.forEach(tag => {
+    const group = document.createElement('div');
+    group.className = 'info-tag-group';
+    group.dataset.tag = tag;
+    group.draggable = true;
+
+    group.innerHTML = `
+      <div class="info-tag-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="info-tag-arrow">&#9660;</span>
+        <span class="info-tag-name">${escHtml(tag)}</span>
+        <span class="info-tag-count">${groups[tag].length}</span>
+      </div>
+      <div class="info-tag-body info-panels"></div>
+    `;
+    bindInfoTagDrag(group);
+
+    const panelsContainer = group.querySelector('.info-tag-body');
+    groups[tag].forEach(panel => {
+      const el = document.createElement('div');
+      el.className = 'info-panel';
+      el.dataset.id = panel.id;
+      el.dataset.tag = tag;
+      el.draggable = true;
+
+      const fieldsHtml = (panel.fields || []).map(f => `
+        <div class="info-field">
+          <span class="info-field-label">${escHtml(f.label)}</span>
+          <span class="info-field-value${f.encrypted ? ' is-masked' : ''}">${escHtml(f.encrypted ? maskValue(f.value) : f.value)}</span>
+          <button class="info-field-copy" data-copy="${escAttr(f.value || '')}" title="复制" onclick="copyField(this, this.dataset.copy || '')">&#128203;</button>
+        </div>
+      `).join('');
+
+      el.innerHTML = `
+        <div class="info-panel-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="info-panel-arrow">&#9654;</span>
+          <span class="info-panel-title">${escHtml(panel.title || '无标题')}</span>
+          <div class="info-panel-actions">
+            <button class="btn btn-ghost btn-sm" title="编辑" onclick="event.stopPropagation();openInfoEditor('${panel.id}')">&#9998;</button>
+            <button class="btn btn-danger btn-sm" title="删除" onclick="event.stopPropagation();askDeleteInfo('${panel.id}')">&#10005;</button>
+          </div>
+        </div>
+        <div class="info-panel-body">
+          <div class="info-panel-content">${fieldsHtml || '<p style="color:var(--text-light);font-size:13px;">暂无条目</p>'}</div>
+        </div>
+      `;
+
+      bindInfoPanelDrag(el);
+      panelsContainer.appendChild(el);
+    });
+
+    container.appendChild(group);
+  });
+}
+
+function bindInfoTagDrag(group) {
+  let dragCounter = 0;
+
+  group.addEventListener('dragstart', e => {
+    if (e.target.closest('.info-panel')) return;
+    draggedInfoTag = group.dataset.tag;
+    group.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  group.addEventListener('dragend', () => {
+    draggedInfoTag = null;
+    dragCounter = 0;
+    group.classList.remove('dragging', 'drag-over');
+  });
+
+  group.addEventListener('dragover', e => {
+    if (!draggedInfoTag) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+
+  group.addEventListener('dragenter', e => {
+    if (!draggedInfoTag) return;
+    e.preventDefault();
+    dragCounter++;
+    if (draggedInfoTag !== group.dataset.tag) group.classList.add('drag-over');
+  });
+
+  group.addEventListener('dragleave', () => {
+    if (!draggedInfoTag) return;
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      group.classList.remove('drag-over');
+    }
+  });
+
+  group.addEventListener('drop', e => {
+    if (!draggedInfoTag) return;
+    e.preventDefault();
+    dragCounter = 0;
+    group.classList.remove('drag-over');
+    if (draggedInfoTag !== group.dataset.tag) reorderInfoTags(draggedInfoTag, group.dataset.tag);
+  });
+}
+
+function bindInfoPanelDrag(panelEl) {
+  let dragCounter = 0;
+
+  panelEl.addEventListener('dragstart', e => {
+    e.stopPropagation();
+    draggedInfoPanelId = panelEl.dataset.id;
+    panelEl.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  panelEl.addEventListener('dragend', () => {
+    draggedInfoPanelId = null;
+    dragCounter = 0;
+    panelEl.classList.remove('dragging', 'drag-over');
+  });
+
+  panelEl.addEventListener('dragover', e => {
+    if (!draggedInfoPanelId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+  });
+
+  panelEl.addEventListener('dragenter', e => {
+    if (!draggedInfoPanelId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter++;
+    if (draggedInfoPanelId !== panelEl.dataset.id) panelEl.classList.add('drag-over');
+  });
+
+  panelEl.addEventListener('dragleave', e => {
+    if (!draggedInfoPanelId) return;
+    e.stopPropagation();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      panelEl.classList.remove('drag-over');
+    }
+  });
+
+  panelEl.addEventListener('drop', e => {
+    if (!draggedInfoPanelId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter = 0;
+    panelEl.classList.remove('drag-over');
+    if (draggedInfoPanelId !== panelEl.dataset.id) {
+      reorderInfoPanels(draggedInfoPanelId, panelEl.dataset.id);
+    }
+  });
+}
+
+function getInfoTag(panel) {
+  return panel.tag || '未分类';
+}
+
+function reorderInfoTags(fromTag, toTag) {
+  const groups = {};
+  const tagOrder = [];
+  infoPanels.forEach(panel => {
+    const tag = getInfoTag(panel);
+    if (!groups[tag]) {
+      groups[tag] = [];
+      tagOrder.push(tag);
+    }
+    groups[tag].push(panel);
+  });
+
+  const fromIdx = tagOrder.indexOf(fromTag);
+  const toIdx = tagOrder.indexOf(toTag);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const [moved] = tagOrder.splice(fromIdx, 1);
+  tagOrder.splice(toIdx, 0, moved);
+  infoPanels = tagOrder.flatMap(tag => groups[tag]);
+  persistInfo();
+  renderInfoPanels();
+}
+
+function reorderInfoPanels(fromId, toId) {
+  const fromPanel = infoPanels.find(panel => panel.id === fromId);
+  const toPanel = infoPanels.find(panel => panel.id === toId);
+  if (!fromPanel || !toPanel) return;
+
+  const tag = getInfoTag(fromPanel);
+  if (tag !== getInfoTag(toPanel)) return;
+
+  const sameTagPanels = infoPanels.filter(panel => getInfoTag(panel) === tag);
+  const fromIdx = sameTagPanels.findIndex(panel => panel.id === fromId);
+  const toIdx = sameTagPanels.findIndex(panel => panel.id === toId);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const [moved] = sameTagPanels.splice(fromIdx, 1);
+  sameTagPanels.splice(toIdx, 0, moved);
+
+  let inserted = false;
+  infoPanels = infoPanels.reduce((nextPanels, panel) => {
+    if (getInfoTag(panel) !== tag) {
+      nextPanels.push(panel);
+      return nextPanels;
+    }
+    if (!inserted) {
+      nextPanels.push(...sameTagPanels);
+      inserted = true;
+    }
+    return nextPanels;
+  }, []);
+
+  persistInfo();
+  renderInfoPanels();
+}
+
+function copyField(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '&#10003;';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '&#128203;'; }, 1500);
+  }).catch(() => showToast('复制失败'));
+}
+
+/* 信息面板编辑器 */
+let editorFields = [];
+
+function openInfoEditor(id) {
+  editingInfoId = id || null;
+  const title = document.getElementById('infoTitle');
+  const tag = document.getElementById('infoTag');
+  const modalTitle = document.getElementById('infoModalTitle');
+
+  if (id) {
+    const panel = infoPanels.find(p => p.id === id);
+    if (!panel) return;
+    title.value = panel.title;
+    tag.value = panel.tag || '';
+    editorFields = (panel.fields || []).map(f => ({
+      label: f.label,
+      value: f.value,
+      encrypted: !!f.encrypted
+    }));
+    modalTitle.textContent = '编辑信息';
+  } else {
+    title.value = '';
+    tag.value = '';
+    editorFields = [
+      { label: '', value: '', encrypted: false },
+      { label: '', value: '', encrypted: false }
+    ];
+    modalTitle.textContent = '添加信息';
+  }
+
+  renderInfoFieldRows();
+  document.getElementById('infoEditorModal').classList.add('active');
+  setTimeout(() => title.focus(), 150);
+}
+
+function closeInfoEditor() {
+  document.getElementById('infoEditorModal').classList.remove('active');
+  hideInfoTagSuggestions();
+  editingInfoId = null;
+  editorFields = [];
+}
+
+function getExistingInfoTags() {
+  return [...new Set(infoPanels.map(panel => (panel.tag || '').trim()).filter(Boolean))];
+}
+
+function showInfoTagSuggestions() {
+  const input = document.getElementById('infoTag');
+  const box = document.getElementById('infoTagSuggestions');
+  if (!input || !box) return;
+
+  const keyword = input.value.trim().toLowerCase();
+  const tags = getExistingInfoTags().filter(tag => tag.toLowerCase().includes(keyword));
+
+  if (!tags.length) {
+    hideInfoTagSuggestions();
+    return;
+  }
+
+  box.innerHTML = tags.map(tag => `
+    <button type="button" class="tag-suggestion-item" onmousedown="selectInfoTagSuggestion('${escAttr(tag)}')">${escHtml(tag)}</button>
+  `).join('');
+  box.classList.add('active');
+}
+
+function hideInfoTagSuggestions() {
+  const box = document.getElementById('infoTagSuggestions');
+  if (box) box.classList.remove('active');
+}
+
+function selectInfoTagSuggestion(tag) {
+  const input = document.getElementById('infoTag');
+  if (!input) return;
+
+  input.value = tag;
+  hideInfoTagSuggestions();
+  input.focus();
+}
+
+function renderInfoFieldRows() {
+  const container = document.getElementById('infoFieldsContainer');
+  container.innerHTML = '';
+  editorFields.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    row.innerHTML = `
+      <span class="field-row-label">${i + 1}</span>
+      <input type="text" class="form-input" placeholder="标签" value="${escAttr(f.label)}"
+        onchange="editorFields[${i}].label=this.value" style="max-width:120px;">
+      <input type="text" class="form-input" placeholder="内容" value="${escAttr(f.value)}"
+        onchange="editorFields[${i}].value=this.value">
+      <label class="field-encrypt">
+        <input type="checkbox" ${f.encrypted ? 'checked' : ''} onchange="editorFields[${i}].encrypted=this.checked">
+        <span>加密</span>
+      </label>
+      <button class="field-remove" title="移除此行" onclick="removeInfoFieldRow(${i})">&#10005;</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function addInfoFieldRow() {
+  editorFields.push({ label: '', value: '', encrypted: false });
+  renderInfoFieldRows();
+  const container = document.getElementById('infoFieldsContainer');
+  const inputs = container.lastElementChild.querySelectorAll('input');
+  if (inputs.length) inputs[0].focus();
+}
+
+function removeInfoFieldRow(idx) {
+  if (editorFields.length <= 1) return;
+  editorFields.splice(idx, 1);
+  renderInfoFieldRows();
+}
+
+async function saveInfoPanel() {
+  const title = document.getElementById('infoTitle').value.trim();
+  const tag = document.getElementById('infoTag').value.trim();
+
+  const rows = document.querySelectorAll('#infoFieldsContainer .field-row');
+  rows.forEach((row, i) => {
+    const inputs = row.querySelectorAll('input');
+    if (editorFields[i]) {
+      editorFields[i].label = inputs[0].value;
+      editorFields[i].value = inputs[1].value;
+      editorFields[i].encrypted = inputs[2].checked;
+    }
+  });
+
+  const fields = editorFields
+    .filter(f => f.label.trim() || f.value.trim())
+    .map(f => ({
+      label: f.label,
+      value: f.value,
+      encrypted: !!f.encrypted
+    }));
+
+  if (!title && !tag && fields.length === 0) {
+    document.getElementById('infoTitle').focus();
+    return;
+  }
+
+  if (editingInfoId) {
+    const panel = infoPanels.find(p => p.id === editingInfoId);
+    if (panel) {
+      panel.title = title;
+      panel.tag = tag;
+      panel.fields = fields;
+      panel.updatedAt = Date.now();
+    }
+  } else {
+    infoPanels.push({
+      id: genId('i'), title, tag, fields,
+      createdAt: Date.now(), updatedAt: Date.now()
+    });
+  }
+
+  await persistInfo();
+  renderInfoPanels();
+  closeInfoEditor();
+}
+
+function askDeleteInfo(id) {
+  const panel = infoPanels.find(p => p.id === id);
+  openConfirm(
+    `确定要删除面板「${panel ? panel.title || '无标题' : ''}」吗？`,
+    async () => {
+      infoPanels = infoPanels.filter(p => p.id !== id);
+      await persistInfo();
+      renderInfoPanels();
+    }
+  );
+}
+
+/* ==================== 模态框遮罩点击（仅内容为空时允许遮罩关闭） ==================== */
+document.getElementById('editorModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget && isModalContentEmpty('editorModal')) closeNoteEditor();
+});
+document.getElementById('infoEditorModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget && isModalContentEmpty('infoEditorModal')) closeInfoEditor();
+});
+document.getElementById('projectEditorModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget && isModalContentEmpty('projectEditorModal')) closeProjectEditor();
+});
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeConfirm();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.form-group.with-suggestions')) hideInfoTagSuggestions();
+});
+
+window.addEventListener('beforeunload', flushProjectPersist);
+
+/* ==================== 快捷键 ==================== */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const editorModal = document.getElementById('editorModal');
+    const infoModal = document.getElementById('infoEditorModal');
+    const projectModal = document.getElementById('projectEditorModal');
+    const confirmModal = document.getElementById('confirmOverlay');
+
+    if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
+    if (editorModal.classList.contains('active')) { closeNoteEditor(); return; }
+    if (infoModal.classList.contains('active')) { closeInfoEditor(); return; }
+    if (projectModal.classList.contains('active')) { closeProjectEditor(); return; }
+  }
+
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    const editorModal = document.getElementById('editorModal');
+    const infoModal = document.getElementById('infoEditorModal');
+    const projectModal = document.getElementById('projectEditorModal');
+    if (editorModal.classList.contains('active')) saveNote();
+    if (infoModal.classList.contains('active')) saveInfoPanel();
+    if (projectModal.classList.contains('active')) saveProject();
+  }
+});
+</script>
+</body>
+</html>
