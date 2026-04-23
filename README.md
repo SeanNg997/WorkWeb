@@ -32,11 +32,11 @@ node --version
 - macOS：双击 `Start WorkWeb.command`
 - Windows：双击 `Start WorkWeb.vbs`
 
-如果 Windows 启动失败，双击 `Start WorkWeb.bat`，窗口不会一闪而过，会停下来显示错误信息。
+如果 Windows 启动失败，双击 `Start WorkWeb.bat`，会停下来显示错误信息。
 
 ## 3 数据保存位置
 
-`data`文件夹中主要文件包括：
+`data` 文件夹中主要文件包括：
 
 - `notes.json`：TODO 和便笺数据。
 - `projects.json`：项目书架数据。

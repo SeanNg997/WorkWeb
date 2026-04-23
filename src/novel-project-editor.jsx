@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
 
@@ -40,6 +40,75 @@ function ToolbarButton({ active, children, onClick, title }) {
   );
 }
 
+function ToolbarDropdown({ active, items, label, title }) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef(null);
+
+  function clearCloseTimer() {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }
+
+  function openMenu() {
+    clearCloseTimer();
+    setOpen(true);
+  }
+
+  function scheduleClose() {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+    }, 300);
+  }
+
+  function toggleMenu() {
+    clearCloseTimer();
+    setOpen(current => !current);
+  }
+
+  function handleItemClick(action) {
+    action();
+    clearCloseTimer();
+    setOpen(false);
+  }
+
+  useEffect(() => () => clearCloseTimer(), []);
+
+  return (
+    <div
+      className={`novel-toolbar-group${open ? ' open' : ''}`}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        className={`novel-toolbar-button novel-toolbar-trigger${active ? ' active' : ''}${open ? ' open' : ''}`}
+        title={title}
+        onMouseDown={event => event.preventDefault()}
+        onClick={toggleMenu}
+      >
+        <span>{label}</span>
+        <span className="novel-toolbar-caret" aria-hidden="true">▾</span>
+      </button>
+      <div className={`novel-toolbar-menu${open ? ' open' : ''}`}>
+        {items.map(item => (
+          <ToolbarButton
+            key={item.key}
+            title={item.title}
+            active={item.active}
+            onClick={() => handleItemClick(item.onClick)}
+          >
+            {item.label}
+          </ToolbarButton>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NovelToolbar({ sourceMode, onToggleSourceMode }) {
   const { editor } = useEditor();
   const tick = useSyncExternalStore(
@@ -61,16 +130,71 @@ function NovelToolbar({ sourceMode, onToggleSourceMode }) {
   if (!editor) return null;
   void tick;
 
+  const headingActive = [1, 2, 3, 4].some(level => editor.isActive('heading', { level }));
+  const listActive = editor.isActive('bulletList') || editor.isActive('orderedList');
+
   return (
     <div className="novel-toolbar">
-      <ToolbarButton title="一级标题" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>H1</ToolbarButton>
-      <ToolbarButton title="二级标题" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
+      <ToolbarDropdown
+        title="标题等级"
+        label="标题"
+        active={headingActive}
+        items={[
+          {
+            key: 'heading-1',
+            title: '一级标题',
+            label: 'H1 一级标题',
+            active: editor.isActive('heading', { level: 1 }),
+            onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run()
+          },
+          {
+            key: 'heading-2',
+            title: '二级标题',
+            label: 'H2 二级标题',
+            active: editor.isActive('heading', { level: 2 }),
+            onClick: () => editor.chain().focus().toggleHeading({ level: 2 }).run()
+          },
+          {
+            key: 'heading-3',
+            title: '三级标题',
+            label: 'H3 三级标题',
+            active: editor.isActive('heading', { level: 3 }),
+            onClick: () => editor.chain().focus().toggleHeading({ level: 3 }).run()
+          },
+          {
+            key: 'heading-4',
+            title: '四级标题',
+            label: 'H4 四级标题',
+            active: editor.isActive('heading', { level: 4 }),
+            onClick: () => editor.chain().focus().toggleHeading({ level: 4 }).run()
+          }
+        ]}
+      />
       <ToolbarButton title="正文" active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>正文</ToolbarButton>
       <ToolbarButton title="加粗" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
       <ToolbarButton title="斜体" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
       <ToolbarButton title="删除线" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
-      <ToolbarButton title="项目列表" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>• 列表</ToolbarButton>
-      <ToolbarButton title="编号列表" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>1. 列表</ToolbarButton>
+      <ToolbarDropdown
+        title="列表"
+        label="列表"
+        active={listActive}
+        items={[
+          {
+            key: 'bullet-list',
+            title: '无序列表',
+            label: '• 无序列表',
+            active: editor.isActive('bulletList'),
+            onClick: () => editor.chain().focus().toggleBulletList().run()
+          },
+          {
+            key: 'ordered-list',
+            title: '有序列表',
+            label: '1. 有序列表',
+            active: editor.isActive('orderedList'),
+            onClick: () => editor.chain().focus().toggleOrderedList().run()
+          }
+        ]}
+      />
       <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
       <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
       <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
