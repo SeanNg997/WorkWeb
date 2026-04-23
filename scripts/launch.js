@@ -9,15 +9,6 @@ const SERVER_LOG = path.join(RUNTIME_DIR, 'workweb-server.log');
 const PORT = 3000;
 const URL = `http://127.0.0.1:${PORT}`;
 
-function getElectronBinary() {
-  try {
-    const electronModule = require('electron');
-    return typeof electronModule === 'string' ? electronModule : null;
-  } catch {
-    return null;
-  }
-}
-
 function ensureRuntimeDir() {
   if (!fs.existsSync(RUNTIME_DIR)) {
     fs.mkdirSync(RUNTIME_DIR, { recursive: true });
@@ -59,20 +50,6 @@ function startServerInBackground() {
   child.unref();
 }
 
-function launchElectronApp() {
-  const electronBinary = getElectronBinary();
-  if (!electronBinary) return false;
-
-  const child = spawn(electronBinary, [ROOT_DIR], {
-    cwd: ROOT_DIR,
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: true
-  });
-  child.unref();
-  return true;
-}
-
 function openBrowser(url) {
   let command;
   let args;
@@ -98,10 +75,6 @@ function openBrowser(url) {
 }
 
 async function main() {
-  if (launchElectronApp()) {
-    return;
-  }
-
   if (!(await requestOnce(URL))) {
     startServerInBackground();
     const ready = await waitForServer();

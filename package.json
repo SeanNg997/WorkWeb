@@ -1,12 +1,9 @@
 {
   "name": "workweb",
-  "productName": "WorkWeb",
   "version": "1.0.0",
   "private": true,
-  "main": "electron/main.js",
   "scripts": {
     "start": "node scripts/launch.js",
-    "desktop": "electron .",
     "server": "node server.js",
     "build:novel": "vite build --config vite.novel.config.mjs"
   },
@@ -21,7 +18,5 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.0"
   },
-  "devDependencies": {
-    "electron": "^41.3.0"
-  }
+  "devDependencies": {}
 }
