@@ -212,6 +212,16 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
   );
 }
 
+function EditorReadyBridge({ onReady }) {
+  const { editor } = useEditor();
+
+  useEffect(() => {
+    if (editor) onReady?.(editor);
+  }, [editor, onReady]);
+
+  return null;
+}
+
 function NovelProjectEditor({
   value,
   onChange,
@@ -220,7 +230,8 @@ function NovelProjectEditor({
   onToggleSourceMode,
   showToolbar = true,
   showSourceToggle = true,
-  saveStatus = null
+  saveStatus = null,
+  onEditorReady
 }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
 
@@ -264,17 +275,52 @@ function NovelProjectEditor({
         handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event)
       }}
       slotBefore={showToolbar ? (
-        <NovelToolbar
-          sourceMode={sourceMode}
-          onToggleSourceMode={onToggleSourceMode}
-          showSourceToggle={showSourceToggle}
-          saveStatus={saveStatus}
-        />
+        <>
+          <EditorReadyBridge onReady={onEditorReady} />
+          <NovelToolbar
+            sourceMode={sourceMode}
+            onToggleSourceMode={onToggleSourceMode}
+            showSourceToggle={showSourceToggle}
+            saveStatus={saveStatus}
+          />
+        </>
       ) : null}
+      slotAfter={!showToolbar ? <EditorReadyBridge onReady={onEditorReady} /> : null}
       onUpdate={({ editor }) => onChange?.(editor.getHTML())}
       />
     </EditorRoot>
   );
+}
+
+function isBlankSpaceClick(host, event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return false;
+
+  const content = host.querySelector('.novel-project-editor-content');
+  const prose = host.querySelector('.novel-project-editor-prose');
+  if (!content || !prose || !content.contains(target)) return false;
+  if (target.closest('.novel-toolbar')) return false;
+
+  const lastBlock = Array.from(prose.children).at(-1);
+  if (!lastBlock) return true;
+  return event.clientY > lastBlock.getBoundingClientRect().bottom;
+}
+
+function focusEditorEnd(editor, host) {
+  if (editor?.chain) {
+    editor.chain().focus('end').run();
+    return;
+  }
+
+  const prose = host.querySelector('[contenteditable="true"]');
+  if (!prose) return;
+  prose.focus();
+  const range = document.createRange();
+  range.selectNodeContents(prose);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
 }
 
 function mountNovelProjectEditor(el, options = {}) {
@@ -296,8 +342,15 @@ function mountNovelProjectEditor(el, options = {}) {
     showToolbar: options.showToolbar !== false,
     showSourceToggle: options.showSourceToggle !== false,
     saveStatus: options.saveStatus || null,
+    editor: null,
     version: 0
   };
+
+  function handleHostMouseDown(event) {
+    if (!isBlankSpaceClick(el, event)) return;
+    event.preventDefault();
+    focusEditorEnd(state.editor, el);
+  }
 
   function render() {
     root.render(
@@ -311,11 +364,13 @@ function mountNovelProjectEditor(el, options = {}) {
         showToolbar={state.showToolbar}
         showSourceToggle={state.showSourceToggle}
         saveStatus={state.saveStatus}
+        onEditorReady={editor => { state.editor = editor; }}
       />
     );
   }
 
   render();
+  el.addEventListener('mousedown', handleHostMouseDown);
 
   const api = {
     setValue(nextValue) {
@@ -335,7 +390,11 @@ function mountNovelProjectEditor(el, options = {}) {
     focus() {
       el.querySelector('[contenteditable="true"]')?.focus();
     },
+    focusEnd() {
+      focusEditorEnd(state.editor, el);
+    },
     destroy() {
+      el.removeEventListener('mousedown', handleHostMouseDown);
       root.unmount();
       mountedEditors.delete(el);
     }

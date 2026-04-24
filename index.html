@@ -1231,6 +1231,14 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   color: var(--accent-hover);
 }
 
+#downloadLatestBtn {
+  display: none;
+}
+
+#downloadLatestBtn.visible {
+  display: inline-flex;
+}
+
 .data-dir-box {
   display: grid;
   gap: 10px;
@@ -1827,6 +1835,7 @@ textarea.form-input {
           <p id="versionStatus">当前版本：读取中</p>
           <div class="settings-actions">
             <button class="btn btn-secondary" onclick="checkUpdateFromSettings()">检查更新</button>
+            <button class="btn btn-primary" id="downloadLatestBtn" onclick="openLatestRelease()">前往下载</button>
           </div>
         </section>
 
@@ -1925,6 +1934,15 @@ function updateSettingsVersionStatus(text = '') {
   if (el) el.textContent = text || `当前版本：v${currentAppVersion || '1.0.0'}`;
 }
 
+function updateDownloadButton(visible = false) {
+  document.getElementById('downloadLatestBtn')?.classList.toggle('visible', visible && Boolean(latestReleaseUrl));
+}
+
+function openLatestRelease() {
+  if (!latestReleaseUrl) return;
+  window.open(latestReleaseUrl, '_blank', 'noopener,noreferrer');
+}
+
 async function checkLatestRelease(version) {
   if (!version) return { status: 'failed' };
 
@@ -1941,13 +1959,16 @@ async function checkLatestRelease(version) {
     if (latestVersion && releaseUrl && compareVersions(latestVersion, version) > 0) {
       latestReleaseUrl = releaseUrl;
       document.getElementById('sidebarSettingsBtn')?.classList.add('has-update');
+      updateDownloadButton(true);
       return { status: 'new', latestVersion, releaseUrl };
     }
 
     latestReleaseUrl = '';
     document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
+    updateDownloadButton(false);
     return { status: 'latest', latestVersion: latestVersion || version };
   } catch {
+    updateDownloadButton(false);
     return { status: 'failed' };
   }
 }
@@ -2168,6 +2189,7 @@ function openSettings() {
   selectedNextDataDir = '';
   document.getElementById('nextDataDir').textContent = '未选择';
   updateSettingsVersionStatus();
+  updateDownloadButton(Boolean(latestReleaseUrl));
   refreshDataDirDisplay();
   document.getElementById('settingsModal').classList.add('active');
 }
@@ -2251,20 +2273,25 @@ async function changeDataDir() {
 
 async function checkUpdateFromSettings() {
   if (!currentAppVersion) {
+    updateDownloadButton(false);
     updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
     return;
   }
 
+  updateDownloadButton(false);
   updateSettingsVersionStatus('正在检查更新...');
   const result = await checkLatestRelease(currentAppVersion);
   if (result.status === 'new') {
+    updateDownloadButton(true);
     updateSettingsVersionStatus(`有新的版本可以使用：v${result.latestVersion}`);
     return;
   }
   if (result.status === 'latest') {
+    updateDownloadButton(false);
     updateSettingsVersionStatus('当前已经是最新版本');
     return;
   }
+  updateDownloadButton(false);
   updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
 }
 
