@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>个人工作面板</title>
 <link rel="stylesheet" href="vendor/workweb.css">
-<!-- 传统 .ico 格式 -->
-<link rel="icon" type="image/x-icon" href="image/icon.ico">
-<!-- 现代浏览器 PNG 格式 -->
-<link rel="icon" type="image/png" href="image/icon_32.png">
+<link rel="icon" type="image/x-icon" sizes="32x32" href="image/icon_32.ico">
+<link rel="icon" type="image/x-icon" sizes="64x64" href="image/icon_64.ico">
+<link rel="shortcut icon" href="image/icon.ico">
 <script src="vendor/marked.min.js"></script>
 <script src="vendor/novel-project-editor.js"></script>
 <style>
@@ -181,6 +180,29 @@ body {
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 
+.sidebar-version {
+  padding: 6px 16px 10px;
+  color: rgba(255,255,255,0.48);
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  user-select: text;
+  text-align: center;
+}
+
+.sidebar-version-update {
+  margin-left: 6px;
+  color: #f1d08a;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(241,208,138,0.45);
+  transition: color var(--transition), border-color var(--transition), opacity var(--transition);
+}
+
+.sidebar-version-update:hover {
+  color: #ffe7b6;
+  border-color: rgba(255,231,182,0.82);
+}
+
 .theme-options {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -331,6 +353,11 @@ body {
 @keyframes noteIn {
   from { opacity: 0; transform: translateY(12px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes projectShelfIn {
+  from { opacity: 0; transform: translateY(16px) rotate(1.2deg) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
 }
 
 .note-card:not(.dragging):hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
@@ -607,6 +634,11 @@ body {
   cursor: pointer;
   overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.project-book-card.page-reveal {
+  animation: projectShelfIn 0.42s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation-delay: calc(var(--project-enter-index, 0) * 0.04s);
 }
 
 .project-book-card::before {
@@ -1471,6 +1503,7 @@ textarea.form-input {
       <span class="nav-icon">&#9786;</span><span>常用个人信息</span>
     </div>
   </nav>
+  <div class="sidebar-version" id="sidebarVersion">v1.0.0</div>
   <div class="theme-panel">
     <div class="theme-options">
       <button class="theme-btn" data-theme="sage" onclick="setTheme('sage')">
@@ -1687,6 +1720,8 @@ let infoPanels = [];
 let projects = [];
 let serverOnline = false;
 
+const GITHUB_RELEASE_API = 'https://api.github.com/repos/SeanNg997/WorkWeb/releases/latest';
+
 async function apiGet(key) {
   const res = await fetch(`/api/${key}`);
   if (!res.ok) throw new Error(res.statusText);
@@ -1701,6 +1736,74 @@ async function apiSave(key, data) {
   });
   if (!res.ok) throw new Error(res.statusText);
   return res.json();
+}
+
+function normalizeVersionText(value) {
+  return String(value || '').trim().replace(/^v/i, '');
+}
+
+function compareVersions(a, b) {
+  const aParts = normalizeVersionText(a).split(/[^\d]+/).filter(Boolean).map(Number);
+  const bParts = normalizeVersionText(b).split(/[^\d]+/).filter(Boolean).map(Number);
+  const maxLength = Math.max(aParts.length, bParts.length);
+
+  for (let i = 0; i < maxLength; i += 1) {
+    const left = aParts[i] || 0;
+    const right = bParts[i] || 0;
+    if (left > right) return 1;
+    if (left < right) return -1;
+  }
+
+  return 0;
+}
+
+function renderSidebarVersion(version, updateUrl = '') {
+  const el = document.getElementById('sidebarVersion');
+  if (!el) return;
+
+  el.textContent = '';
+  el.append(document.createTextNode(`v${normalizeVersionText(version) || '1.0.0'}`));
+
+  if (!updateUrl) return;
+
+  const link = document.createElement('a');
+  link.className = 'sidebar-version-update';
+  link.href = updateUrl;
+  link.target = '_blank';
+  link.rel = 'noreferrer noopener';
+  link.textContent = '检测到新版本！';
+  el.append(document.createTextNode(' '));
+  el.append(link);
+}
+
+async function checkLatestRelease(version) {
+  if (!version) return;
+
+  try {
+    const res = await fetch(GITHUB_RELEASE_API, {
+      headers: { Accept: 'application/vnd.github+json' }
+    });
+    if (!res.ok) throw new Error(res.statusText);
+
+    const release = await res.json();
+    const latestVersion = normalizeVersionText(release?.tag_name || release?.name || '');
+    const releaseUrl = String(release?.html_url || '').trim();
+
+    if (latestVersion && releaseUrl && compareVersions(latestVersion, version) > 0) {
+      renderSidebarVersion(version, releaseUrl);
+    }
+  } catch {}
+}
+
+async function loadAppVersion() {
+  try {
+    const meta = await apiGet('version');
+    const version = normalizeVersionText(meta?.version);
+    if (!version) return;
+
+    renderSidebarVersion(version);
+    await checkLatestRelease(version);
+  } catch {}
 }
 
 async function loadData() {
@@ -1766,6 +1869,7 @@ let projectSaveStatus = { text: '', visible: false, tone: '' };
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
+  await loadAppVersion();
   await loadData();
   renderNotes();
   renderProjects();
@@ -1801,6 +1905,7 @@ function switchPage(page) {
     el.classList.toggle('active', el.dataset.page === page));
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
+  if (page === 'progress') replayProjectShelfAnimation();
 }
 
 /* ==================== 通用工具 ==================== */
@@ -2356,6 +2461,15 @@ function flushProjectPersist() {
   persistProjects(projectSaveRevision);
 }
 
+function replayProjectShelfAnimation() {
+  document.querySelectorAll('#projectShelf .project-book-card').forEach((card, index) => {
+    card.style.setProperty('--project-enter-index', index);
+    card.classList.remove('page-reveal');
+    void card.offsetWidth;
+    card.classList.add('page-reveal');
+  });
+}
+
 function renderProjects() {
   const shelf = document.getElementById('projectShelf');
   const empty = document.getElementById('projectEmptyState');
@@ -2368,8 +2482,8 @@ function renderProjects() {
   } else {
     shelf.style.display = 'grid';
     empty.style.display = 'none';
-    shelf.innerHTML = projects.map(project => `
-      <article class="project-book-card" data-id="${escAttr(project.id)}" draggable="true" onclick="handleProjectBookClick('${project.id}')">
+    shelf.innerHTML = projects.map((project, index) => `
+      <article class="project-book-card page-reveal" style="--project-enter-index:${index};" data-id="${escAttr(project.id)}" draggable="true" onclick="handleProjectBookClick('${project.id}')">
         <div class="project-book-actions">
           <button class="btn btn-ghost btn-sm project-book-action-btn" title="编辑" onclick="event.stopPropagation();openProjectEditor('${project.id}')">&#9998;</button>
           <button class="btn btn-danger btn-sm project-book-action-btn project-book-action-danger" title="删除" onclick="event.stopPropagation();askDeleteProject('${project.id}')">&#10005;</button>

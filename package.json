@@ -1,24 +1,75 @@
 {
   "name": "workweb",
   "version": "1.0.0",
+  "description": "本地个人工作面板桌面应用",
+  "author": "Xiaoran",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "start": "node scripts/launch.js",
     "server": "node server.js",
-    "build:novel": "vite build --config vite.novel.config.mjs"
+    "desktop": "electron .",
+    "build:novel": "vite build --config vite.novel.config.mjs",
+    "pack:win": "node scripts/build-win.js",
+    "pack:mac": "electron-builder --mac dmg"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.60.2",
     "@tiptap/core": "^2.27.1",
     "@tiptap/extension-placeholder": "^2.27.1",
     "@tiptap/starter-kit": "^2.27.1",
     "@vitejs/plugin-react": "^5.1.2",
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12",
     "novel": "^1.0.2",
+    "rcedit": "^5.0.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "^5.9.3",
     "vite": "^7.3.0"
   },
-  "devDependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.60.2"
+  "build": {
+    "appId": "com.xiaoran.workweb",
+    "productName": "WorkWeb",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "image/**/*",
+      "index.html",
+      "server.js",
+      "vendor/**/*",
+      "README.md"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "win": {
+      "icon": "image/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "installerHeaderIcon": "image/icon.ico",
+      "installerIcon": "image/icon.ico",
+      "shortcutName": "WorkWeb",
+      "uninstallerIcon": "image/icon.ico",
+      "include": "build/installer.nsh"
+    },
+    "mac": {
+      "icon": "image/icon.icns",
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ]
+    }
   }
 }

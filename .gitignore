@@ -1,3 +1,9 @@
 data/
 .DS_Store
-runtime/*.log
+node_modules/
+release/
+dist/
+out/
+.electron-builder/
+runtime/
+*.log
