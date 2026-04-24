@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
+import { TextSelection } from '@tiptap/pm/state';
 
 const mountedEditors = new Map();
 
@@ -234,6 +235,21 @@ function NovelProjectEditor({
     return () => {};
   }, [value]);
 
+  function focusEndWhenClickingBlankSpace(view, event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return false;
+
+    const prose = target.closest('.novel-project-editor-prose');
+    if (!prose || target !== prose) return false;
+
+    const lastBlock = Array.from(prose.children).at(-1);
+    if (!lastBlock || event.clientY <= lastBlock.getBoundingClientRect().bottom) return false;
+
+    view.dispatch(view.state.tr.setSelection(TextSelection.atEnd(view.state.doc)));
+    view.focus();
+    return true;
+  }
+
   return (
     <EditorRoot>
       <EditorContent
@@ -244,7 +260,8 @@ function NovelProjectEditor({
       editorProps={{
         attributes: {
           class: 'novel-project-editor-prose'
-        }
+        },
+        handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event)
       }}
       slotBefore={showToolbar ? (
         <NovelToolbar

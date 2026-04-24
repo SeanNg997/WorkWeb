@@ -155,6 +155,10 @@ body {
   overflow: hidden;
 }
 
+body[data-markdown-size="small"] { --markdown-font-scale: 0.9; }
+body[data-markdown-size="normal"] { --markdown-font-scale: 1; }
+body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
+
 /* === 侧边栏 === */
 .sidebar {
   width: 240px; min-width: 240px;
@@ -201,6 +205,25 @@ body {
 .sidebar-version-update:hover {
   color: #ffe7b6;
   border-color: rgba(255,231,182,0.82);
+}
+
+.sidebar-settings {
+  margin: 6px 16px 10px;
+  min-height: 36px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  color: var(--sidebar-text);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.sidebar-settings:hover,
+.sidebar-settings.has-update {
+  background: var(--sidebar-active);
+  color: var(--sidebar-text-active);
 }
 
 .theme-options {
@@ -494,7 +517,7 @@ body {
 .note-content {
   flex: 1; overflow: hidden;
   display: flex;
-  font-size: 13px; line-height: 1.7; color: var(--text);
+  font-size: calc(13px * var(--markdown-font-scale, 1)); line-height: 1.7; color: var(--text);
   word-break: break-word;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
 }
@@ -527,6 +550,7 @@ body {
   outline: none;
   color: var(--text);
   font: inherit;
+  font-size: calc(13px * var(--markdown-font-scale, 1));
   line-height: 1.7;
 }
 
@@ -578,7 +602,7 @@ body {
 .note-content h3 { font-size: 14px; margin: 4px 0 2px; }
 .note-content p { margin: 4px 0; }
 .note-content ul, .note-content ol { padding-left: 20px; margin: 4px 0; }
-.note-content code { background: var(--surface-muted); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.note-content code { background: var(--surface-muted); padding: 1px 5px; border-radius: 4px; font-size: calc(12px * var(--markdown-font-scale, 1)); }
 .note-content pre { background: var(--surface-muted); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
 .note-content pre code { background: none; padding: 0; }
 .note-content blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text-light); margin: 8px 0; }
@@ -897,7 +921,7 @@ body {
   background: rgba(255,255,255,0.82);
   color: var(--text);
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-size: 13px;
+  font-size: calc(13px * var(--markdown-font-scale, 1));
   line-height: 1.7;
   resize: none;
   outline: none;
@@ -1049,7 +1073,7 @@ body {
   outline: none;
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--markdown-font-scale, 1));
   line-height: 1.85;
 }
 
@@ -1165,6 +1189,70 @@ body {
 .modal-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
 
 .form-group { margin-bottom: 16px; }
+
+.settings-modal {
+  width: 680px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-muted) 74%, white);
+}
+
+.settings-card h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.settings-card p {
+  margin: 0 0 12px;
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.settings-actions,
+.font-size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.font-size-options .active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.data-dir-box {
+  display: grid;
+  gap: 10px;
+}
+
+.path-display {
+  min-height: 38px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.58);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.settings-message {
+  min-height: 18px;
+  color: var(--text-light);
+  font-size: 12px;
+}
 
 .form-group.with-suggestions {
   position: relative;
@@ -1503,7 +1591,7 @@ textarea.form-input {
       <span class="nav-icon">&#9786;</span><span>常用个人信息</span>
     </div>
   </nav>
-  <div class="sidebar-version" id="sidebarVersion">v1.0.0</div>
+  <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
   <div class="theme-panel">
     <div class="theme-options">
       <button class="theme-btn" data-theme="sage" onclick="setTheme('sage')">
@@ -1698,6 +1786,67 @@ textarea.form-input {
   </div>
 </div>
 
+<!-- 设置模态框 -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal settings-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>设置</h3>
+      <button class="modal-close" onclick="closeSettings()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-grid">
+        <section class="settings-card">
+          <h4>数据文件</h4>
+          <p>导出会把当前数据目录压缩为 WorkWeb_data.workweb；导入只合并数据，不覆盖当前内容。</p>
+          <div class="settings-actions">
+            <button class="btn btn-secondary" onclick="importDataFile()">导入</button>
+            <button class="btn btn-primary" onclick="exportDataFile()">导出</button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h4>数据目录</h4>
+          <div class="data-dir-box">
+            <div>
+              <p>当前数据目录</p>
+              <div class="path-display" id="currentDataDir">正在读取...</div>
+            </div>
+            <div>
+              <p>指定更改目录</p>
+              <div class="path-display" id="nextDataDir">未选择</div>
+            </div>
+            <div class="settings-actions">
+              <button class="btn btn-secondary" onclick="chooseNextDataDir()">选择目录</button>
+              <button class="btn btn-primary" onclick="changeDataDir()">确认更改并迁移</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h4>检查更新</h4>
+          <p id="versionStatus">当前版本：读取中</p>
+          <div class="settings-actions">
+            <button class="btn btn-secondary" onclick="checkUpdateFromSettings()">检查更新</button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h4>Markdown 字体大小</h4>
+          <div class="font-size-options">
+            <button class="btn btn-secondary" data-font-size="large" onclick="setMarkdownFontSize('large')">增大</button>
+            <button class="btn btn-secondary" data-font-size="normal" onclick="setMarkdownFontSize('normal')">标准</button>
+            <button class="btn btn-secondary" data-font-size="small" onclick="setMarkdownFontSize('small')">缩小</button>
+          </div>
+        </section>
+      </div>
+      <p class="settings-message" id="settingsMessage"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- 确认框 -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
@@ -1719,6 +1868,9 @@ let notes = [];
 let infoPanels = [];
 let projects = [];
 let serverOnline = false;
+let currentAppVersion = '';
+let latestReleaseUrl = '';
+let selectedNextDataDir = '';
 
 const GITHUB_RELEASE_API = 'https://api.github.com/repos/SeanNg997/WorkWeb/releases/latest';
 
@@ -1736,6 +1888,17 @@ async function apiSave(key, data) {
   });
   if (!res.ok) throw new Error(res.statusText);
   return res.json();
+}
+
+async function apiPost(key, data = {}) {
+  const res = await fetch(`/api/${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body?.error || res.statusText);
+  return body;
 }
 
 function normalizeVersionText(value) {
@@ -1757,27 +1920,13 @@ function compareVersions(a, b) {
   return 0;
 }
 
-function renderSidebarVersion(version, updateUrl = '') {
-  const el = document.getElementById('sidebarVersion');
-  if (!el) return;
-
-  el.textContent = '';
-  el.append(document.createTextNode(`v${normalizeVersionText(version) || '1.0.0'}`));
-
-  if (!updateUrl) return;
-
-  const link = document.createElement('a');
-  link.className = 'sidebar-version-update';
-  link.href = updateUrl;
-  link.target = '_blank';
-  link.rel = 'noreferrer noopener';
-  link.textContent = '检测到新版本！';
-  el.append(document.createTextNode(' '));
-  el.append(link);
+function updateSettingsVersionStatus(text = '') {
+  const el = document.getElementById('versionStatus');
+  if (el) el.textContent = text || `当前版本：v${currentAppVersion || '1.0.0'}`;
 }
 
 async function checkLatestRelease(version) {
-  if (!version) return;
+  if (!version) return { status: 'failed' };
 
   try {
     const res = await fetch(GITHUB_RELEASE_API, {
@@ -1790,9 +1939,17 @@ async function checkLatestRelease(version) {
     const releaseUrl = String(release?.html_url || '').trim();
 
     if (latestVersion && releaseUrl && compareVersions(latestVersion, version) > 0) {
-      renderSidebarVersion(version, releaseUrl);
+      latestReleaseUrl = releaseUrl;
+      document.getElementById('sidebarSettingsBtn')?.classList.add('has-update');
+      return { status: 'new', latestVersion, releaseUrl };
     }
-  } catch {}
+
+    latestReleaseUrl = '';
+    document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
+    return { status: 'latest', latestVersion: latestVersion || version };
+  } catch {
+    return { status: 'failed' };
+  }
 }
 
 async function loadAppVersion() {
@@ -1801,7 +1958,8 @@ async function loadAppVersion() {
     const version = normalizeVersionText(meta?.version);
     if (!version) return;
 
-    renderSidebarVersion(version);
+    currentAppVersion = version;
+    updateSettingsVersionStatus();
     await checkLatestRelease(version);
   } catch {}
 }
@@ -1869,6 +2027,7 @@ let projectSaveStatus = { text: '', visible: false, tone: '' };
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
+  loadMarkdownFontSize();
   await loadAppVersion();
   await loadData();
   renderNotes();
@@ -1889,6 +2048,18 @@ function setTheme(theme) {
 
 function loadTheme() {
   setTheme(localStorage.getItem('wb_theme') || 'sage');
+}
+
+function setMarkdownFontSize(size) {
+  const safeSize = ['large', 'normal', 'small'].includes(size) ? size : 'normal';
+  document.body.dataset.markdownSize = safeSize;
+  localStorage.setItem('wb_markdown_size', safeSize);
+  document.querySelectorAll('[data-font-size]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.fontSize === safeSize));
+}
+
+function loadMarkdownFontSize() {
+  setMarkdownFontSize(localStorage.getItem('wb_markdown_size') || 'normal');
 }
 
 function updateDateDisplay() {
@@ -1965,6 +2136,138 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+function setSettingsMessage(message) {
+  const el = document.getElementById('settingsMessage');
+  if (el) el.textContent = message || '';
+}
+
+async function selectDirectory(options = {}) {
+  if (window.workwebDesktop?.selectDirectory) return window.workwebDesktop.selectDirectory(options);
+  return prompt(options.title || '请输入目录路径') || '';
+}
+
+async function selectImportFile() {
+  if (window.workwebDesktop?.selectImportFile) return window.workwebDesktop.selectImportFile();
+  return prompt('请输入 WorkWeb 数据文件路径') || '';
+}
+
+async function refreshDataDirDisplay() {
+  const currentEl = document.getElementById('currentDataDir');
+  if (!currentEl) return;
+
+  try {
+    const meta = await apiGet('data-dir');
+    currentEl.textContent = meta?.dataDir || '未获取到数据目录';
+  } catch {
+    currentEl.textContent = '获取数据目录失败';
+  }
+}
+
+function openSettings() {
+  setSettingsMessage('');
+  selectedNextDataDir = '';
+  document.getElementById('nextDataDir').textContent = '未选择';
+  updateSettingsVersionStatus();
+  refreshDataDirDisplay();
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+  setSettingsMessage('');
+}
+
+async function exportDataFile() {
+  const outputDir = await selectDirectory({
+    title: '选择导出目录',
+    buttonLabel: '导出到这里'
+  });
+  if (!outputDir) return;
+
+  setSettingsMessage('正在导出数据...');
+  try {
+    const result = await apiPost('export-data', { outputDir });
+    setSettingsMessage(`导出完成：${result.filePath || 'WorkWeb_data.workweb'}`);
+    showToast('导出完成');
+  } catch (error) {
+    setSettingsMessage(error.message || '导出失败');
+  }
+}
+
+async function importDataFile() {
+  const filePath = await selectImportFile();
+  if (!filePath) return;
+
+  setSettingsMessage('正在导入数据...');
+  try {
+    const result = await apiPost('import-data', { filePath });
+    await loadData();
+    renderNotes();
+    renderProjects();
+    renderInfoPanels();
+    setSettingsMessage(`导入完成，已合并 ${result.importedCount || 0} 项数据`);
+    showToast('导入完成');
+  } catch (error) {
+    setSettingsMessage(error.message || '导入失败');
+  }
+}
+
+async function chooseNextDataDir() {
+  const data = await apiGet('data-dir').catch(() => ({}));
+  const dir = await selectDirectory({
+    title: '选择新的 WorkWeb 数据目录',
+    buttonLabel: '使用这个目录',
+    defaultPath: data?.dataDir
+  });
+  if (!dir) return;
+
+  selectedNextDataDir = dir;
+  document.getElementById('nextDataDir').textContent = dir;
+  setSettingsMessage('');
+}
+
+async function changeDataDir() {
+  if (!selectedNextDataDir) {
+    setSettingsMessage('请先选择新的数据目录');
+    return;
+  }
+
+  setSettingsMessage('正在迁移数据...');
+  try {
+    const result = await apiPost('data-dir', { targetDir: selectedNextDataDir });
+    await loadData();
+    renderNotes();
+    renderProjects();
+    renderInfoPanels();
+    selectedNextDataDir = '';
+    document.getElementById('nextDataDir').textContent = '未选择';
+    document.getElementById('currentDataDir').textContent = result.dataDir || '';
+    setSettingsMessage('数据目录已更改，数据已迁移');
+    showToast('数据目录已更改');
+  } catch (error) {
+    setSettingsMessage(error.message || '更改数据目录失败');
+  }
+}
+
+async function checkUpdateFromSettings() {
+  if (!currentAppVersion) {
+    updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
+    return;
+  }
+
+  updateSettingsVersionStatus('正在检查更新...');
+  const result = await checkLatestRelease(currentAppVersion);
+  if (result.status === 'new') {
+    updateSettingsVersionStatus(`有新的版本可以使用：v${result.latestVersion}`);
+    return;
+  }
+  if (result.status === 'latest') {
+    updateSettingsVersionStatus('当前已经是最新版本');
+    return;
+  }
+  updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
+}
+
 function updateNoteSaveBadge(noteId) {
   const card = document.querySelector(`.note-card[data-id="${noteId}"]`);
   const badge = card?.querySelector('.note-save-status');
@@ -1991,9 +2294,9 @@ function setNoteSaveBadge(noteId, text = '', tone = '', visible = false) {
 function markNoteDirty(noteId) {
   const prev = noteSaveStates.get(noteId);
   const next = {
-    text: '未保存',
-    tone: 'dirty',
-    visible: true,
+    text: '',
+    tone: '',
+    visible: false,
     revision: (prev?.revision || 0) + 1,
     hideTimer: null
   };
@@ -2005,7 +2308,7 @@ function markNoteDirty(noteId) {
 
 function markNoteSaved(noteId, revision) {
   const state = noteSaveStates.get(noteId);
-  if (!state || state.revision !== revision || state.tone !== 'dirty') return;
+  if (!state || state.revision !== revision) return;
   state.text = '已保存';
   state.tone = 'saved';
   state.visible = true;
@@ -2031,13 +2334,13 @@ function clearProjectSaveHideTimer() {
 function markProjectDirty() {
   clearProjectSaveHideTimer();
   projectSaveRevision += 1;
-  projectSaveStatus = { text: '未保存', visible: true, tone: 'dirty' };
+  projectSaveStatus = { text: '', visible: false, tone: '' };
   syncProjectSaveStatus();
   return projectSaveRevision;
 }
 
 function markProjectSaved(revision) {
-  if (revision !== projectSaveRevision || projectSaveStatus.tone !== 'dirty') return;
+  if (revision !== projectSaveRevision) return;
   clearProjectSaveHideTimer();
   projectSaveStatus = { text: '已保存', visible: true, tone: 'saved' };
   syncProjectSaveStatus();
@@ -3291,6 +3594,9 @@ document.getElementById('infoEditorModal').addEventListener('click', e => {
 document.getElementById('projectEditorModal').addEventListener('click', e => {
   if (e.target === e.currentTarget && isModalContentEmpty('projectEditorModal')) closeProjectEditor();
 });
+document.getElementById('settingsModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSettings();
+});
 document.getElementById('confirmOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeConfirm();
 });
@@ -3306,12 +3612,15 @@ document.addEventListener('keydown', e => {
     const editorModal = document.getElementById('editorModal');
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
+    const settingsModal = document.getElementById('settingsModal');
     const confirmModal = document.getElementById('confirmOverlay');
 
     if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
+    if (settingsModal.classList.contains('active')) { closeSettings(); return; }
     if (editorModal.classList.contains('active')) { closeNoteEditor(); return; }
     if (infoModal.classList.contains('active')) { closeInfoEditor(); return; }
     if (projectModal.classList.contains('active')) { closeProjectEditor(); return; }
+    if (activeProjectId) { closeProjectBook(); return; }
   }
 
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {

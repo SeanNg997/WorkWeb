@@ -1,12 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { startServer } = require('../server');
 
 const APP_ID = 'com.xiaoran.workweb';
 const HOST = '127.0.0.1';
 const ICON_PATH = path.join(__dirname, '..', 'image', process.platform === 'darwin' ? 'icon.icns' : 'icon.ico');
 const SETTINGS_FILE_NAME = 'desktop-settings.json';
+const PRELOAD_PATH = path.join(__dirname, 'preload.js');
 
 let mainWindow = null;
 let localServer = null;
@@ -30,6 +31,16 @@ function readJSONFile(filePath, fallback = {}) {
 function writeJSONFile(filePath, data) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function saveDataDirSetting(dataDir) {
+  const settingsFile = getSettingsFilePath();
+  const settings = readJSONFile(settingsFile, {});
+  writeJSONFile(settingsFile, {
+    ...settings,
+    dataDir,
+    dataDirConfirmed: true
+  });
 }
 
 function isWritableDir(dirPath) {
@@ -180,7 +191,8 @@ async function ensureServer() {
   localServer = await startServer({
     dataDir: await resolveDataDir(),
     host: HOST,
-    port: 0
+    port: 0,
+    onDataDirChange: saveDataDirSetting
   });
 
   return localServer.origin;
@@ -198,12 +210,40 @@ function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      preload: PRELOAD_PATH
     }
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+}
+
+function registerIpcHandlers() {
+  ipcMain.handle('workweb:selectDirectory', async (_event, options = {}) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: options.title || '选择文件夹',
+      buttonLabel: options.buttonLabel || '选择',
+      defaultPath: options.defaultPath,
+      properties: ['openDirectory', 'createDirectory']
+    });
+
+    return result.canceled ? '' : result.filePaths[0] || '';
+  });
+
+  ipcMain.handle('workweb:selectImportFile', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '选择 WorkWeb 数据文件',
+      buttonLabel: '导入',
+      filters: [
+        { name: 'WorkWeb 数据文件', extensions: ['workweb'] },
+        { name: '所有文件', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+
+    return result.canceled ? '' : result.filePaths[0] || '';
   });
 }
 
@@ -237,6 +277,7 @@ if (!isSingleInstance) {
   });
 
   app.whenReady().then(() => {
+    registerIpcHandlers();
     openApp().catch(handleFatalError);
   });
 
