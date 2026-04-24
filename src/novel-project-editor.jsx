@@ -109,7 +109,7 @@ function ToolbarDropdown({ active, items, label, title }) {
   );
 }
 
-function NovelToolbar({ sourceMode, onToggleSourceMode }) {
+function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus }) {
   const { editor } = useEditor();
   const tick = useSyncExternalStore(
     callback => {
@@ -197,12 +197,30 @@ function NovelToolbar({ sourceMode, onToggleSourceMode }) {
       />
       <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
       <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
-      <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
+      {showSourceToggle ? (
+        <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
+      ) : null}
+      <div className="novel-toolbar-spacer" />
+      <span
+        className={`novel-save-status${saveStatus?.visible ? ' visible' : ''}${saveStatus?.tone ? ` ${saveStatus.tone}` : ''}`}
+        aria-live="polite"
+      >
+        {saveStatus?.text || ''}
+      </span>
     </div>
   );
 }
 
-function NovelProjectEditor({ value, onChange, placeholder, sourceMode, onToggleSourceMode }) {
+function NovelProjectEditor({
+  value,
+  onChange,
+  placeholder,
+  sourceMode,
+  onToggleSourceMode,
+  showToolbar = true,
+  showSourceToggle = true,
+  saveStatus = null
+}) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
 
   const extensions = useMemo(() => [
@@ -228,7 +246,14 @@ function NovelProjectEditor({ value, onChange, placeholder, sourceMode, onToggle
           class: 'novel-project-editor-prose'
         }
       }}
-      slotBefore={<NovelToolbar sourceMode={sourceMode} onToggleSourceMode={onToggleSourceMode} />}
+      slotBefore={showToolbar ? (
+        <NovelToolbar
+          sourceMode={sourceMode}
+          onToggleSourceMode={onToggleSourceMode}
+          showSourceToggle={showSourceToggle}
+          saveStatus={saveStatus}
+        />
+      ) : null}
       onUpdate={({ editor }) => onChange?.(editor.getHTML())}
       />
     </EditorRoot>
@@ -251,6 +276,9 @@ function mountNovelProjectEditor(el, options = {}) {
     placeholder: options.placeholder,
     sourceMode: Boolean(options.sourceMode),
     onToggleSourceMode: options.onToggleSourceMode,
+    showToolbar: options.showToolbar !== false,
+    showSourceToggle: options.showSourceToggle !== false,
+    saveStatus: options.saveStatus || null,
     version: 0
   };
 
@@ -263,6 +291,9 @@ function mountNovelProjectEditor(el, options = {}) {
         placeholder={state.placeholder}
         sourceMode={state.sourceMode}
         onToggleSourceMode={state.onToggleSourceMode}
+        showToolbar={state.showToolbar}
+        showSourceToggle={state.showSourceToggle}
+        saveStatus={state.saveStatus}
       />
     );
   }
@@ -278,6 +309,10 @@ function mountNovelProjectEditor(el, options = {}) {
     setSourceMode(nextMode) {
       state.sourceMode = Boolean(nextMode);
       state.version += 1;
+      render();
+    },
+    setSaveStatus(nextStatus) {
+      state.saveStatus = nextStatus || null;
       render();
     },
     focus() {

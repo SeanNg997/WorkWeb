@@ -398,14 +398,148 @@ body {
   flex: 1;
 }
 
+.note-title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+}
+
+.note-title-input::placeholder,
+.note-content-editor-host .novel-project-editor-prose.is-editor-empty:first-child::before {
+  color: var(--text-light);
+}
+
+.note-content-editor-host .novel-project-editor-prose.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 .note-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); }
-.note-card:hover .note-actions { opacity: 1; }
+.note-card:hover .note-actions,
+.note-card:focus-within .note-actions { opacity: 1; }
+
+.note-save-status,
+.project-page-editor .novel-save-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 92%, white);
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.24s ease, transform 0.24s ease, color 0.24s ease, border-color 0.24s ease;
+}
+
+.note-save-status.visible,
+.project-page-editor .novel-save-status.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.note-save-status.dirty,
+.project-page-editor .novel-save-status.dirty {
+  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
+  color: var(--danger);
+}
+
+.note-save-status.saved,
+.project-page-editor .novel-save-status.saved {
+  border-color: color-mix(in srgb, var(--success) 26%, transparent);
+  color: var(--success);
+}
 
 .note-content {
-  flex: 1; overflow-y: auto;
+  flex: 1; overflow: hidden;
+  display: flex;
   font-size: 13px; line-height: 1.7; color: var(--text);
   word-break: break-word;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+
+.note-content-editor-host {
+  width: 100%;
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+}
+
+.note-title-input:focus,
+.note-content-editor-host .novel-project-editor-content:focus-within {
+  background: var(--surface-muted);
+}
+
+.note-content-editor-host .novel-project-editor-content {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  overflow: auto;
+}
+
+.note-content-editor-host .novel-project-editor-prose {
+  min-height: 100%;
+  padding: 8px 10px;
+  outline: none;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.7;
+}
+
+.note-content-editor-host .novel-project-editor-prose p {
+  margin: 0.35em 0;
+}
+
+.note-content-editor-host .novel-project-editor-prose h1,
+.note-content-editor-host .novel-project-editor-prose h2,
+.note-content-editor-host .novel-project-editor-prose h3,
+.note-content-editor-host .novel-project-editor-prose h4 {
+  margin: 0.65em 0 0.25em;
+  line-height: 1.35;
+}
+
+.note-content-editor-host .novel-project-editor-prose ul,
+.note-content-editor-host .novel-project-editor-prose ol {
+  padding-left: 1.35em;
+  margin: 0.4em 0;
+}
+
+.note-content-editor-host .novel-project-editor-prose blockquote {
+  margin: 0.55em 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+  color: var(--text-light);
+}
+
+.note-content-editor-host .novel-project-editor-prose pre {
+  margin: 0.55em 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  overflow-x: auto;
+  background: var(--surface-muted);
+}
+
+.note-content-editor-host .novel-project-editor-prose code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-muted);
 }
 
 .note-content::-webkit-scrollbar { width: 4px; }
@@ -791,6 +925,11 @@ body {
   border-bottom: 1px solid var(--line);
   background: color-mix(in srgb, var(--surface-muted) 82%, white);
   overflow: visible;
+}
+
+.project-page-editor .novel-toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 8px;
 }
 
 .project-page-editor .novel-toolbar-button {
@@ -1230,9 +1369,11 @@ textarea.form-input {
 .field-encrypt {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  justify-self: stretch;
+  height: 40px;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(255,255,255,0.78);
@@ -1240,7 +1381,9 @@ textarea.form-input {
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
+  cursor: pointer;
   transition: border-color var(--transition), background var(--transition), color var(--transition);
+  vertical-align: middle;
 }
 
 .field-encrypt:hover {
@@ -1249,10 +1392,15 @@ textarea.form-input {
   color: var(--accent-hover);
 }
 
-.field-encrypt input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
+.field-encrypt.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.field-encrypt:active {
+  transform: translateY(1px);
 }
 
 .field-remove {
@@ -1347,7 +1495,7 @@ textarea.form-input {
   <div class="page active" id="page-todo">
     <div class="workspace-header">
       <h2>TODO</h2>
-      <button class="btn btn-primary" onclick="openNoteEditor()"><span>&#43;</span> 新建便笺</button>
+      <button class="btn btn-primary" onclick="createNote()"><span>&#43;</span> 新建便笺</button>
     </div>
     <div class="workspace-body">
       <div class="notes-grid" id="notesGrid"></div>
@@ -1584,11 +1732,12 @@ async function persistInfo() {
   } catch { localStorage.setItem('wb_info', JSON.stringify(infoPanels)); }
 }
 
-async function persistProjects() {
+async function persistProjects(revision = null) {
   try {
     if (serverOnline) await apiSave('projects', projects);
     else localStorage.setItem('wb_projects', JSON.stringify(projects));
   } catch { localStorage.setItem('wb_projects', JSON.stringify(projects)); }
+  if (revision !== null) markProjectSaved(revision);
 }
 
 /* ==================== 初始化 ==================== */
@@ -1597,6 +1746,9 @@ let editingInfoId = null;
 let editingProjectId = null;
 let pendingAction = null;
 let draggedId = null;
+const noteEditors = new Map();
+const noteDraftTimers = new Map();
+const noteSaveStates = new Map();
 let draggedProjectId = null;
 let draggedInfoTag = null;
 let draggedInfoPanelId = null;
@@ -1608,6 +1760,9 @@ let projectCloseTimer = null;
 let projectEditor = null;
 let isSettingProjectEditor = false;
 let projectSourceMode = false;
+let projectSaveRevision = 0;
+let projectSaveHideTimer = null;
+let projectSaveStatus = { text: '', visible: false, tone: '' };
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
@@ -1705,6 +1860,89 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+function updateNoteSaveBadge(noteId) {
+  const card = document.querySelector(`.note-card[data-id="${noteId}"]`);
+  const badge = card?.querySelector('.note-save-status');
+  const state = noteSaveStates.get(noteId);
+  if (!badge || !state) return;
+  badge.textContent = state.text || '';
+  badge.className = `note-save-status${state.visible ? ' visible' : ''}${state.tone ? ` ${state.tone}` : ''}`;
+}
+
+function setNoteSaveBadge(noteId, text = '', tone = '', visible = false) {
+  const prev = noteSaveStates.get(noteId);
+  if (prev?.hideTimer) clearTimeout(prev.hideTimer);
+  const next = {
+    text,
+    tone,
+    visible,
+    revision: prev?.revision || 0,
+    hideTimer: null
+  };
+  noteSaveStates.set(noteId, next);
+  updateNoteSaveBadge(noteId);
+}
+
+function markNoteDirty(noteId) {
+  const prev = noteSaveStates.get(noteId);
+  const next = {
+    text: '未保存',
+    tone: 'dirty',
+    visible: true,
+    revision: (prev?.revision || 0) + 1,
+    hideTimer: null
+  };
+  if (prev?.hideTimer) clearTimeout(prev.hideTimer);
+  noteSaveStates.set(noteId, next);
+  updateNoteSaveBadge(noteId);
+  return next.revision;
+}
+
+function markNoteSaved(noteId, revision) {
+  const state = noteSaveStates.get(noteId);
+  if (!state || state.revision !== revision || state.tone !== 'dirty') return;
+  state.text = '已保存';
+  state.tone = 'saved';
+  state.visible = true;
+  updateNoteSaveBadge(noteId);
+  state.hideTimer = setTimeout(() => {
+    const latest = noteSaveStates.get(noteId);
+    if (!latest || latest.revision !== revision) return;
+    latest.visible = false;
+    updateNoteSaveBadge(noteId);
+  }, 500);
+}
+
+function syncProjectSaveStatus() {
+  projectEditor?.setSaveStatus?.(projectSaveStatus);
+}
+
+function clearProjectSaveHideTimer() {
+  if (!projectSaveHideTimer) return;
+  clearTimeout(projectSaveHideTimer);
+  projectSaveHideTimer = null;
+}
+
+function markProjectDirty() {
+  clearProjectSaveHideTimer();
+  projectSaveRevision += 1;
+  projectSaveStatus = { text: '未保存', visible: true, tone: 'dirty' };
+  syncProjectSaveStatus();
+  return projectSaveRevision;
+}
+
+function markProjectSaved(revision) {
+  if (revision !== projectSaveRevision || projectSaveStatus.tone !== 'dirty') return;
+  clearProjectSaveHideTimer();
+  projectSaveStatus = { text: '已保存', visible: true, tone: 'saved' };
+  syncProjectSaveStatus();
+  projectSaveHideTimer = setTimeout(() => {
+    if (revision !== projectSaveRevision) return;
+    projectSaveStatus = { text: '已保存', visible: false, tone: 'saved' };
+    syncProjectSaveStatus();
+  }, 500);
+}
+
 function isModalContentEmpty(modalId) {
   if (modalId === 'editorModal') {
     return !document.getElementById('noteTitle').value.trim()
@@ -1740,11 +1978,120 @@ function confirmAction() {
 }
 
 /* ==================== TODO 便笺 ==================== */
+function destroyNoteEditors() {
+  noteEditors.forEach(editor => editor?.destroy?.());
+  noteEditors.clear();
+}
+
+function queueInlineNotePersist(noteId) {
+  clearTimeout(noteDraftTimers.get(noteId));
+  noteDraftTimers.set(noteId, setTimeout(() => {
+    persistInlineNote(noteId);
+  }, 300));
+}
+
+async function persistInlineNote(noteId) {
+  clearTimeout(noteDraftTimers.get(noteId));
+  noteDraftTimers.delete(noteId);
+  const note = notes.find(n => n.id === noteId);
+  if (!note) return;
+  const revision = noteSaveStates.get(noteId)?.revision || 0;
+  note.updatedAt = Date.now();
+  await persistNotes();
+  markNoteSaved(noteId, revision);
+}
+
+function focusNote(noteId, target = 'title') {
+  setTimeout(() => {
+    const card = document.querySelector(`.note-card[data-id="${noteId}"]`);
+    if (!card) return;
+    if (target === 'content') {
+      noteEditors.get(noteId)?.focus?.();
+      return;
+    }
+    card.querySelector('.note-title-input')?.focus();
+  }, 120);
+}
+
+async function createNote() {
+  const note = {
+    id: genId('n'),
+    title: '',
+    content: '',
+    span: 1,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  notes.push(note);
+  renderNotes();
+  focusNote(note.id);
+  await persistNotes();
+}
+
+function bindInlineNoteEditor(card, note) {
+  const titleInput = card.querySelector('.note-title-input');
+  const editorHost = card.querySelector('.note-content-editor-host');
+  if (!titleInput || !editorHost) return;
+
+  const stopCardEvent = event => event.stopPropagation();
+  const beginInlineEdit = () => {
+    card.draggable = false;
+    card.classList.add('is-inline-editing');
+  };
+  const endInlineEdit = () => {
+    setTimeout(() => {
+      if (card.contains(document.activeElement)) return;
+      card.draggable = true;
+      card.classList.remove('is-inline-editing');
+      persistInlineNote(note.id);
+    }, 0);
+  };
+
+  ['mousedown', 'click', 'dblclick'].forEach(eventName => {
+    titleInput.addEventListener(eventName, stopCardEvent);
+    editorHost.addEventListener(eventName, stopCardEvent);
+  });
+  titleInput.addEventListener('mousedown', beginInlineEdit);
+  editorHost.addEventListener('mousedown', beginInlineEdit);
+
+  card.addEventListener('focusin', beginInlineEdit);
+  card.addEventListener('focusout', endInlineEdit);
+
+  titleInput.addEventListener('input', () => {
+    note.title = titleInput.value.trim();
+    note.updatedAt = Date.now();
+    markNoteDirty(note.id);
+    queueInlineNotePersist(note.id);
+  });
+
+  titleInput.addEventListener('keydown', event => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    noteEditors.get(note.id)?.focus?.();
+  });
+
+  const editor = window.mountNovelProjectEditor?.(editorHost, {
+    value: note.content || '',
+    placeholder: '直接输入正文...',
+    showToolbar: false,
+    showSourceToggle: false,
+    onChange: value => {
+      note.content = value;
+      note.updatedAt = Date.now();
+      markNoteDirty(note.id);
+      queueInlineNotePersist(note.id);
+    }
+  });
+
+  if (editor) noteEditors.set(note.id, editor);
+}
+
 function renderNotes() {
   const grid = document.getElementById('notesGrid');
   const empty = document.getElementById('emptyState');
 
   if (notes.length === 0) {
+    destroyNoteEditors();
     grid.style.display = 'none';
     empty.style.display = 'block';
     return;
@@ -1752,6 +2099,7 @@ function renderNotes() {
 
   grid.style.display = 'grid';
   empty.style.display = 'none';
+  destroyNoteEditors();
   grid.innerHTML = '';
 
   notes.forEach(note => {
@@ -1766,20 +2114,24 @@ function renderNotes() {
       <div class="note-resize-handle"></div>
       <div class="note-resize-indicator"></div>
       <div class="note-header">
-        <div class="note-title">${escHtml(note.title || '无标题')}</div>
+        <div class="note-title">
+          <input
+            type="text"
+            class="note-title-input"
+            value="${escAttr(note.title || '')}"
+            placeholder="输入标题..."
+            maxlength="50"
+          >
+        </div>
         <div class="note-actions">
-          <button class="btn btn-ghost" title="编辑" onclick="event.stopPropagation();openNoteEditor('${note.id}')">&#9998;</button>
+          <span class="note-save-status" aria-live="polite"></span>
           <button class="btn btn-danger" title="删除" onclick="event.stopPropagation();askDeleteNote('${note.id}')">&#10005;</button>
         </div>
       </div>
-      <div class="note-content">${renderMd(note.content)}</div>
+      <div class="note-content">
+        <div class="note-content-editor-host"></div>
+      </div>
     `;
-
-    // 双击进入编辑
-    card.addEventListener('dblclick', e => {
-      if (e.target.closest('.note-actions') || e.target.closest('.note-resize-handle')) return;
-      openNoteEditor(note.id);
-    });
 
     // 拖拽排序
     let dragCounter = 0;
@@ -1898,6 +2250,8 @@ function renderNotes() {
     });
 
     grid.appendChild(card);
+    bindInlineNoteEditor(card, note);
+    updateNoteSaveBadge(note.id);
   });
 }
 
@@ -1940,7 +2294,7 @@ function closeNoteEditor() {
 
 async function saveNote() {
   const title = document.getElementById('noteTitle').value.trim();
-  const content = document.getElementById('noteContent').value.trim();
+  const content = document.getElementById('noteContent').value;
 
   if (!title && !content) {
     document.getElementById('noteTitle').focus();
@@ -1971,6 +2325,9 @@ function askDeleteNote(id) {
   openConfirm(
     `确定要删除便笺「${note ? note.title || '无标题' : ''}」吗？`,
     async () => {
+      clearTimeout(noteDraftTimers.get(id));
+      noteDraftTimers.delete(id);
+      noteSaveStates.delete(id);
       notes = notes.filter(n => n.id !== id);
       await persistNotes();
       renderNotes();
@@ -1985,9 +2342,10 @@ function getProjectById(id) {
 
 function queuePersistProjects() {
   if (projectPersistTimer) clearTimeout(projectPersistTimer);
+  const revision = projectSaveRevision;
   projectPersistTimer = setTimeout(() => {
     projectPersistTimer = null;
-    persistProjects();
+    persistProjects(revision);
   }, 260);
 }
 
@@ -1995,7 +2353,7 @@ function flushProjectPersist() {
   if (!projectPersistTimer) return;
   clearTimeout(projectPersistTimer);
   projectPersistTimer = null;
-  persistProjects();
+  persistProjects(projectSaveRevision);
 }
 
 function renderProjects() {
@@ -2113,6 +2471,7 @@ function applyProjectEditorMode() {
   if (!wrap) return;
   wrap.classList.toggle('source-mode', projectSourceMode);
   if (projectEditor?.setSourceMode) projectEditor.setSourceMode(projectSourceMode);
+  syncProjectSaveStatus();
 }
 
 function setProjectSourceMode(nextMode, options = {}) {
@@ -2150,6 +2509,8 @@ function renderProjectBook() {
   if (!project) {
     if (!projectCloseTimer) view.classList.remove('active', 'opening', 'closing');
     syncProjectSourceEditor('');
+    clearProjectSaveHideTimer();
+    projectSaveStatus = { text: '', visible: false, tone: '' };
     applyProjectEditorMode();
     return;
   }
@@ -2303,6 +2664,7 @@ function ensureProjectEditor() {
     value: '',
     placeholder: '输入项目内容...',
     sourceMode: projectSourceMode,
+    saveStatus: projectSaveStatus,
     onToggleSourceMode: () => toggleProjectSourceMode(),
     onChange: value => {
       if (isSettingProjectEditor) return;
@@ -2338,6 +2700,7 @@ function handleProjectPageInput(value) {
   project.pages[activeProjectPageIndex] = value;
   project.updatedAt = Date.now();
   if (projectSourceMode) syncProjectSourceEditor(value);
+  markProjectDirty();
   queuePersistProjects();
 }
 
@@ -2721,10 +3084,11 @@ function renderInfoFieldRows() {
         onchange="editorFields[${i}].label=this.value" style="max-width:120px;">
       <input type="text" class="form-input" placeholder="内容" value="${escAttr(f.value)}"
         onchange="editorFields[${i}].value=this.value">
-      <label class="field-encrypt">
-        <input type="checkbox" ${f.encrypted ? 'checked' : ''} onchange="editorFields[${i}].encrypted=this.checked">
-        <span>加密</span>
-      </label>
+      <button
+        type="button"
+        class="field-encrypt${f.encrypted ? ' active' : ''}"
+        onclick="editorFields[${i}].encrypted=!editorFields[${i}].encrypted;renderInfoFieldRows()"
+      >加密</button>
       <button class="field-remove" title="移除此行" onclick="removeInfoFieldRow(${i})">&#10005;</button>
     `;
     container.appendChild(row);
@@ -2751,11 +3115,10 @@ async function saveInfoPanel() {
 
   const rows = document.querySelectorAll('#infoFieldsContainer .field-row');
   rows.forEach((row, i) => {
-    const inputs = row.querySelectorAll('input');
+    const inputs = row.querySelectorAll('input.form-input');
     if (editorFields[i]) {
-      editorFields[i].label = inputs[0].value;
-      editorFields[i].value = inputs[1].value;
-      editorFields[i].encrypted = inputs[2].checked;
+      editorFields[i].label = inputs[0]?.value || '';
+      editorFields[i].value = inputs[1]?.value || '';
     }
   });
 

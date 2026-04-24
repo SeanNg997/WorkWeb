@@ -18,5 +18,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.60.2"
+  }
 }
