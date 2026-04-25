@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { startServer } = require('../server');
 
 const APP_ID = 'com.xiaoran.workweb';
@@ -8,9 +9,17 @@ const HOST = '127.0.0.1';
 const ICON_PATH = path.join(__dirname, '..', 'image', process.platform === 'darwin' ? 'icon.icns' : 'icon.ico');
 const SETTINGS_FILE_NAME = 'desktop-settings.json';
 const PRELOAD_PATH = path.join(__dirname, 'preload.js');
+const ALLOWED_DESKTOP_SETTING_KEYS = new Set(['wb_markdown_size']);
 
 let mainWindow = null;
 let localServer = null;
+let updateState = {
+  supported: false,
+  status: 'idle',
+  message: '尚未检查更新',
+  version: '',
+  progress: 0
+};
 
 app.setAppUserModelId(APP_ID);
 app.setName('WorkWeb');
@@ -40,6 +49,81 @@ function saveDataDirSetting(dataDir) {
     ...settings,
     dataDir,
     dataDirConfirmed: true
+  });
+}
+
+function readDesktopSettings() {
+  return readJSONFile(getSettingsFilePath(), {});
+}
+
+function saveDesktopSetting(key, value) {
+  if (!ALLOWED_DESKTOP_SETTING_KEYS.has(key)) return undefined;
+  const settingsFile = getSettingsFilePath();
+  const settings = readJSONFile(settingsFile, {});
+  writeJSONFile(settingsFile, {
+    ...settings,
+    [key]: value
+  });
+  return value;
+}
+
+function isWindowsUpdaterSupported() {
+  return app.isPackaged && process.platform === 'win32' && !process.env.PORTABLE_EXECUTABLE_DIR;
+}
+
+function sendUpdateState(patch = {}) {
+  updateState = {
+    ...updateState,
+    supported: isWindowsUpdaterSupported(),
+    ...patch
+  };
+  mainWindow?.webContents.send('workweb:updateState', updateState);
+  return updateState;
+}
+
+function configureAutoUpdater() {
+  updateState.supported = isWindowsUpdaterSupported();
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+
+  autoUpdater.on('checking-for-update', () => {
+    sendUpdateState({ status: 'checking', message: '正在检查更新', progress: 0 });
+  });
+
+  autoUpdater.on('update-available', info => {
+    sendUpdateState({
+      status: 'available',
+      message: `发现新版本 v${info?.version || ''}`,
+      version: info?.version || '',
+      progress: 0
+    });
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    sendUpdateState({ status: 'latest', message: '当前已经是最新版本', progress: 0 });
+  });
+
+  autoUpdater.on('download-progress', progress => {
+    sendUpdateState({
+      status: 'downloading',
+      message: '正在下载更新',
+      progress: Math.max(0, Math.min(100, Number(progress?.percent || 0)))
+    });
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    sendUpdateState({ status: 'downloaded', message: '下载完成，正在重启安装', progress: 100 });
+    setTimeout(() => {
+      autoUpdater.quitAndInstall(false, true);
+    }, 800);
+  });
+
+  autoUpdater.on('error', error => {
+    sendUpdateState({
+      status: 'error',
+      message: error instanceof Error ? error.message : '更新失败',
+      progress: 0
+    });
   });
 }
 
@@ -207,13 +291,17 @@ function createWindow() {
     title: 'WorkWeb',
     icon: ICON_PATH,
     backgroundColor: '#f4efe4',
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: PRELOAD_PATH
     }
   });
+
+  mainWindow.setMenu(null);
+  mainWindow.setMenuBarVisibility(false);
+  mainWindow.setAutoHideMenuBar(false);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -244,6 +332,43 @@ function registerIpcHandlers() {
     });
 
     return result.canceled ? '' : result.filePaths[0] || '';
+  });
+
+  ipcMain.handle('workweb:getSetting', (_event, key) => {
+    if (!ALLOWED_DESKTOP_SETTING_KEYS.has(key)) return undefined;
+    const settings = readDesktopSettings();
+    return settings?.[key];
+  });
+
+  ipcMain.handle('workweb:setSetting', (_event, key, value) => saveDesktopSetting(key, value));
+
+  ipcMain.handle('workweb:getUpdateState', () => sendUpdateState());
+
+  ipcMain.handle('workweb:checkForUpdates', async () => {
+    if (!isWindowsUpdaterSupported()) {
+      return sendUpdateState({
+        status: 'unsupported',
+        message: '自动更新仅支持 Windows 安装版，不支持便携版',
+        progress: 0
+      });
+    }
+
+    await autoUpdater.checkForUpdates();
+    return updateState;
+  });
+
+  ipcMain.handle('workweb:downloadUpdate', async () => {
+    if (!isWindowsUpdaterSupported()) {
+      return sendUpdateState({
+        status: 'unsupported',
+        message: '自动更新仅支持 Windows 安装版，不支持便携版',
+        progress: 0
+      });
+    }
+
+    sendUpdateState({ status: 'downloading', message: '正在下载更新', progress: 0 });
+    await autoUpdater.downloadUpdate();
+    return updateState;
   });
 }
 
@@ -277,6 +402,8 @@ if (!isSingleInstance) {
   });
 
   app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
+    configureAutoUpdater();
     registerIpcHandlers();
     openApp().catch(handleFatalError);
   });

@@ -393,6 +393,32 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   background: var(--accent-soft);
 }
 
+.sortable-source {
+  opacity: 0;
+}
+
+.sort-drag-proxy {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 4000;
+  pointer-events: none;
+  box-sizing: border-box;
+  margin: 0 !important;
+  opacity: 0.92;
+  box-shadow: 0 22px 48px rgba(35,45,41,0.22);
+  transform-origin: center;
+}
+
+.sortable-placeholder {
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  opacity: 0.58;
+  box-sizing: border-box;
+  min-height: 34px;
+}
+
 .project-book-card.dragging,
 .info-tag-group.dragging,
 .info-panel.dragging {
@@ -640,10 +666,54 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 .project-shelf {
   display: grid;
+  gap: 26px;
+  padding-top: 28px;
+}
+
+.project-tag-section {
+  display: grid;
+  gap: 14px;
+  cursor: grab;
+}
+
+.project-tag-section.dragging {
+  opacity: 0.45;
+}
+
+.project-tag-section.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: 8px;
+  border-radius: 14px;
+}
+
+.project-tag-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  cursor: grab;
+  user-select: none;
+}
+
+.project-tag-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.project-tag-count {
+  font-size: 11px;
+  color: var(--text-light);
+  background: var(--surface-muted);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+.project-tag-books {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
   align-items: start;
-  padding-top: 28px;
 }
 
 .project-book-card {
@@ -736,9 +806,11 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   position: relative;
   z-index: 1;
   display: flex;
+  flex-direction: column;
   flex: 1;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   text-align: center;
 }
 
@@ -750,6 +822,37 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   letter-spacing: 1px;
   word-break: break-word;
   text-shadow: 0 2px 14px rgba(0,0,0,0.18);
+}
+
+.project-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.project-tag-pill {
+  max-width: 100%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: break-word;
+  backdrop-filter: blur(6px);
+}
+
+.project-overview-tags {
+  justify-content: flex-start;
+  margin: -8px 0 14px;
+}
+
+.project-overview-tags .project-tag-pill {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  backdrop-filter: none;
 }
 
 .project-book-view {
@@ -1119,8 +1222,59 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   padding: 4px 0 0;
+}
+
+.project-page-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.project-page-tab {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+  justify-content: center;
+  user-select: none;
+  will-change: transform, opacity;
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
+}
+
+.project-page-tab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(95,115,104,0.16);
+}
+
+.project-page-tab.dragging {
+  opacity: 0.46;
+  transform: scale(0.92);
+}
+
+.project-page-tab.drag-over {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.project-page-placeholder {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
 }
 
 .project-summary-input {
@@ -1237,6 +1391,36 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 #downloadLatestBtn.visible {
   display: inline-flex;
+}
+
+.update-progress {
+  display: none;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.update-progress.visible {
+  display: grid;
+}
+
+.update-progress-bar {
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(62,79,71,0.1);
+}
+
+.update-progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.24s ease;
+}
+
+.update-progress-text {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
 .data-dir-box {
@@ -1360,19 +1544,28 @@ textarea.form-input {
 .confirm-box p { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
 .confirm-actions { display: flex; gap: 8px; justify-content: center; }
 
+.update-modal {
+  width: 420px;
+}
+
+.update-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
 /* === 常用个人信息 === */
 #infoContainer {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  align-items: flex-start;
+  align-items: start;
 }
 
 .info-panels { display: flex; flex-direction: column; gap: 10px; }
 
 .info-tag-group {
-  margin-bottom: 20px;
-  width: min(100%, calc(var(--col-unit) * 1.5));
+  min-width: 0;
+  width: 100%;
   cursor: grab;
 }
 
@@ -1658,6 +1851,7 @@ textarea.form-input {
             <section class="project-left-page">
               <div class="project-title-kicker">PROJECT OVERVIEW</div>
               <h3 class="project-book-title" id="projectBookTitle"></h3>
+              <div class="project-tag-row project-overview-tags" id="projectBookTags"></div>
               <p class="project-book-summary" id="projectBookSummary"></p>
               <div class="project-book-return-bar project-book-return-bar-summary">
                 <button class="btn btn-secondary btn-sm project-book-return" onclick="closeProjectBook()">返回书架</button>
@@ -1677,9 +1871,7 @@ textarea.form-input {
               </div>
 
               <div class="project-page-footer">
-                <button class="btn btn-secondary btn-sm" id="projectPrevBtn" onclick="prevProjectPage()">上一页</button>
-                <span class="project-page-indicator" id="projectPageIndicator">第 1 页</span>
-                <button class="btn btn-secondary btn-sm" id="projectNextBtn" onclick="nextProjectPage()">下一页</button>
+                <div class="project-page-tabs" id="projectPageTabs" aria-label="项目页码"></div>
               </div>
             </section>
           </div>
@@ -1782,6 +1974,17 @@ textarea.form-input {
         <label>项目名称</label>
         <input type="text" class="form-input" id="projectTitle" placeholder="输入项目名称..." maxlength="60">
       </div>
+      <div class="form-group with-suggestions">
+        <label>项目标签</label>
+        <input
+          type="text"
+          class="form-input"
+          id="projectTags"
+          placeholder="输入标签，用空格、逗号或顿号分隔..."
+          onfocus="showProjectTagSuggestions()"
+          oninput="showProjectTagSuggestions()">
+        <div class="tag-suggestions" id="projectTagSuggestions"></div>
+      </div>
       <div class="form-group">
         <label>项目简介</label>
         <textarea class="form-input project-summary-input" id="projectSummary" placeholder="输入项目简介..."></textarea>
@@ -1808,7 +2011,7 @@ textarea.form-input {
           <p>导出会把当前数据目录压缩为 WorkWeb_data.workweb；导入只合并数据，不覆盖当前内容。</p>
           <div class="settings-actions">
             <button class="btn btn-secondary" onclick="importDataFile()">导入</button>
-            <button class="btn btn-primary" onclick="exportDataFile()">导出</button>
+            <button class="btn btn-secondary" onclick="exportDataFile()">导出</button>
           </div>
         </section>
 
@@ -1835,7 +2038,13 @@ textarea.form-input {
           <p id="versionStatus">当前版本：读取中</p>
           <div class="settings-actions">
             <button class="btn btn-secondary" onclick="checkUpdateFromSettings()">检查更新</button>
-            <button class="btn btn-primary" id="downloadLatestBtn" onclick="openLatestRelease()">前往下载</button>
+            <button class="btn btn-primary" id="downloadLatestBtn" onclick="startUpdateDownload()">立即更新</button>
+          </div>
+          <div class="update-progress" id="settingsUpdateProgress">
+            <div class="update-progress-bar">
+              <div class="update-progress-fill" id="settingsUpdateProgressFill"></div>
+            </div>
+            <div class="update-progress-text" id="settingsUpdateProgressText"></div>
           </div>
         </section>
 
@@ -1852,6 +2061,24 @@ textarea.form-input {
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 更新进度 -->
+<div class="modal-overlay" id="updateModal">
+  <div class="modal update-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>正在更新 WorkWeb</h3>
+    </div>
+    <div class="modal-body update-modal-body">
+      <p class="settings-message" id="updateModalMessage">正在准备下载...</p>
+      <div class="update-progress visible">
+        <div class="update-progress-bar">
+          <div class="update-progress-fill" id="updateModalProgressFill"></div>
+        </div>
+        <div class="update-progress-text" id="updateModalProgressText">0%</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1878,10 +2105,10 @@ let infoPanels = [];
 let projects = [];
 let serverOnline = false;
 let currentAppVersion = '';
-let latestReleaseUrl = '';
 let selectedNextDataDir = '';
+let updateState = { supported: false, status: 'idle', message: '尚未检查更新', progress: 0 };
 
-const GITHUB_RELEASE_API = 'https://api.github.com/repos/SeanNg997/WorkWeb/releases/latest';
+const MARKDOWN_FONT_SIZE_KEY = 'wb_markdown_size';
 
 async function apiGet(key) {
   const res = await fetch(`/api/${key}`);
@@ -1914,63 +2141,88 @@ function normalizeVersionText(value) {
   return String(value || '').trim().replace(/^v/i, '');
 }
 
-function compareVersions(a, b) {
-  const aParts = normalizeVersionText(a).split(/[^\d]+/).filter(Boolean).map(Number);
-  const bParts = normalizeVersionText(b).split(/[^\d]+/).filter(Boolean).map(Number);
-  const maxLength = Math.max(aParts.length, bParts.length);
-
-  for (let i = 0; i < maxLength; i += 1) {
-    const left = aParts[i] || 0;
-    const right = bParts[i] || 0;
-    if (left > right) return 1;
-    if (left < right) return -1;
-  }
-
-  return 0;
-}
-
 function updateSettingsVersionStatus(text = '') {
   const el = document.getElementById('versionStatus');
   if (el) el.textContent = text || `当前版本：v${currentAppVersion || '1.0.0'}`;
 }
 
 function updateDownloadButton(visible = false) {
-  document.getElementById('downloadLatestBtn')?.classList.toggle('visible', visible && Boolean(latestReleaseUrl));
+  document.getElementById('downloadLatestBtn')?.classList.toggle('visible', Boolean(visible));
 }
 
-function openLatestRelease() {
-  if (!latestReleaseUrl) return;
-  window.open(latestReleaseUrl, '_blank', 'noopener,noreferrer');
+function renderUpdateProgress(state = updateState) {
+  const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
+  const isDownloading = ['downloading', 'downloaded'].includes(state.status);
+  const settingsProgress = document.getElementById('settingsUpdateProgress');
+  settingsProgress?.classList.toggle('visible', isDownloading);
+
+  const fillEls = [
+    document.getElementById('settingsUpdateProgressFill'),
+    document.getElementById('updateModalProgressFill')
+  ];
+  fillEls.forEach(el => { if (el) el.style.width = `${progress}%`; });
+
+  const progressText = `${Math.round(progress)}%`;
+  const settingsText = document.getElementById('settingsUpdateProgressText');
+  if (settingsText) settingsText.textContent = state.message ? `${state.message} ${progressText}` : progressText;
+
+  const modalText = document.getElementById('updateModalProgressText');
+  if (modalText) modalText.textContent = progressText;
+
+  const modalMessage = document.getElementById('updateModalMessage');
+  if (modalMessage) modalMessage.textContent = state.message || '正在准备下载...';
+
+  document.getElementById('updateModal')?.classList.toggle('active', isDownloading);
 }
 
-async function checkLatestRelease(version) {
-  if (!version) return { status: 'failed' };
+function applyUpdateState(state = {}) {
+  updateState = { ...updateState, ...state };
+  renderUpdateProgress(updateState);
 
-  try {
-    const res = await fetch(GITHUB_RELEASE_API, {
-      headers: { Accept: 'application/vnd.github+json' }
-    });
-    if (!res.ok) throw new Error(res.statusText);
+  if (updateState.status === 'available') {
+    document.getElementById('sidebarSettingsBtn')?.classList.add('has-update');
+    updateDownloadButton(true);
+    updateSettingsVersionStatus(updateState.version
+      ? `有新的版本可以使用：v${updateState.version}`
+      : '有新的版本可以使用');
+    return;
+  }
 
-    const release = await res.json();
-    const latestVersion = normalizeVersionText(release?.tag_name || release?.name || '');
-    const releaseUrl = String(release?.html_url || '').trim();
+  if (updateState.status === 'checking') {
+    updateDownloadButton(false);
+    updateSettingsVersionStatus('正在检查更新...');
+    return;
+  }
 
-    if (latestVersion && releaseUrl && compareVersions(latestVersion, version) > 0) {
-      latestReleaseUrl = releaseUrl;
-      document.getElementById('sidebarSettingsBtn')?.classList.add('has-update');
-      updateDownloadButton(true);
-      return { status: 'new', latestVersion, releaseUrl };
-    }
+  if (updateState.status === 'downloading' || updateState.status === 'downloaded') {
+    updateDownloadButton(false);
+    updateSettingsVersionStatus(updateState.message || '正在更新');
+    return;
+  }
 
-    latestReleaseUrl = '';
+  if (updateState.status === 'latest') {
     document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
     updateDownloadButton(false);
-    return { status: 'latest', latestVersion: latestVersion || version };
-  } catch {
-    updateDownloadButton(false);
-    return { status: 'failed' };
+    updateSettingsVersionStatus('当前已经是最新版本');
+    return;
   }
+
+  if (updateState.status === 'unsupported') {
+    document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
+    updateDownloadButton(false);
+    updateSettingsVersionStatus(updateState.message || '自动更新仅支持 Windows 安装版，不支持便携版');
+    return;
+  }
+
+  if (updateState.status === 'error') {
+    updateDownloadButton(false);
+    updateSettingsVersionStatus(updateState.message || '更新失败');
+  }
+}
+
+async function loadUpdateState() {
+  if (!window.workwebDesktop?.getUpdateState) return;
+  applyUpdateState(await window.workwebDesktop.getUpdateState());
 }
 
 async function loadAppVersion() {
@@ -1981,7 +2233,7 @@ async function loadAppVersion() {
 
     currentAppVersion = version;
     updateSettingsVersionStatus();
-    await checkLatestRelease(version);
+    await loadUpdateState();
   } catch {}
 }
 
@@ -2032,6 +2284,7 @@ const noteEditors = new Map();
 const noteDraftTimers = new Map();
 const noteSaveStates = new Map();
 let draggedProjectId = null;
+let draggedProjectTag = null;
 let draggedInfoTag = null;
 let draggedInfoPanelId = null;
 let suppressProjectOpen = false;
@@ -2048,7 +2301,8 @@ let projectSaveStatus = { text: '', visible: false, tone: '' };
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
-  loadMarkdownFontSize();
+  await loadMarkdownFontSize();
+  window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
   await loadData();
   renderNotes();
@@ -2071,16 +2325,40 @@ function loadTheme() {
   setTheme(localStorage.getItem('wb_theme') || 'sage');
 }
 
-function setMarkdownFontSize(size) {
-  const safeSize = ['large', 'normal', 'small'].includes(size) ? size : 'normal';
-  document.body.dataset.markdownSize = safeSize;
-  localStorage.setItem('wb_markdown_size', safeSize);
-  document.querySelectorAll('[data-font-size]').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.fontSize === safeSize));
+async function readPreference(key, fallback = '') {
+  if (window.workwebDesktop?.getSetting) {
+    try {
+      const value = await window.workwebDesktop.getSetting(key);
+      return value ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return localStorage.getItem(key) || fallback;
 }
 
-function loadMarkdownFontSize() {
-  setMarkdownFontSize(localStorage.getItem('wb_markdown_size') || 'normal');
+function writePreference(key, value) {
+  localStorage.setItem(key, value);
+  window.workwebDesktop?.setSetting?.(key, value).catch(() => {});
+}
+
+function applyMarkdownFontSize(size) {
+  const safeSize = ['large', 'normal', 'small'].includes(size) ? size : 'normal';
+  document.body.dataset.markdownSize = safeSize;
+  document.querySelectorAll('[data-font-size]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.fontSize === safeSize));
+  return safeSize;
+}
+
+function setMarkdownFontSize(size) {
+  const safeSize = applyMarkdownFontSize(size);
+  writePreference(MARKDOWN_FONT_SIZE_KEY, safeSize);
+}
+
+async function loadMarkdownFontSize() {
+  const size = await readPreference(MARKDOWN_FONT_SIZE_KEY, localStorage.getItem(MARKDOWN_FONT_SIZE_KEY) || 'normal');
+  applyMarkdownFontSize(size);
 }
 
 function updateDateDisplay() {
@@ -2126,6 +2404,25 @@ function maskValue(text) {
   return '*'.repeat(Array.from(text || '').length);
 }
 
+function normalizeTags(value) {
+  const rawTags = Array.isArray(value)
+    ? value
+    : String(value || '').split(/[,，、\s]+/);
+
+  return [...new Set(rawTags
+    .map(tag => String(tag || '').trim())
+    .filter(Boolean))];
+}
+
+function renderProjectTags(tags = []) {
+  const safeTags = normalizeTags(tags);
+  return safeTags.map(tag => `<span class="project-tag-pill">${escHtml(tag)}</span>`).join('');
+}
+
+function getProjectGroupTag(project) {
+  return normalizeTags(project?.tags)[0] || '未分类';
+}
+
 function normalizeProject(project) {
   if (!project || typeof project !== 'object') return null;
   const pages = Array.isArray(project.pages) && project.pages.length
@@ -2135,6 +2432,7 @@ function normalizeProject(project) {
     id: project.id || genId('p'),
     title: String(project.title || ''),
     summary: String(project.summary || ''),
+    tags: normalizeTags(project.tags || project.tag || ''),
     pages,
     createdAt: project.createdAt || Date.now(),
     updatedAt: project.updatedAt || Date.now()
@@ -2188,9 +2486,10 @@ function openSettings() {
   setSettingsMessage('');
   selectedNextDataDir = '';
   document.getElementById('nextDataDir').textContent = '未选择';
-  updateSettingsVersionStatus();
-  updateDownloadButton(Boolean(latestReleaseUrl));
+  if (!updateState.status || updateState.status === 'idle') updateSettingsVersionStatus();
+  else applyUpdateState(updateState);
   refreshDataDirDisplay();
+  loadUpdateState();
   document.getElementById('settingsModal').classList.add('active');
 }
 
@@ -2272,27 +2571,40 @@ async function changeDataDir() {
 }
 
 async function checkUpdateFromSettings() {
-  if (!currentAppVersion) {
-    updateDownloadButton(false);
-    updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
+  if (!window.workwebDesktop?.checkForUpdates) {
+    applyUpdateState({ status: 'unsupported', message: '当前环境不支持自动更新', progress: 0 });
     return;
   }
 
-  updateDownloadButton(false);
-  updateSettingsVersionStatus('正在检查更新...');
-  const result = await checkLatestRelease(currentAppVersion);
-  if (result.status === 'new') {
-    updateDownloadButton(true);
-    updateSettingsVersionStatus(`有新的版本可以使用：v${result.latestVersion}`);
+  try {
+    applyUpdateState({ status: 'checking', message: '正在检查更新', progress: 0 });
+    const state = await window.workwebDesktop.checkForUpdates();
+    applyUpdateState(state);
+  } catch (error) {
+    applyUpdateState({
+      status: 'error',
+      message: error?.message || '获取新版本失败，请检查网络问题',
+      progress: 0
+    });
+  }
+}
+
+async function startUpdateDownload() {
+  if (!window.workwebDesktop?.downloadUpdate) {
+    applyUpdateState({ status: 'unsupported', message: '当前环境不支持自动更新', progress: 0 });
     return;
   }
-  if (result.status === 'latest') {
-    updateDownloadButton(false);
-    updateSettingsVersionStatus('当前已经是最新版本');
-    return;
+
+  try {
+    applyUpdateState({ status: 'downloading', message: '正在下载更新', progress: 0 });
+    await window.workwebDesktop.downloadUpdate();
+  } catch (error) {
+    applyUpdateState({
+      status: 'error',
+      message: error?.message || '下载更新失败',
+      progress: 0
+    });
   }
-  updateDownloadButton(false);
-  updateSettingsVersionStatus('获取新版本失败，请检查网络问题');
 }
 
 function updateNoteSaveBadge(noteId) {
@@ -2378,6 +2690,210 @@ function markProjectSaved(revision) {
   }, 500);
 }
 
+function captureSortableRects(container, itemSelector) {
+  const rects = new Map();
+  Array.from(container.children).forEach(child => {
+    if (!child.matches(itemSelector) && !child.classList.contains('sortable-placeholder')) return;
+    const key = child.dataset.sortKey || child.dataset.id || child.dataset.pageKey;
+    if (key) rects.set(key, child.getBoundingClientRect());
+  });
+  return rects;
+}
+
+function animateSortableRects(container, itemSelector, previousRects) {
+  requestAnimationFrame(() => {
+    Array.from(container.children).forEach(child => {
+      if (!child.matches(itemSelector) && !child.classList.contains('sortable-placeholder')) return;
+      const key = child.dataset.sortKey || child.dataset.id || child.dataset.pageKey;
+      const previous = key ? previousRects.get(key) : null;
+      if (!previous) return;
+
+      const current = child.getBoundingClientRect();
+      const dx = previous.left - current.left;
+      const dy = previous.top - current.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+      child.style.transition = 'none';
+      child.style.transform = `translate(${dx}px, ${dy}px)`;
+      requestAnimationFrame(() => {
+        child.style.transition = '';
+        child.style.transform = '';
+      });
+    });
+  });
+}
+
+function getSortableInsertionIndex(container, itemSelector, source, x, y) {
+  const items = Array.from(container.children)
+    .filter(child => child.matches(itemSelector) && child !== source && !child.classList.contains('sort-drag-proxy'));
+
+  if (!items.length) return 0;
+
+  const ordered = items
+    .map(item => ({ item, rect: item.getBoundingClientRect() }))
+    .sort((a, b) => Math.abs(a.rect.top - b.rect.top) > 8 ? a.rect.top - b.rect.top : a.rect.left - b.rect.left);
+
+  const slots = [];
+  const first = ordered[0].rect;
+  slots.push({ index: 0, x: first.left, y: first.top + first.height / 2 });
+
+  for (let i = 0; i < ordered.length - 1; i += 1) {
+    const left = ordered[i].rect;
+    const right = ordered[i + 1].rect;
+    slots.push({
+      index: i + 1,
+      x: (left.left + left.width / 2 + right.left + right.width / 2) / 2,
+      y: (left.top + left.height / 2 + right.top + right.height / 2) / 2
+    });
+  }
+
+  const last = ordered[ordered.length - 1].rect;
+  slots.push({ index: ordered.length, x: last.right, y: last.top + last.height / 2 });
+
+  return slots.reduce((best, slot) => {
+    const distance = Math.hypot(x - slot.x, y - slot.y);
+    return distance < best.distance ? { index: slot.index, distance } : best;
+  }, { index: ordered.length, distance: Infinity }).index;
+}
+
+function placeSortablePlaceholder(container, itemSelector, source, placeholder, index) {
+  const ordered = Array.from(container.children)
+    .filter(child => child.matches(itemSelector) && child !== source && child !== placeholder && !child.classList.contains('sort-drag-proxy'));
+  const before = ordered[index] || null;
+  if (before) container.insertBefore(placeholder, before);
+  else container.appendChild(placeholder);
+}
+
+function bindPointerSortable(container, itemSelector, options = {}) {
+  if (!container) return;
+  container._workwebSortableAbort?.abort();
+  const abortController = new AbortController();
+  container._workwebSortableAbort = abortController;
+  const listenerOptions = { signal: abortController.signal };
+
+  const {
+    getKey = item => item.dataset.id,
+    excludedSelector = 'input, textarea, select, button, a, [contenteditable="true"]',
+    placeholderClass = '',
+    placeholderStyle = null,
+    onDragStart = null,
+    onDragEnd = null,
+    onReorder
+  } = options;
+
+  let state = null;
+
+  container.querySelectorAll(itemSelector).forEach(item => {
+    item.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || state) return;
+      if (event.target.closest(excludedSelector)) return;
+
+      state = {
+        source: item,
+        key: getKey(item),
+        startX: event.clientX,
+        startY: event.clientY,
+        lastX: event.clientX,
+        lastY: event.clientY,
+        dragging: false,
+        proxy: null,
+        placeholder: null,
+        sourceRect: null,
+        pointerId: event.pointerId
+      };
+    }, listenerOptions);
+  });
+
+  function beginDrag(event) {
+    const { source } = state;
+    const rect = source.getBoundingClientRect();
+    state.sourceRect = rect;
+    const placeholder = document.createElement('div');
+    placeholder.className = `sortable-placeholder ${placeholderClass}`.trim();
+    placeholder.dataset.sortKey = '__placeholder';
+    placeholder.style.width = `${rect.width}px`;
+    placeholder.style.height = `${rect.height}px`;
+    if (source.dataset.span) placeholder.style.gridColumn = `span ${source.dataset.span}`;
+    placeholderStyle?.(placeholder, source, rect);
+
+    const proxy = source.cloneNode(true);
+    proxy.classList.add('sort-drag-proxy');
+    proxy.classList.remove('page-reveal');
+    proxy.style.width = `${rect.width}px`;
+    proxy.style.height = `${rect.height}px`;
+
+    source.replaceWith(placeholder);
+    document.body.appendChild(proxy);
+    source.classList.add('dragging', 'sortable-source');
+    document.body.style.userSelect = 'none';
+
+    state.dragging = true;
+    state.proxy = proxy;
+    state.placeholder = placeholder;
+    onDragStart?.(source, state.key);
+    moveDragProxy(event.clientX, event.clientY);
+  }
+
+  function moveDragProxy(x, y) {
+    const dx = x - state.startX;
+    const dy = y - state.startY;
+    state.proxy.style.transform = `translate(${state.sourceRect.left + dx}px, ${state.sourceRect.top + dy}px) scale(1.02)`;
+  }
+
+  function handlePointerMove(event) {
+    if (!state) return;
+
+    state.lastX = event.clientX;
+    state.lastY = event.clientY;
+    const distance = Math.hypot(event.clientX - state.startX, event.clientY - state.startY);
+    if (!state.dragging && distance < 6) return;
+    if (!state.dragging) beginDrag(event);
+
+    event.preventDefault();
+    moveDragProxy(event.clientX, event.clientY);
+
+    const nextIndex = getSortableInsertionIndex(container, itemSelector, state.source, event.clientX, event.clientY);
+    const currentItems = Array.from(container.children)
+      .filter(child => child === state.placeholder || child.matches(itemSelector));
+    if (currentItems[nextIndex] === state.placeholder) return;
+
+    const previousRects = captureSortableRects(container, itemSelector);
+    placeSortablePlaceholder(container, itemSelector, state.source, state.placeholder, nextIndex);
+    animateSortableRects(container, itemSelector, previousRects);
+  }
+
+  function handlePointerUp() {
+    if (!state) return;
+
+    const currentState = state;
+    state = null;
+
+    if (!currentState.dragging) return;
+
+    const { source, proxy, placeholder, key } = currentState;
+    const finalIndex = Array.from(container.children)
+      .filter(child => child === placeholder || child.matches(itemSelector))
+      .indexOf(placeholder);
+
+    source.classList.remove('dragging', 'sortable-source');
+    placeholder.replaceWith(source);
+    proxy.remove();
+    document.body.style.userSelect = '';
+
+    source.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+    }, { capture: true, once: true });
+
+    onDragEnd?.(source, key, finalIndex);
+    if (finalIndex >= 0) onReorder?.(key, finalIndex);
+  }
+
+  document.addEventListener('pointermove', handlePointerMove, listenerOptions);
+  document.addEventListener('pointerup', handlePointerUp, listenerOptions);
+  document.addEventListener('pointercancel', handlePointerUp, listenerOptions);
+}
+
 function isModalContentEmpty(modalId) {
   if (modalId === 'editorModal') {
     return !document.getElementById('noteTitle').value.trim()
@@ -2390,6 +2906,7 @@ function isModalContentEmpty(modalId) {
   }
   if (modalId === 'projectEditorModal') {
     return !document.getElementById('projectTitle').value.trim()
+        && !document.getElementById('projectTags').value.trim()
         && !document.getElementById('projectSummary').value.trim();
   }
   return true;
@@ -2812,17 +3329,45 @@ function renderProjects() {
   } else {
     shelf.style.display = 'grid';
     empty.style.display = 'none';
-    shelf.innerHTML = projects.map((project, index) => `
-      <article class="project-book-card page-reveal" style="--project-enter-index:${index};" data-id="${escAttr(project.id)}" draggable="true" onclick="handleProjectBookClick('${project.id}')">
-        <div class="project-book-actions">
-          <button class="btn btn-ghost btn-sm project-book-action-btn" title="编辑" onclick="event.stopPropagation();openProjectEditor('${project.id}')">&#9998;</button>
-          <button class="btn btn-danger btn-sm project-book-action-btn project-book-action-danger" title="删除" onclick="event.stopPropagation();askDeleteProject('${project.id}')">&#10005;</button>
+    const groups = {};
+    const tagOrder = [];
+    projects.forEach(project => {
+      const tag = getProjectGroupTag(project);
+      if (!groups[tag]) {
+        groups[tag] = [];
+        tagOrder.push(tag);
+      }
+      groups[tag].push(project);
+    });
+
+    let enterIndex = 0;
+    shelf.innerHTML = tagOrder.map(tag => `
+      <section class="project-tag-section" data-tag="${escAttr(tag)}" draggable="true">
+        <div class="project-tag-header">
+          <span class="project-tag-name">${escHtml(tag)}</span>
+          <span class="project-tag-count">${groups[tag].length}</span>
         </div>
-        <div class="project-book-cover">
-          <h3 class="project-book-cover-title">${escHtml(project.title || '未命名项目')}</h3>
+        <div class="project-tag-books">
+          ${groups[tag].map(project => {
+            const html = `
+              <article class="project-book-card page-reveal" style="--project-enter-index:${enterIndex};" data-id="${escAttr(project.id)}" draggable="true" onclick="handleProjectBookClick('${project.id}')">
+                <div class="project-book-actions">
+                  <button class="btn btn-ghost btn-sm project-book-action-btn" title="编辑" onclick="event.stopPropagation();openProjectEditor('${project.id}')">&#9998;</button>
+                  <button class="btn btn-danger btn-sm project-book-action-btn project-book-action-danger" title="删除" onclick="event.stopPropagation();askDeleteProject('${project.id}')">&#10005;</button>
+                </div>
+                <div class="project-book-cover">
+                  <h3 class="project-book-cover-title">${escHtml(project.title || '未命名项目')}</h3>
+                  <div class="project-tag-row">${renderProjectTags(project.tags)}</div>
+                </div>
+              </article>
+            `;
+            enterIndex += 1;
+            return html;
+          }).join('')}
         </div>
-      </article>
+      </section>
     `).join('');
+    bindProjectTagDrag();
     bindProjectShelfDrag();
   }
 
@@ -2838,6 +3383,55 @@ function renderProjects() {
 function handleProjectBookClick(id) {
   if (suppressProjectOpen) return;
   openProjectBook(id);
+}
+
+function bindProjectTagDrag() {
+  document.querySelectorAll('.project-tag-section').forEach(section => {
+    let dragCounter = 0;
+
+    section.addEventListener('dragstart', e => {
+      if (e.target.closest('.project-book-card')) return;
+      draggedProjectTag = section.dataset.tag;
+      section.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    section.addEventListener('dragend', () => {
+      draggedProjectTag = null;
+      dragCounter = 0;
+      section.classList.remove('dragging', 'drag-over');
+    });
+
+    section.addEventListener('dragover', e => {
+      if (!draggedProjectTag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    section.addEventListener('dragenter', e => {
+      if (!draggedProjectTag) return;
+      e.preventDefault();
+      dragCounter++;
+      if (draggedProjectTag !== section.dataset.tag) section.classList.add('drag-over');
+    });
+
+    section.addEventListener('dragleave', () => {
+      if (!draggedProjectTag) return;
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        section.classList.remove('drag-over');
+      }
+    });
+
+    section.addEventListener('drop', e => {
+      if (!draggedProjectTag) return;
+      e.preventDefault();
+      dragCounter = 0;
+      section.classList.remove('drag-over');
+      if (draggedProjectTag !== section.dataset.tag) reorderProjectTags(draggedProjectTag, section.dataset.tag);
+    });
+  });
 }
 
 function bindProjectShelfDrag() {
@@ -2886,6 +3480,29 @@ function bindProjectShelfDrag() {
       }
     });
   });
+}
+
+function reorderProjectTags(fromTag, toTag) {
+  const groups = {};
+  const tagOrder = [];
+  projects.forEach(project => {
+    const tag = getProjectGroupTag(project);
+    if (!groups[tag]) {
+      groups[tag] = [];
+      tagOrder.push(tag);
+    }
+    groups[tag].push(project);
+  });
+
+  const fromIdx = tagOrder.indexOf(fromTag);
+  const toIdx = tagOrder.indexOf(toTag);
+  if (fromIdx < 0 || toIdx < 0) return;
+
+  const [moved] = tagOrder.splice(fromIdx, 1);
+  tagOrder.splice(toIdx, 0, moved);
+  projects = tagOrder.flatMap(tag => groups[tag]);
+  persistProjects();
+  renderProjects();
 }
 
 function reorderProjects(fromId, toId) {
@@ -2946,6 +3563,49 @@ function toggleProjectSourceMode() {
   setProjectSourceMode(!projectSourceMode);
 }
 
+function getExistingProjectTags() {
+  return [...new Set(projects.flatMap(project => normalizeTags(project.tags)))];
+}
+
+function showProjectTagSuggestions() {
+  const input = document.getElementById('projectTags');
+  const box = document.getElementById('projectTagSuggestions');
+  if (!input || !box) return;
+
+  const rawParts = input.value.split(/[,，、\s]+/);
+  const keyword = (rawParts.at(-1) || '').trim().toLowerCase();
+  const selected = new Set(normalizeTags(input.value).map(tag => tag.toLowerCase()));
+  const tags = getExistingProjectTags().filter(tag => {
+    const lower = tag.toLowerCase();
+    return !selected.has(lower) && (!keyword || lower.includes(keyword));
+  });
+
+  if (!tags.length) {
+    hideProjectTagSuggestions();
+    return;
+  }
+
+  box.innerHTML = tags.map(tag => `
+    <button type="button" class="tag-suggestion-item" onmousedown="selectProjectTagSuggestion('${escAttr(tag)}')">${escHtml(tag)}</button>
+  `).join('');
+  box.classList.add('active');
+}
+
+function hideProjectTagSuggestions() {
+  document.getElementById('projectTagSuggestions')?.classList.remove('active');
+}
+
+function selectProjectTagSuggestion(tag) {
+  const input = document.getElementById('projectTags');
+  if (!input) return;
+
+  const tags = normalizeTags(input.value);
+  if (!tags.includes(tag)) tags.push(tag);
+  input.value = tags.join(' ');
+  hideProjectTagSuggestions();
+  input.focus();
+}
+
 function renderProjectBook() {
   const view = document.getElementById('projectBookView');
   const project = getProjectById(activeProjectId);
@@ -2963,11 +3623,9 @@ function renderProjectBook() {
   activeProjectPageIndex = Math.max(0, Math.min(activeProjectPageIndex, pageCount - 1));
 
   document.getElementById('projectBookTitle').textContent = project.title || '未命名项目';
+  document.getElementById('projectBookTags').innerHTML = renderProjectTags(project.tags);
   document.getElementById('projectBookSummary').textContent = project.summary || '';
-  document.getElementById('projectPageIndicator').textContent = `第 ${activeProjectPageIndex + 1} / ${pageCount} 页`;
-  document.getElementById('projectPrevBtn').disabled = activeProjectPageIndex === 0;
-  document.getElementById('projectNextBtn').textContent =
-    activeProjectPageIndex >= pageCount - 1 ? '新增一页' : '下一页';
+  renderProjectPageTabs();
 
   view.classList.add('active');
   const content = project.pages[activeProjectPageIndex] || '';
@@ -2976,9 +3634,75 @@ function renderProjectBook() {
   applyProjectEditorMode();
 }
 
+function renderProjectPageTabs(previousRects = null, pageKeys = null) {
+  const tabs = document.getElementById('projectPageTabs');
+  const project = getProjectById(activeProjectId);
+  if (!tabs || !project) return;
+
+  const pages = project.pages.length ? project.pages : [''];
+  tabs.innerHTML = pages.map((_page, index) => `
+    <button
+      class="btn btn-secondary btn-sm project-page-tab${index === activeProjectPageIndex ? ' active' : ''}"
+      type="button"
+      data-page-index="${index}"
+      data-page-key="${pageKeys?.[index] ?? index}"
+      aria-label="第 ${index + 1} 页"
+      onclick="switchProjectPage(${index})"
+    >${index + 1}</button>
+  `).join('') + `
+    <button
+      class="btn btn-secondary btn-sm project-page-tab project-page-add"
+      type="button"
+      aria-label="新增页面"
+      onclick="addProjectPage()"
+    >+</button>
+  `;
+
+  bindProjectPageDrag();
+  if (previousRects) animateProjectPageTabs(previousRects);
+}
+
+function getProjectPageRects() {
+  const rects = new Map();
+  document.querySelectorAll('#projectPageTabs [data-page-index]').forEach(tab => {
+    rects.set(tab.dataset.pageKey || tab.dataset.pageIndex, tab.getBoundingClientRect());
+  });
+  return rects;
+}
+
+function animateProjectPageTabs(previousRects) {
+  document.querySelectorAll('#projectPageTabs [data-page-index]').forEach(tab => {
+    const previous = previousRects.get(tab.dataset.pageKey || tab.dataset.pageIndex);
+    if (!previous) return;
+
+    const current = tab.getBoundingClientRect();
+    const deltaX = previous.left - current.left;
+    const deltaY = previous.top - current.top;
+    if (!deltaX && !deltaY) return;
+
+    tab.style.transition = 'none';
+    tab.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    requestAnimationFrame(() => {
+      tab.style.transition = '';
+      tab.style.transform = '';
+    });
+  });
+}
+
+function bindProjectPageDrag() {
+  const tabs = document.getElementById('projectPageTabs');
+  bindPointerSortable(tabs, '[data-page-index]', {
+    getKey: item => Number(item.dataset.pageIndex),
+    excludedSelector: '.project-page-add',
+    placeholderClass: 'project-page-placeholder',
+    onReorder: reorderProjectPages
+  });
+}
+
 function openProjectEditor(id) {
   editingProjectId = id || null;
   const title = document.getElementById('projectTitle');
+  const tags = document.getElementById('projectTags');
   const summary = document.getElementById('projectSummary');
   const modalTitle = document.getElementById('projectModalTitle');
 
@@ -2986,10 +3710,12 @@ function openProjectEditor(id) {
     const project = getProjectById(id);
     if (!project) return;
     title.value = project.title;
+    tags.value = normalizeTags(project.tags).join(' ');
     summary.value = project.summary;
     modalTitle.textContent = '编辑项目';
   } else {
     title.value = '';
+    tags.value = '';
     summary.value = '';
     modalTitle.textContent = '添加项目';
   }
@@ -3000,14 +3726,16 @@ function openProjectEditor(id) {
 
 function closeProjectEditor() {
   document.getElementById('projectEditorModal').classList.remove('active');
+  hideProjectTagSuggestions();
   editingProjectId = null;
 }
 
 async function saveProject() {
   const title = document.getElementById('projectTitle').value.trim();
+  const tags = normalizeTags(document.getElementById('projectTags').value);
   const summary = document.getElementById('projectSummary').value.trim();
 
-  if (!title && !summary) {
+  if (!title && !summary && !tags.length) {
     document.getElementById('projectTitle').focus();
     return;
   }
@@ -3016,6 +3744,7 @@ async function saveProject() {
     const project = getProjectById(editingProjectId);
     if (project) {
       project.title = title;
+      project.tags = tags;
       project.summary = summary;
       project.updatedAt = Date.now();
     }
@@ -3023,6 +3752,7 @@ async function saveProject() {
     projects.push(normalizeProject({
       id: genId('p'),
       title,
+      tags,
       summary,
       pages: [''],
       createdAt: Date.now(),
@@ -3153,24 +3883,14 @@ function handleProjectSourceInput(value) {
   handleProjectPageInput(value);
 }
 
-function prevProjectPage() {
-  if (activeProjectPageIndex <= 0) return;
-  flushProjectPersist();
-  activeProjectPageIndex -= 1;
-  renderProjectBook();
-  focusProjectEditor();
-}
-
-function nextProjectPage() {
+function switchProjectPage(index) {
   const project = getProjectById(activeProjectId);
   if (!project) return;
-  if (activeProjectPageIndex >= project.pages.length - 1) {
-    addProjectPage();
-    return;
-  }
 
+  const nextIndex = Math.max(0, Math.min(Number(index) || 0, project.pages.length - 1));
+  if (nextIndex === activeProjectPageIndex) return;
   flushProjectPersist();
-  activeProjectPageIndex += 1;
+  activeProjectPageIndex = nextIndex;
   renderProjectBook();
   focusProjectEditor();
 }
@@ -3188,6 +3908,36 @@ async function addProjectPage() {
   focusProjectEditor();
 }
 
+async function reorderProjectPages(fromIndex, toIndex) {
+  const project = getProjectById(activeProjectId);
+  if (!project || fromIndex === toIndex) return;
+
+  const pageCount = project.pages.length;
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= pageCount || toIndex >= pageCount) return;
+
+  flushProjectPersist();
+  const previousRects = getProjectPageRects();
+  const pageKeys = Array.from({ length: pageCount }, (_item, index) => index);
+  const activeBefore = activeProjectPageIndex;
+  const [movedPage] = project.pages.splice(fromIndex, 1);
+  project.pages.splice(toIndex, 0, movedPage);
+  const [movedKey] = pageKeys.splice(fromIndex, 1);
+  pageKeys.splice(toIndex, 0, movedKey);
+
+  if (activeBefore === fromIndex) {
+    activeProjectPageIndex = toIndex;
+  } else if (fromIndex < activeBefore && toIndex >= activeBefore) {
+    activeProjectPageIndex -= 1;
+  } else if (fromIndex > activeBefore && toIndex <= activeBefore) {
+    activeProjectPageIndex += 1;
+  }
+
+  project.updatedAt = Date.now();
+  markProjectDirty();
+  renderProjectPageTabs(previousRects, pageKeys);
+  await persistProjects(projectSaveRevision);
+}
+
 /* ==================== 常用个人信息 ==================== */
 function renderInfoPanels() {
   const container = document.getElementById('infoContainer');
@@ -3199,7 +3949,7 @@ function renderInfoPanels() {
     return;
   }
 
-  container.style.display = 'flex';
+  container.style.display = 'grid';
   empty.style.display = 'none';
 
   // 按标签分组，并保留用户拖拽后的标签顺序。
