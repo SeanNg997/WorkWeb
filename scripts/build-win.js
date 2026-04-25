@@ -30,18 +30,23 @@ async function patchWindowsExecutable() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
   const { rcedit } = await import('rcedit');
 
-  await rcedit(EXE_PATH, {
-    icon: ICON_SOURCE,
-    'file-version': pkg.version,
-    'product-version': pkg.version,
-    'version-string': {
-      CompanyName: pkg.author || 'WorkWeb',
-      FileDescription: pkg.description || 'WorkWeb',
-      InternalName: 'WorkWeb',
-      OriginalFilename: 'WorkWeb.exe',
-      ProductName: 'WorkWeb'
-    }
-  });
+  try {
+    await rcedit(EXE_PATH, {
+      icon: ICON_SOURCE,
+      'file-version': pkg.version,
+      'product-version': pkg.version,
+      'version-string': {
+        CompanyName: pkg.author || 'WorkWeb',
+        FileDescription: pkg.description || 'WorkWeb',
+        InternalName: 'WorkWeb',
+        OriginalFilename: 'WorkWeb.exe',
+        ProductName: 'WorkWeb'
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`跳过 exe 资源修正：${message}`);
+  }
 }
 
 async function main() {

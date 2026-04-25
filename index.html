@@ -667,13 +667,13 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 .project-shelf {
   display: grid;
   gap: 26px;
-  padding-top: 28px;
+  padding-top: 16px;
 }
 
 .project-tag-section {
   display: grid;
   gap: 14px;
-  cursor: grab;
+  cursor: default;
 }
 
 .project-tag-section.dragging {
@@ -691,7 +691,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   align-items: center;
   gap: 10px;
   min-height: 28px;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
 }
 
@@ -714,6 +714,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
   align-items: start;
+  cursor: default;
 }
 
 .project-book-card {
@@ -829,6 +830,8 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
+  pointer-events: none;
+  user-select: none;
 }
 
 .project-tag-pill {
@@ -841,7 +844,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   font-weight: 700;
   line-height: 1.4;
   word-break: break-word;
-  backdrop-filter: blur(6px);
+  pointer-events: none;
 }
 
 .project-overview-tags {
@@ -1835,7 +1838,7 @@ textarea.form-input {
       <h2>项目书架</h2>
       <button class="btn btn-primary" onclick="openProjectEditor()"><span>&#43;</span> 添加项目</button>
     </div>
-    <div class="workspace-body" style="flex:1;">
+    <div class="workspace-body" style="flex:1;padding-top: 0px">
       <div class="projects-shell">
         <div id="projectShelfView">
           <div class="project-shelf" id="projectShelf"></div>
@@ -2040,12 +2043,6 @@ textarea.form-input {
             <button class="btn btn-secondary" onclick="checkUpdateFromSettings()">检查更新</button>
             <button class="btn btn-primary" id="downloadLatestBtn" onclick="startUpdateDownload()">立即更新</button>
           </div>
-          <div class="update-progress" id="settingsUpdateProgress">
-            <div class="update-progress-bar">
-              <div class="update-progress-fill" id="settingsUpdateProgressFill"></div>
-            </div>
-            <div class="update-progress-text" id="settingsUpdateProgressText"></div>
-          </div>
         </section>
 
         <section class="settings-card">
@@ -2153,19 +2150,10 @@ function updateDownloadButton(visible = false) {
 function renderUpdateProgress(state = updateState) {
   const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
   const isDownloading = ['downloading', 'downloaded'].includes(state.status);
-  const settingsProgress = document.getElementById('settingsUpdateProgress');
-  settingsProgress?.classList.toggle('visible', isDownloading);
-
-  const fillEls = [
-    document.getElementById('settingsUpdateProgressFill'),
-    document.getElementById('updateModalProgressFill')
-  ];
-  fillEls.forEach(el => { if (el) el.style.width = `${progress}%`; });
+  const modalFill = document.getElementById('updateModalProgressFill');
+  if (modalFill) modalFill.style.width = `${progress}%`;
 
   const progressText = `${Math.round(progress)}%`;
-  const settingsText = document.getElementById('settingsUpdateProgressText');
-  if (settingsText) settingsText.textContent = state.message ? `${state.message} ${progressText}` : progressText;
-
   const modalText = document.getElementById('updateModalProgressText');
   if (modalText) modalText.textContent = progressText;
 
@@ -3342,7 +3330,7 @@ function renderProjects() {
 
     let enterIndex = 0;
     shelf.innerHTML = tagOrder.map(tag => `
-      <section class="project-tag-section" data-tag="${escAttr(tag)}" draggable="true">
+      <section class="project-tag-section" data-tag="${escAttr(tag)}">
         <div class="project-tag-header">
           <span class="project-tag-name">${escHtml(tag)}</span>
           <span class="project-tag-count">${groups[tag].length}</span>
@@ -3388,9 +3376,29 @@ function handleProjectBookClick(id) {
 function bindProjectTagDrag() {
   document.querySelectorAll('.project-tag-section').forEach(section => {
     let dragCounter = 0;
+    let dragArmed = false;
+    const header = section.querySelector('.project-tag-header');
+
+    function disableDrag() {
+      dragArmed = false;
+      if (!draggedProjectTag) section.draggable = false;
+    }
+
+    header?.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      dragArmed = true;
+      section.draggable = true;
+      window.addEventListener('pointerup', disableDrag, { once: true });
+      window.addEventListener('pointercancel', disableDrag, { once: true });
+    });
 
     section.addEventListener('dragstart', e => {
-      if (e.target.closest('.project-book-card')) return;
+      if (!dragArmed) {
+        e.preventDefault();
+        section.draggable = false;
+        return;
+      }
+
       draggedProjectTag = section.dataset.tag;
       section.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -3399,6 +3407,8 @@ function bindProjectTagDrag() {
     section.addEventListener('dragend', () => {
       draggedProjectTag = null;
       dragCounter = 0;
+      dragArmed = false;
+      section.draggable = false;
       section.classList.remove('dragging', 'drag-over');
     });
 

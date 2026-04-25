@@ -1,4 +1,5 @@
 const fs = require('fs');
+const https = require('https');
 const path = require('path');
 const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
@@ -10,6 +11,13 @@ const ICON_PATH = path.join(__dirname, '..', 'image', process.platform === 'darw
 const SETTINGS_FILE_NAME = 'desktop-settings.json';
 const PRELOAD_PATH = path.join(__dirname, 'preload.js');
 const ALLOWED_DESKTOP_SETTING_KEYS = new Set(['wb_markdown_size']);
+const UPDATE_PUBLISH_CONFIG = {
+  provider: 'github',
+  owner: 'SeanNg997',
+  repo: 'WorkWeb',
+  updaterCacheDirName: 'workweb-updater'
+};
+const UPDATE_RELEASE_API = `https://api.github.com/repos/${UPDATE_PUBLISH_CONFIG.owner}/${UPDATE_PUBLISH_CONFIG.repo}/releases/latest`;
 
 let mainWindow = null;
 let localServer = null;
@@ -67,8 +75,103 @@ function saveDesktopSetting(key, value) {
   return value;
 }
 
+function getUpdateConfigPath() {
+  return path.join(app.getPath('userData'), 'app-update.yml');
+}
+
+function ensureUpdateConfigFile() {
+  const configPath = getUpdateConfigPath();
+  const content = [
+    `provider: ${UPDATE_PUBLISH_CONFIG.provider}`,
+    `owner: ${UPDATE_PUBLISH_CONFIG.owner}`,
+    `repo: ${UPDATE_PUBLISH_CONFIG.repo}`,
+    `updaterCacheDirName: ${UPDATE_PUBLISH_CONFIG.updaterCacheDirName}`,
+    ''
+  ].join('\n');
+
+  ensureDir(path.dirname(configPath));
+  fs.writeFileSync(configPath, content, 'utf-8');
+  return configPath;
+}
+
 function isWindowsUpdaterSupported() {
   return app.isPackaged && process.platform === 'win32' && !process.env.PORTABLE_EXECUTABLE_DIR;
+}
+
+function normalizeVersion(value) {
+  return String(value || '').trim().replace(/^v/i, '');
+}
+
+function compareVersions(left, right) {
+  const leftParts = normalizeVersion(left).split(/[.-]/).map(part => Number.parseInt(part, 10) || 0);
+  const rightParts = normalizeVersion(right).split(/[.-]/).map(part => Number.parseInt(part, 10) || 0);
+  const length = Math.max(leftParts.length, rightParts.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const diff = (leftParts[index] || 0) - (rightParts[index] || 0);
+    if (diff !== 0) return diff;
+  }
+
+  return 0;
+}
+
+function requestJSON(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': `WorkWeb/${app.getVersion()}`
+      }
+    }, res => {
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+        res.resume();
+        requestJSON(res.headers.location).then(resolve, reject);
+        return;
+      }
+
+      let body = '';
+      res.setEncoding('utf-8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`GitHub 返回 ${res.statusCode || '未知状态'}`));
+          return;
+        }
+
+        try {
+          resolve(JSON.parse(body));
+        } catch {
+          reject(new Error('GitHub 返回内容无法解析'));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.setTimeout(15000, () => {
+      req.destroy(new Error('检查更新超时'));
+    });
+  });
+}
+
+async function getLatestRelease() {
+  const release = await requestJSON(UPDATE_RELEASE_API);
+  return {
+    version: normalizeVersion(release?.tag_name || release?.name),
+    url: release?.html_url || `https://github.com/${UPDATE_PUBLISH_CONFIG.owner}/${UPDATE_PUBLISH_CONFIG.repo}/releases`,
+    hasUpdateFile: Array.isArray(release?.assets) && release.assets.some(asset => asset?.name === 'latest.yml')
+  };
+}
+
+function isMissingUpdateFileError(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return message.includes('latest.yml') || message.includes('ERR_UPDATER_CHANNEL_FILE_NOT_FOUND');
+}
+
+function formatUpdateError(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  if (message.includes('app-update.yml')) return '更新配置缺失，请重新安装最新版 WorkWeb 后再试';
+  if (isMissingUpdateFileError(error)) return '最新发布缺少自动更新文件，请到 GitHub Release 页面手动下载';
+  return message || '更新失败';
 }
 
 function sendUpdateState(patch = {}) {
@@ -85,6 +188,11 @@ function configureAutoUpdater() {
   updateState.supported = isWindowsUpdaterSupported();
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
+
+  if (updateState.supported) {
+    autoUpdater.updateConfigPath = ensureUpdateConfigFile();
+    autoUpdater.setFeedURL(UPDATE_PUBLISH_CONFIG);
+  }
 
   autoUpdater.on('checking-for-update', () => {
     sendUpdateState({ status: 'checking', message: '正在检查更新', progress: 0 });
@@ -121,7 +229,7 @@ function configureAutoUpdater() {
   autoUpdater.on('error', error => {
     sendUpdateState({
       status: 'error',
-      message: error instanceof Error ? error.message : '更新失败',
+      message: formatUpdateError(error),
       progress: 0
     });
   });
@@ -353,8 +461,30 @@ function registerIpcHandlers() {
       });
     }
 
-    await autoUpdater.checkForUpdates();
-    return updateState;
+    try {
+      const latestRelease = await getLatestRelease();
+      if (latestRelease.version && compareVersions(latestRelease.version, app.getVersion()) <= 0) {
+        return sendUpdateState({ status: 'latest', message: '当前已经是最新版本', progress: 0 });
+      }
+
+      if (!latestRelease.hasUpdateFile) {
+        return sendUpdateState({
+          status: 'error',
+          message: `发现新版本 v${latestRelease.version}，但发布包缺少自动更新文件，请到 GitHub Release 页面手动下载`,
+          version: latestRelease.version,
+          progress: 0
+        });
+      }
+
+      await autoUpdater.checkForUpdates();
+      return updateState;
+    } catch (error) {
+      return sendUpdateState({
+        status: 'error',
+        message: formatUpdateError(error),
+        progress: 0
+      });
+    }
   });
 
   ipcMain.handle('workweb:downloadUpdate', async () => {
@@ -366,9 +496,17 @@ function registerIpcHandlers() {
       });
     }
 
-    sendUpdateState({ status: 'downloading', message: '正在下载更新', progress: 0 });
-    await autoUpdater.downloadUpdate();
-    return updateState;
+    try {
+      sendUpdateState({ status: 'downloading', message: '正在下载更新', progress: 0 });
+      await autoUpdater.downloadUpdate();
+      return updateState;
+    } catch (error) {
+      return sendUpdateState({
+        status: 'error',
+        message: formatUpdateError(error),
+        progress: 0
+      });
+    }
   });
 }
 
