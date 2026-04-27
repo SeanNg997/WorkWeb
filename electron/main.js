@@ -456,7 +456,7 @@ function registerIpcHandlers() {
     if (!isWindowsUpdaterSupported()) {
       return sendUpdateState({
         status: 'unsupported',
-        message: '自动更新仅支持 Windows 安装版，不支持便携版',
+        message: '自动更新仅支持 Windows 安装版',
         progress: 0
       });
     }
@@ -491,7 +491,7 @@ function registerIpcHandlers() {
     if (!isWindowsUpdaterSupported()) {
       return sendUpdateState({
         status: 'unsupported',
-        message: '自动更新仅支持 Windows 安装版，不支持便携版',
+        message: '自动更新仅支持 Windows 安装版',
         progress: 0
       });
     }
