@@ -56,8 +56,7 @@
         }
       ],
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "nsis": {
