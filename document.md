@@ -226,7 +226,7 @@ TODO 页面：
 - `#projectPageEditor` 挂载富文本编辑器。
 - `#projectSourceEditor` 是源码模式 textarea。
 - `#projectPageTabs` 渲染页码按钮和新增按钮。页码支持拖拽排序，拖拽插入位置会被限制在新增按钮左侧。
-- `#projectFindBar` 是项目内查找条，用户在项目编辑区域按 `Ctrl+F` / `Cmd+F` 时显示；每次打开会清空输入。输入后只跳到第一个结果所在页，不立即选中；点击上/下按钮才选中对应结果。
+- `#projectFindBar` 是项目内查找条，用户在项目编辑区域按 `Ctrl+F` / `Cmd+F` 时显示；每次打开会清空输入。输入后只统计匹配数量，不自动切换页面；点击上/下按钮才跳到对应页面并选中结果。
 
 常用个人信息页面：
 
@@ -368,7 +368,7 @@ API 封装：
 - `addProjectPage()`：新增页面。
 - `reorderProjectPages(fromIndex, toIndex)`：页码拖拽排序。
 - `setProjectSourceMode(nextMode)` / `toggleProjectSourceMode()`：富文本和源码 textarea 之间切换。
-- `openProjectFind()` / `updateProjectFind()` / `moveProjectFind()` / `goToProjectFindResult()`：当前项目全页查找。打开查找框会清空输入；输入后只跳到第一个命中页；点击上/下按钮才选中匹配文本。
+- `openProjectFind()` / `updateProjectFind()` / `moveProjectFind()` / `goToProjectFindResult()`：当前项目全页查找。打开查找框会清空输入；输入后只统计匹配数量，不自动切换页面；点击上/下按钮才跳到对应页面并选中匹配文本。
 
 项目内容保存细节：
 
