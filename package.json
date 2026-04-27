@@ -61,6 +61,7 @@
       ]
     },
     "nsis": {
+      "artifactName": "${productName}_Setup_${version}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
@@ -76,6 +77,9 @@
       "target": [
         "dmg"
       ]
+    },
+    "dmg": {
+      "artifactName": "${productName}_Setup_${version}.${ext}"
     }
   },
   "dependencies": {
