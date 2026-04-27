@@ -318,6 +318,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 .btn-danger { background: transparent; color: var(--danger); padding: 4px 8px; }
 .btn-danger:hover { background: rgba(184,109,98,0.1); }
+.settings-actions .btn-danger-solid:hover { background: var(--danger-hover); color: #fff; }
 
 .btn-ghost { background: transparent; color: var(--text-light); padding: 4px 8px; }
 .btn-ghost:hover { background: rgba(47,56,52,0.06); color: var(--text); }
@@ -1023,6 +1024,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 }
 
 .project-editor-wrap {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1204,6 +1206,80 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 .project-page-editor .novel-project-editor-prose p {
   margin: 0.5em 0;
+}
+
+.project-page-editor .novel-project-editor-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  cursor: nwse-resize;
+}
+
+.project-page-find {
+  position: absolute;
+  top: 68px;
+  right: 18px;
+  z-index: 8;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  width: min(340px, calc(100% - 36px));
+  padding: 6px 7px 6px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-bg) 92%, white);
+  box-shadow: 0 14px 32px rgba(35,45,41,0.13);
+  backdrop-filter: blur(12px);
+}
+
+.project-page-find.active {
+  display: flex;
+  animation: findBarIn 0.22s ease both;
+}
+
+@keyframes findBarIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.project-page-find input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.project-page-find-count {
+  min-width: 44px;
+  color: var(--text-light);
+  font-size: 11px;
+  text-align: center;
+}
+
+.project-page-find button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.project-page-find button:hover {
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 .project-page-editor .novel-project-editor-prose h1,
@@ -1392,6 +1468,39 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
   color: var(--text-light);
   font-size: 12px;
   line-height: 1.6;
+}
+
+.trash-list {
+  display: grid;
+  gap: 8px;
+}
+
+.trash-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.trash-row:last-child {
+  border-bottom: 0;
+}
+
+.trash-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.trash-meta {
+  margin-top: 3px;
+  color: var(--text-light);
+  font-size: 11px;
+}
+
+.trash-restore-overlay {
+  z-index: 120;
 }
 
 .settings-actions,
@@ -1890,6 +1999,13 @@ textarea.form-input {
                   spellcheck="false"
                   oninput="handleProjectSourceInput(this.value)"
                 ></textarea>
+                <div class="project-page-find" id="projectFindBar">
+                  <input type="text" id="projectFindInput" placeholder="查找当前本子..." autocomplete="off" oninput="updateProjectFind(this.value)">
+                  <span class="project-page-find-count" id="projectFindCount">0/0</span>
+                  <button type="button" title="上一个" onclick="moveProjectFind(-1)">&#8249;</button>
+                  <button type="button" title="下一个" onclick="moveProjectFind(1)">&#8250;</button>
+                  <button type="button" title="关闭" onclick="closeProjectFind()">×</button>
+                </div>
               </div>
 
               <div class="project-page-footer">
@@ -2034,6 +2150,8 @@ textarea.form-input {
           <div class="settings-actions">
             <button class="btn btn-secondary" onclick="importDataFile()">导入</button>
             <button class="btn btn-secondary" onclick="exportDataFile()">导出</button>
+            <button class="btn btn-secondary" onclick="openTrashRestore()">恢复</button>
+            <button class="btn btn-danger-solid" onclick="askClearTrash()">清空回收站</button>
           </div>
         </section>
 
@@ -2077,6 +2195,22 @@ textarea.form-input {
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 回收站恢复 -->
+<div class="modal-overlay trash-restore-overlay" id="trashRestoreModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>恢复回收站</h3>
+      <button class="modal-close" onclick="closeTrashRestore()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="trash-list" id="trashRestoreList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTrashRestore()">关闭</button>
     </div>
   </div>
 </div>
@@ -2306,6 +2440,9 @@ let projectSourceMode = false;
 let projectSaveRevision = 0;
 let projectSaveHideTimer = null;
 let projectSaveStatus = { text: '', visible: false, tone: '' };
+let projectFindResults = [];
+let projectFindIndex = -1;
+let projectFindQuery = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
@@ -2561,6 +2698,12 @@ async function changeDataDir() {
     return;
   }
 
+  openConfirm(`确定要将数据目录迁移到「${selectedNextDataDir}」吗？`, migrateDataDir);
+}
+
+async function migrateDataDir() {
+  if (!selectedNextDataDir) return;
+
   setSettingsMessage('正在迁移数据...');
   try {
     const result = await apiPost('data-dir', { targetDir: selectedNextDataDir });
@@ -2576,6 +2719,78 @@ async function changeDataDir() {
   } catch (error) {
     setSettingsMessage(error.message || '更改数据目录失败');
   }
+}
+
+function formatTrashTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '未知时间';
+  return date.toLocaleString('zh-CN', { hour12: false });
+}
+
+async function openTrashRestore() {
+  const modal = document.getElementById('trashRestoreModal');
+  const list = document.getElementById('trashRestoreList');
+  modal.classList.add('active');
+  list.innerHTML = '<p class="settings-message">正在读取回收站...</p>';
+  try {
+    const res = await fetch(`/api/trash?t=${Date.now()}`, { cache: 'no-store' });
+    const items = await res.json().catch(() => []);
+    if (!res.ok) throw new Error(items?.error || res.statusText || '读取回收站失败');
+    if (!Array.isArray(items)) throw new Error('回收站数据格式不正确');
+    if (!items.length) {
+      list.innerHTML = '<p class="settings-message">回收站是空的</p>';
+      return;
+    }
+    list.innerHTML = `
+      <div class="trash-meta">共 ${items.length} 项</div>
+      ${items.map(item => `
+        <div class="trash-row">
+          <div>
+            <div class="trash-title">${escHtml(item.title || '无标题')}</div>
+            <div class="trash-meta">${item.type === 'todo' ? 'TODO' : '项目'} · 删除于 ${escHtml(formatTrashTime(item.deletedAt))}</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="restoreTrashItem('${escAttr(item.file)}')">恢复</button>
+        </div>
+      `).join('')}
+    `;
+  } catch (error) {
+    list.innerHTML = `
+      <div class="trash-row">
+        <div>
+          <div class="trash-title">读取失败</div>
+          <div class="trash-meta">${escHtml(error.message || '读取回收站失败')}</div>
+      </div>
+    `;
+  }
+}
+
+function closeTrashRestore() {
+  document.getElementById('trashRestoreModal').classList.remove('active');
+}
+
+async function restoreTrashItem(file) {
+  try {
+    await apiPost('restore-trash', { file });
+    await loadData();
+    renderNotes();
+    renderProjects();
+    await openTrashRestore();
+    showToast('已恢复');
+  } catch (error) {
+    showToast(error.message || '恢复失败');
+  }
+}
+
+function askClearTrash() {
+  openConfirm('确定要清空回收站吗？清空后无法恢复。', async () => {
+    try {
+      await apiPost('clear-trash');
+      closeTrashRestore();
+      showToast('回收站已清空');
+    } catch (error) {
+      showToast(error.message || '清空失败');
+    }
+  });
 }
 
 async function checkUpdateFromSettings() {
@@ -2784,6 +2999,7 @@ function bindPointerSortable(container, itemSelector, options = {}) {
     excludedSelector = 'input, textarea, select, button, a, [contenteditable="true"]',
     placeholderClass = '',
     placeholderStyle = null,
+    maxIndex = null,
     onDragStart = null,
     onDragEnd = null,
     onReorder
@@ -2861,7 +3077,9 @@ function bindPointerSortable(container, itemSelector, options = {}) {
     event.preventDefault();
     moveDragProxy(event.clientX, event.clientY);
 
-    const nextIndex = getSortableInsertionIndex(container, itemSelector, state.source, event.clientX, event.clientY, state.sourceIndex);
+    const limit = typeof maxIndex === 'function' ? maxIndex() : maxIndex;
+    const rawNextIndex = getSortableInsertionIndex(container, itemSelector, state.source, event.clientX, event.clientY, state.sourceIndex);
+    const nextIndex = Number.isFinite(limit) ? Math.min(rawNextIndex, Math.max(0, limit - 1)) : rawNextIndex;
     const currentItems = Array.from(container.children)
       .filter(child => child === state.placeholder || child.matches(itemSelector));
     if (currentItems[nextIndex] === state.placeholder) return;
@@ -3662,6 +3880,100 @@ function toggleProjectSourceMode() {
   setProjectSourceMode(!projectSourceMode);
 }
 
+function htmlToSearchText(value) {
+  const box = document.createElement('div');
+  box.innerHTML = value || '';
+  return box.textContent || '';
+}
+
+function openProjectFind() {
+  if (!activeProjectId) return;
+  const bar = document.getElementById('projectFindBar');
+  const input = document.getElementById('projectFindInput');
+  bar?.classList.add('active');
+  if (input) input.value = '';
+  updateProjectFind('');
+  input?.focus();
+}
+
+function closeProjectFind() {
+  document.getElementById('projectFindBar')?.classList.remove('active');
+  projectFindResults = [];
+  projectFindIndex = -1;
+  projectFindQuery = '';
+  document.getElementById('projectFindCount').textContent = '0/0';
+  focusProjectEditor();
+}
+
+function updateProjectFind(query) {
+  const project = getProjectById(activeProjectId);
+  projectFindQuery = query || '';
+  projectFindResults = [];
+  projectFindIndex = -1;
+  if (!project || !projectFindQuery.trim()) {
+    document.getElementById('projectFindCount').textContent = '0/0';
+    return;
+  }
+
+  const needle = projectFindQuery.toLowerCase();
+  project.pages.forEach((page, pageIndex) => {
+    const text = htmlToSearchText(page).toLowerCase();
+    let start = text.indexOf(needle);
+    while (start >= 0) {
+      projectFindResults.push({ pageIndex, occurrenceInPage: projectFindResults.filter(result => result.pageIndex === pageIndex).length });
+      start = text.indexOf(needle, start + needle.length);
+    }
+  });
+
+  if (!projectFindResults.length) {
+    document.getElementById('projectFindCount').textContent = '0/0';
+    return;
+  }
+
+  projectFindIndex = 0;
+  goToProjectFindResult({ shouldSelect: false, keepFindFocus: true });
+}
+
+function moveProjectFind(direction) {
+  if (!projectFindResults.length) return;
+  projectFindIndex = (projectFindIndex + direction + projectFindResults.length) % projectFindResults.length;
+  goToProjectFindResult({ shouldSelect: true });
+}
+
+function goToProjectFindResult(options = {}) {
+  const { shouldSelect = true, keepFindFocus = false } = options;
+  const result = projectFindResults[projectFindIndex];
+  if (!result) return;
+  document.getElementById('projectFindCount').textContent = `${projectFindIndex + 1}/${projectFindResults.length}`;
+
+  const selectResult = () => {
+    if (projectSourceMode) {
+      const source = document.getElementById('projectSourceEditor');
+      const text = source.value.toLowerCase();
+      const needle = projectFindQuery.toLowerCase();
+      let pos = -1;
+      for (let i = 0; i <= result.occurrenceInPage; i++) pos = text.indexOf(needle, pos + 1);
+      if (pos >= 0) {
+        source.focus();
+        source.setSelectionRange(pos, pos + projectFindQuery.length);
+      }
+      return;
+    }
+    projectEditor?.selectText?.(projectFindQuery, result.occurrenceInPage);
+  };
+
+  if (result.pageIndex !== activeProjectPageIndex) {
+    switchProjectPage(result.pageIndex);
+    setTimeout(() => {
+      if (shouldSelect) selectResult();
+      else if (keepFindFocus) document.getElementById('projectFindInput')?.focus();
+    }, 80);
+  } else {
+    if (shouldSelect) selectResult();
+    else if (keepFindFocus) document.getElementById('projectFindInput')?.focus();
+  }
+}
+
 function getExistingProjectTags() {
   return [...new Set(projects.flatMap(project => normalizeTags(project.tags)))];
 }
@@ -3793,6 +4105,7 @@ function bindProjectPageDrag() {
   bindPointerSortable(tabs, '[data-page-index]', {
     getKey: item => Number(item.dataset.pageIndex),
     excludedSelector: '.project-page-add',
+    maxIndex: () => getProjectById(activeProjectId)?.pages.length ?? 0,
     placeholderClass: 'project-page-placeholder',
     onReorder: reorderProjectPages
   });
@@ -3912,6 +4225,7 @@ function openProjectBook(id) {
 
 function closeProjectBook() {
   flushProjectPersist();
+  closeProjectFind();
   if (projectCloseTimer) return;
 
   const view = document.getElementById('projectBookView');
@@ -3938,6 +4252,7 @@ function ensureProjectEditor() {
     placeholder: '输入项目内容...',
     sourceMode: projectSourceMode,
     saveStatus: projectSaveStatus,
+    onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),
     onChange: value => {
       if (isSettingProjectEditor) return;
@@ -3946,6 +4261,38 @@ function ensureProjectEditor() {
   });
 
   return projectEditor;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageSize(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth || 0, height: img.naturalHeight || 0 });
+    img.onerror = () => resolve({ width: 0, height: 0 });
+    img.src = dataUrl;
+  });
+}
+
+async function uploadProjectImage(file) {
+  if (!file || !file.type?.startsWith('image/')) throw new Error('请选择图片文件');
+  const dataUrl = await readFileAsDataUrl(file);
+  const [result, size] = await Promise.all([
+    apiPost('project-figures', { name: file.name || 'paste.png', dataUrl }),
+    loadImageSize(dataUrl)
+  ]);
+  const editorBox = document.getElementById('projectPageEditor')?.querySelector('.novel-project-editor-prose');
+  const editorWidth = editorBox?.clientWidth || 0;
+  const attrs = { src: result.path, alt: file.name || '图片' };
+  if (editorWidth && size.width > editorWidth * 0.5) attrs.width = '50%';
+  return attrs;
 }
 
 function setProjectEditorMarkdown(value) {
@@ -4473,6 +4820,9 @@ document.getElementById('projectEditorModal').addEventListener('click', e => {
 document.getElementById('settingsModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeSettings();
 });
+document.getElementById('trashRestoreModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeTrashRestore();
+});
 document.getElementById('confirmOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeConfirm();
 });
@@ -4484,14 +4834,33 @@ window.addEventListener('beforeunload', flushProjectPersist);
 
 /* ==================== 快捷键 ==================== */
 document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && activeProjectId) {
+    const target = e.target;
+    const inProjectEditor = target?.closest?.('#projectBookView');
+    if (inProjectEditor) {
+      e.preventDefault();
+      openProjectFind();
+      return;
+    }
+  }
+
   if (e.key === 'Escape') {
+    const findBar = document.getElementById('projectFindBar');
+    if (findBar?.classList.contains('active')) {
+      e.preventDefault();
+      closeProjectFind();
+      return;
+    }
+
     const editorModal = document.getElementById('editorModal');
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
     const settingsModal = document.getElementById('settingsModal');
+    const trashModal = document.getElementById('trashRestoreModal');
     const confirmModal = document.getElementById('confirmOverlay');
 
     if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
+    if (trashModal.classList.contains('active')) { closeTrashRestore(); return; }
     if (settingsModal.classList.contains('active')) { closeSettings(); return; }
     if (editorModal.classList.contains('active')) { closeNoteEditor(); return; }
     if (infoModal.classList.contains('active')) { closeInfoEditor(); return; }

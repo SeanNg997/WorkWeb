@@ -10,6 +10,8 @@ const DEFAULT_DATA_DIR = path.resolve(process.env.WORKWEB_DATA_DIR || path.join(
 const INFO_FILE = 'info.json';
 const EXPORT_MAGIC = 'workweb-data-export';
 const EXPORT_FILE_NAME = 'WorkWeb_data.workweb';
+const TRASH_DIR = 'trash';
+const FIGURES_DIR = path.join('projects', 'figures');
 const LEGACY_COLLECTION_FILES = {
   notes: 'notes.json',
   projects: 'projects.json'
@@ -30,6 +32,10 @@ function ensureDataFile(dataDir, file, fallback = []) {
 
 function ensureCollectionDir(dataDir, key) {
   return ensureDir(path.join(dataDir, key));
+}
+
+function ensureTrashDir(dataDir, key = '') {
+  return ensureDir(path.join(dataDir, TRASH_DIR, key));
 }
 
 function readJSON(dataDir, file, fallback = null) {
@@ -104,7 +110,18 @@ function writeCollection(dataDir, key, items) {
   });
 
   listCollectionFiles(dataDir, key).forEach(filePath => {
-    if (!keepFiles.has(path.basename(filePath))) fs.unlinkSync(filePath);
+    if (keepFiles.has(path.basename(filePath))) return;
+
+    const trashDir = ensureTrashDir(dataDir, key);
+    const item = (() => {
+      try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); }
+      catch { return {}; }
+    })();
+    const deletedAt = new Date().toISOString();
+    const baseName = path.basename(filePath, '.json');
+    const trashPath = makeUniqueFilePath(path.join(trashDir, `${baseName}_${Date.now()}.json`));
+    fs.writeFileSync(trashPath, JSON.stringify({ ...item, deletedAt }, null, 2), 'utf-8');
+    fs.unlinkSync(filePath);
   });
 }
 
@@ -130,8 +147,115 @@ function initializeData(dataDir) {
   ensureDataFile(dataDir, INFO_FILE, []);
   ensureCollectionDir(dataDir, 'notes');
   ensureCollectionDir(dataDir, 'projects');
+  ensureTrashDir(dataDir);
+  ensureDir(path.join(dataDir, FIGURES_DIR));
   migrateLegacyCollection(dataDir, 'notes');
   migrateLegacyCollection(dataDir, 'projects');
+}
+
+function safeRelativePath(value) {
+  const relativePath = String(value || '').replace(/\\/g, '/');
+  if (!relativePath || relativePath.includes('..') || path.isAbsolute(relativePath)) return '';
+  return relativePath;
+}
+
+function decodeDataUrl(dataUrl) {
+  const match = String(dataUrl || '').match(/^data:([^;,]+);base64,(.+)$/);
+  if (!match) throw new Error('图片格式不正确');
+  return {
+    mime: match[1].toLowerCase(),
+    buffer: Buffer.from(match[2], 'base64')
+  };
+}
+
+function saveProjectFigure(dataDir, body = {}) {
+  const { mime, buffer } = decodeDataUrl(body.dataUrl);
+  const extByMime = {
+    'image/png': '.png',
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/gif': '.gif',
+    'image/webp': '.webp'
+  };
+  const ext = extByMime[mime];
+  if (!ext) throw new Error('仅支持常见图片格式');
+
+  const rawName = String(body.name || '').trim();
+  const safeBase = path.basename(rawName, path.extname(rawName)).replace(/[^\w-]+/g, '_') || 'figure';
+  const fileName = `${Date.now()}_${safeBase}${ext}`;
+  const targetDir = ensureDir(path.join(dataDir, FIGURES_DIR));
+  const targetPath = makeUniqueFilePath(path.join(targetDir, fileName));
+  fs.writeFileSync(targetPath, buffer);
+  return path.relative(dataDir, targetPath).replace(/\\/g, '/');
+}
+
+function listTrash(dataDir) {
+  const root = path.join(dataDir, TRASH_DIR);
+  if (!fs.existsSync(root)) return [];
+
+  const files = [];
+  function walk(dir) {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        return;
+      }
+      if (entry.isFile() && entry.name.endsWith('.json')) files.push(fullPath);
+    });
+  }
+  walk(root);
+
+  return files.map(filePath => {
+    let item = {};
+    try { item = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+    const relativePath = path.relative(dataDir, filePath).replace(/\\/g, '/');
+    const key = inferTrashCollection(relativePath, item);
+    const stat = fs.statSync(filePath);
+    return {
+      file: relativePath,
+      type: key === 'notes' ? 'todo' : 'project',
+      title: item.title || (key === 'notes' ? '无标题 TODO' : '未命名项目'),
+      deletedAt: item.deletedAt || stat.mtime.toISOString()
+    };
+  }).sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
+}
+
+function inferTrashCollection(relativePath, item = {}) {
+  const parts = String(relativePath || '').replace(/\\/g, '/').split('/');
+  if (['notes', 'todo', 'todos'].includes(parts[1])) return 'notes';
+  if (['projects', 'project'].includes(parts[1])) return 'projects';
+  if (Array.isArray(item.pages) || Object.prototype.hasOwnProperty.call(item, 'summary')) return 'projects';
+  return 'notes';
+}
+
+function restoreTrashFile(dataDir, file) {
+  const relativePath = safeRelativePath(file);
+  if (!relativePath.startsWith(`${TRASH_DIR}/`) || !relativePath.endsWith('.json')) throw new Error('无效的恢复项目');
+  const sourcePath = path.join(dataDir, relativePath);
+  if (!sourcePath.startsWith(path.join(dataDir, TRASH_DIR)) || !fs.existsSync(sourcePath)) throw new Error('恢复项目不存在');
+
+  const item = JSON.parse(fs.readFileSync(sourcePath, 'utf-8'));
+  const key = inferTrashCollection(relativePath, item);
+  if (!['notes', 'projects'].includes(key)) throw new Error('无效的恢复项目');
+
+  delete item.deletedAt;
+  const existingIds = new Set(readCollection(dataDir, key).map(entry => entry.id).filter(Boolean));
+  const fallbackPrefix = key === 'notes' ? 'n' : 'p';
+  const originalId = sanitizeEntityId(item.id, fallbackPrefix);
+  const id = existingIds.has(originalId) ? sanitizeEntityId('', fallbackPrefix) : originalId;
+  const targetDir = ensureCollectionDir(dataDir, key);
+  const targetPath = path.join(targetDir, `${id}.json`);
+  fs.writeFileSync(targetPath, JSON.stringify({ ...item, id, updatedAt: Date.now() }, null, 2), 'utf-8');
+  fs.unlinkSync(sourcePath);
+  return { type: key === 'notes' ? 'todo' : 'project' };
+}
+
+function clearTrash(dataDir) {
+  const root = path.join(dataDir, TRASH_DIR);
+  if (!fs.existsSync(root)) return;
+  fs.rmSync(root, { recursive: true, force: true });
+  ensureTrashDir(dataDir);
 }
 
 function listDataFiles(dataDir) {
@@ -261,8 +385,8 @@ function mergeLegacyCollectionFile(dataDir, key, content) {
 }
 
 function writeImportedFile(dataDir, file) {
-  const relativePath = String(file?.path || '').replace(/\\/g, '/');
-  if (!relativePath || relativePath.includes('..') || path.isAbsolute(relativePath)) return 0;
+  const relativePath = safeRelativePath(file?.path);
+  if (!relativePath) return 0;
 
   const content = Buffer.from(String(file.data || ''), 'base64').toString('utf-8');
   if (relativePath === INFO_FILE) return mergeInfoFile(dataDir, content);
@@ -456,6 +580,66 @@ function createServer(options = {}) {
       return;
     }
 
+    if (pathname === '/api/project-figures' && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        try {
+          const imagePath = saveProjectFigure(context.dataDir, body);
+          sendJSON(res, 200, { ok: true, path: imagePath });
+        } catch (error) {
+          sendJSON(res, 400, { error: error instanceof Error ? error.message : '保存图片失败' });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
+      return;
+    }
+
+    if (pathname === '/api/trash' && req.method === 'GET') {
+      sendJSON(res, 200, listTrash(context.dataDir));
+      return;
+    }
+
+    if (pathname === '/api/restore-trash' && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        try {
+          sendJSON(res, 200, { ok: true, ...restoreTrashFile(context.dataDir, body?.file) });
+        } catch (error) {
+          sendJSON(res, 400, { error: error instanceof Error ? error.message : '恢复失败' });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
+      return;
+    }
+
+    if (pathname === '/api/clear-trash' && req.method === 'POST') {
+      clearTrash(context.dataDir);
+      sendJSON(res, 200, { ok: true });
+      return;
+    }
+
+    if (pathname.startsWith('/projects/figures/')) {
+      const relativePath = safeRelativePath(decodeURIComponent(pathname.slice(1)));
+      const figureRoot = path.join(context.dataDir, FIGURES_DIR);
+      const figurePath = path.join(context.dataDir, relativePath);
+      if (!relativePath.startsWith(`${FIGURES_DIR.replace(/\\/g, '/')}/`) || !figurePath.startsWith(figureRoot)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+      if (!fs.existsSync(figurePath) || fs.statSync(figurePath).isDirectory()) {
+        res.writeHead(404);
+        res.end('Not Found');
+        return;
+      }
+      const figureMime = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+      };
+      res.writeHead(200, { 'Content-Type': figureMime[path.extname(figurePath).toLowerCase()] || 'application/octet-stream' });
+      fs.createReadStream(figurePath).pipe(res);
+      return;
+    }
+
     let filePath = pathname === '/' ? '/index.html' : pathname;
     filePath = path.join(__dirname, filePath);
     if (!filePath.startsWith(__dirname)) {
@@ -477,7 +661,11 @@ function createServer(options = {}) {
       '.ico': 'image/x-icon',
       '.js': 'application/javascript',
       '.json': 'application/json',
-      '.png': 'image/png'
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp'
     };
 
     res.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream' });

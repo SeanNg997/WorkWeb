@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
-import { TextSelection } from '@tiptap/pm/state';
+import Image from '@tiptap/extension-image';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 const mountedEditors = new Map();
 
@@ -110,8 +111,16 @@ function ToolbarDropdown({ active, items, label, title }) {
   );
 }
 
-function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus }) {
+function imageAttrsToHtml(attrs = {}) {
+  const safeSrc = String(attrs.src || '').replace(/"/g, '&quot;');
+  const safeAlt = String(attrs.alt || '').replace(/"/g, '&quot;');
+  const width = attrs.width ? ` style="width:${String(attrs.width).replace(/"/g, '&quot;')};height:auto;"` : '';
+  return `<img src="${safeSrc}" alt="${safeAlt}"${width}>`;
+}
+
+function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus, onImageUpload }) {
   const { editor } = useEditor();
+  const fileInputRef = useRef(null);
   const tick = useSyncExternalStore(
     callback => {
       if (!editor) return () => {};
@@ -134,8 +143,24 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
   const headingActive = [1, 2, 3, 4].some(level => editor.isActive('heading', { level }));
   const listActive = editor.isActive('bulletList') || editor.isActive('orderedList');
 
+  async function handleImageFile(file) {
+    if (!file || !onImageUpload) return;
+    const attrs = await onImageUpload(file);
+    editor.chain().focus().insertContent(imageAttrsToHtml(attrs)).run();
+  }
+
   return (
     <div className="novel-toolbar">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={event => {
+          handleImageFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
       <ToolbarDropdown
         title="标题等级"
         label="标题"
@@ -198,6 +223,9 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
       />
       <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
       <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
+      {onImageUpload ? (
+        <ToolbarButton title="插入图片" active={false} onClick={() => fileInputRef.current?.click()}>图片</ToolbarButton>
+      ) : null}
       {showSourceToggle ? (
         <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
       ) : null}
@@ -231,12 +259,27 @@ function NovelProjectEditor({
   showToolbar = true,
   showSourceToggle = true,
   saveStatus = null,
+  onImageUpload,
   onEditorReady
 }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
 
   const extensions = useMemo(() => [
     StarterKit,
+    Image.extend({
+      addAttributes() {
+        return {
+          ...this.parent?.(),
+          width: {
+            default: null,
+            parseHTML: element => element.style.width || element.getAttribute('width'),
+            renderHTML: attributes => attributes.width
+              ? { style: `width:${attributes.width};height:auto;` }
+              : {}
+          }
+        };
+      }
+    }).configure({ inline: false, allowBase64: false }),
     Placeholder.configure({
       placeholder: placeholder || '输入项目内容...'
     })
@@ -261,6 +304,14 @@ function NovelProjectEditor({
     return true;
   }
 
+  async function insertUploadedImage(view, file) {
+    if (!onImageUpload) return;
+    const attrs = await onImageUpload(file);
+    const node = view.state.schema.nodes.image.create(attrs);
+    view.dispatch(view.state.tr.replaceSelectionWith(node).scrollIntoView());
+    view.focus();
+  }
+
   return (
     <EditorRoot>
       <EditorContent
@@ -272,7 +323,14 @@ function NovelProjectEditor({
         attributes: {
           class: 'novel-project-editor-prose'
         },
-        handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event)
+        handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event),
+        handlePaste: (view, event) => {
+          const files = Array.from(event.clipboardData?.files || []).filter(file => file.type.startsWith('image/'));
+          if (!files.length || !onImageUpload) return false;
+          event.preventDefault();
+          files.forEach(file => insertUploadedImage(view, file));
+          return true;
+        }
       }}
       slotBefore={showToolbar ? (
         <>
@@ -282,6 +340,7 @@ function NovelProjectEditor({
             onToggleSourceMode={onToggleSourceMode}
             showSourceToggle={showSourceToggle}
             saveStatus={saveStatus}
+            onImageUpload={onImageUpload}
           />
         </>
       ) : null}
@@ -323,6 +382,45 @@ function focusEditorEnd(editor, host) {
   selection?.addRange(range);
 }
 
+function selectDomText(host, query, occurrenceIndex = 0) {
+  const prose = host.querySelector('.novel-project-editor-prose');
+  if (!prose || !query) return false;
+
+  const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+  const parts = [];
+  let node = walker.nextNode();
+  while (node) {
+    parts.push({ node, start: parts.reduce((sum, part) => sum + part.node.nodeValue.length, 0) });
+    node = walker.nextNode();
+  }
+
+  const text = parts.map(part => part.node.nodeValue).join('');
+  const needle = query.toLowerCase();
+  let index = -1;
+  for (let i = 0; i <= occurrenceIndex; i++) {
+    index = text.toLowerCase().indexOf(needle, index + 1);
+    if (index < 0) return false;
+  }
+
+  const startPart = parts.find(part => index >= part.start && index <= part.start + part.node.nodeValue.length);
+  const endIndex = index + query.length;
+  const endPart = parts.find(part => endIndex >= part.start && endIndex <= part.start + part.node.nodeValue.length);
+  if (!startPart || !endPart) return false;
+
+  const range = document.createRange();
+  range.setStart(startPart.node, index - startPart.start);
+  range.setEnd(endPart.node, endIndex - endPart.start);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  prose.focus();
+  range.getBoundingClientRect && prose.parentElement?.scrollTo({
+    top: prose.parentElement.scrollTop + range.getBoundingClientRect().top - prose.parentElement.getBoundingClientRect().top - 80,
+    behavior: 'smooth'
+  });
+  return true;
+}
+
 function mountNovelProjectEditor(el, options = {}) {
   if (!el) return null;
 
@@ -342,6 +440,7 @@ function mountNovelProjectEditor(el, options = {}) {
     showToolbar: options.showToolbar !== false,
     showSourceToggle: options.showSourceToggle !== false,
     saveStatus: options.saveStatus || null,
+    onImageUpload: options.onImageUpload,
     editor: null,
     version: 0
   };
@@ -350,6 +449,40 @@ function mountNovelProjectEditor(el, options = {}) {
     if (!isBlankSpaceClick(el, event)) return;
     event.preventDefault();
     focusEditorEnd(state.editor, el);
+  }
+
+  function handleImagePointerDown(event) {
+    const img = event.target instanceof HTMLImageElement ? event.target : null;
+    if (!img || event.button !== 0 || !state.editor?.view) return;
+    const rect = img.getBoundingClientRect();
+    if (event.clientX < rect.right - 16 && event.clientY < rect.bottom - 16) return;
+
+    event.preventDefault();
+    const prose = el.querySelector('.novel-project-editor-prose');
+    const editorWidth = prose?.clientWidth || rect.width;
+    const startX = event.clientX;
+    const startWidth = rect.width;
+    const pos = state.editor.view.posAtDOM(img, 0);
+
+    function handleMove(moveEvent) {
+      const nextWidth = Math.max(80, Math.min(editorWidth, startWidth + moveEvent.clientX - startX));
+      img.style.width = `${Math.round((nextWidth / editorWidth) * 100)}%`;
+      img.style.height = 'auto';
+    }
+
+    function handleUp() {
+      document.removeEventListener('pointermove', handleMove);
+      document.removeEventListener('pointerup', handleUp);
+      const width = img.style.width || null;
+      if (Number.isFinite(pos) && width) {
+        const { view } = state.editor;
+        view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
+        state.editor.commands.updateAttributes('image', { width });
+      }
+    }
+
+    document.addEventListener('pointermove', handleMove);
+    document.addEventListener('pointerup', handleUp, { once: true });
   }
 
   function render() {
@@ -364,6 +497,7 @@ function mountNovelProjectEditor(el, options = {}) {
         showToolbar={state.showToolbar}
         showSourceToggle={state.showSourceToggle}
         saveStatus={state.saveStatus}
+        onImageUpload={state.onImageUpload}
         onEditorReady={editor => { state.editor = editor; }}
       />
     );
@@ -371,6 +505,7 @@ function mountNovelProjectEditor(el, options = {}) {
 
   render();
   el.addEventListener('mousedown', handleHostMouseDown);
+  el.addEventListener('pointerdown', handleImagePointerDown, true);
 
   const api = {
     setValue(nextValue) {
@@ -393,8 +528,12 @@ function mountNovelProjectEditor(el, options = {}) {
     focusEnd() {
       focusEditorEnd(state.editor, el);
     },
+    selectText(query, occurrenceIndex = 0) {
+      return selectDomText(el, query, occurrenceIndex);
+    },
     destroy() {
       el.removeEventListener('mousedown', handleHostMouseDown);
+      el.removeEventListener('pointerdown', handleImagePointerDown, true);
       root.unmount();
       mountedEditors.delete(el);
     }
