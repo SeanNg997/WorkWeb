@@ -2980,7 +2980,7 @@ function animateSortableRects(container, itemSelector, previousRects) {
   });
 }
 
-function getSortableInsertionIndex(container, itemSelector, source, x, y, sourceIndex = -1) {
+function getSortableInsertionIndex(container, itemSelector, source, x, y) {
   const items = Array.from(container.children)
     .filter(child => child.matches(itemSelector) && child !== source && !child.classList.contains('sort-drag-proxy'));
 
@@ -3000,14 +3000,6 @@ function getSortableInsertionIndex(container, itemSelector, source, x, y, source
   const centerX = nearest.rect.left + nearest.rect.width / 2;
   const centerY = nearest.rect.top + nearest.rect.height / 2;
   const isSameRow = y >= nearest.rect.top - 8 && y <= nearest.rect.bottom + 8;
-  const isOverNearest = x >= nearest.rect.left - 8
-    && x <= nearest.rect.right + 8
-    && y >= nearest.rect.top - 8
-    && y <= nearest.rect.bottom + 8;
-
-  if (sourceIndex >= 0 && isOverNearest) {
-    return nearest.index + (sourceIndex <= nearest.index ? 1 : 0);
-  }
 
   const insertAfter = isSameRow ? x >= centerX : y >= centerY;
   return nearest.index + (insertAfter ? 1 : 0);
@@ -3062,7 +3054,6 @@ function bindPointerSortable(container, itemSelector, options = {}) {
         proxy: null,
         placeholder: null,
         sourceRect: null,
-        sourceIndex: Array.from(container.children).filter(child => child.matches(itemSelector)).indexOf(item),
         pointerId: event.pointerId
       };
     }, listenerOptions);
@@ -3118,7 +3109,7 @@ function bindPointerSortable(container, itemSelector, options = {}) {
     onDragMove?.(event, state);
 
     const limit = typeof maxIndex === 'function' ? maxIndex() : maxIndex;
-    const rawNextIndex = getSortableInsertionIndex(container, itemSelector, state.source, event.clientX, event.clientY, state.sourceIndex);
+    const rawNextIndex = getSortableInsertionIndex(container, itemSelector, state.source, event.clientX, event.clientY);
     const nextIndex = Number.isFinite(limit) ? Math.min(rawNextIndex, Math.max(0, limit - 1)) : rawNextIndex;
     const currentItems = Array.from(container.children)
       .filter(child => child === state.placeholder || child.matches(itemSelector));
