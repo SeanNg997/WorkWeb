@@ -391,6 +391,22 @@ async function ensureServer() {
 }
 
 function createWindow() {
+  const chromeOptions = process.platform === 'darwin'
+    ? {
+        titleBarStyle: 'hiddenInset',
+        trafficLightPosition: { x: 16, y: 18 }
+      }
+    : process.platform === 'win32'
+      ? {
+          titleBarStyle: 'hidden',
+          titleBarOverlay: {
+            color: '#f4f2ec',
+            symbolColor: '#2f3834',
+            height: 42
+          }
+        }
+      : {};
+
   mainWindow = new BrowserWindow({
     width: 1480,
     height: 940,
@@ -399,7 +415,8 @@ function createWindow() {
     title: 'WorkWeb',
     icon: ICON_PATH,
     backgroundColor: '#f4efe4',
-    autoHideMenuBar: false,
+    autoHideMenuBar: true,
+    ...chromeOptions,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -409,7 +426,7 @@ function createWindow() {
 
   mainWindow.setMenu(null);
   mainWindow.setMenuBarVisibility(false);
-  mainWindow.setAutoHideMenuBar(false);
+  mainWindow.setAutoHideMenuBar(true);
 
   mainWindow.on('closed', () => {
     mainWindow = null;

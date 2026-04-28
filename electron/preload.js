@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('workwebDesktop', {
+  platform: process.platform,
   selectDirectory: options => ipcRenderer.invoke('workweb:selectDirectory', options || {}),
   selectImportFile: () => ipcRenderer.invoke('workweb:selectImportFile'),
   getSetting: key => ipcRenderer.invoke('workweb:getSetting', key),

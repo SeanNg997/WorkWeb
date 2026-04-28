@@ -10,6 +10,12 @@
 <link rel="shortcut icon" href="image/icon.ico">
 <script src="vendor/marked.min.js"></script>
 <script src="vendor/novel-project-editor.js"></script>
+<script>
+const workwebDesktopPlatform = window.workwebDesktop?.platform || '';
+if (workwebDesktopPlatform) {
+  document.documentElement.classList.add('desktop-window', `platform-${workwebDesktopPlatform}`);
+}
+</script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -297,6 +303,29 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 .workspace-body::-webkit-scrollbar { width: 6px; }
 .workspace-body::-webkit-scrollbar-track { background: transparent; }
 .workspace-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
+html.desktop-window .sidebar-header,
+html.desktop-window .workspace-header {
+  -webkit-app-region: drag;
+}
+
+html.desktop-window .sidebar-header { padding-top: 52px; }
+html.desktop-window .workspace-header { padding-top: 52px; }
+
+html.desktop-window button,
+html.desktop-window input,
+html.desktop-window textarea,
+html.desktop-window select,
+html.desktop-window a,
+html.desktop-window [contenteditable="true"],
+html.desktop-window .nav-item,
+html.desktop-window .workspace-body,
+html.desktop-window .modal-overlay,
+html.desktop-window .project-page-tabs,
+html.desktop-window .project-page-find,
+html.desktop-window .novel-toolbar {
+  -webkit-app-region: no-drag;
+}
 
 .page { display: none; }
 .page.active { display: flex; flex-direction: column; height: 100%; }
