@@ -398,12 +398,7 @@ function createWindow() {
       }
     : process.platform === 'win32'
       ? {
-          titleBarStyle: 'hidden',
-          titleBarOverlay: {
-            color: '#f4f2ec',
-            symbolColor: '#2f3834',
-            height: 42
-          }
+          frame: false
         }
       : {};
 
@@ -431,9 +426,34 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('workweb:windowMaximized', true);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('workweb:windowMaximized', false);
+  });
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('workweb:minimizeWindow', () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.handle('workweb:toggleMaximizeWindow', () => {
+    if (!mainWindow) return false;
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+    return mainWindow.isMaximized();
+  });
+
+  ipcMain.handle('workweb:closeWindow', () => {
+    mainWindow?.close();
+  });
+
+  ipcMain.handle('workweb:isWindowMaximized', () => Boolean(mainWindow?.isMaximized()));
+
   ipcMain.handle('workweb:selectDirectory', async (_event, options = {}) => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: options.title || '选择文件夹',
