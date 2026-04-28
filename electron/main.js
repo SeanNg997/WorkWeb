@@ -398,7 +398,12 @@ function createWindow() {
       }
     : process.platform === 'win32'
       ? {
-          frame: false
+          titleBarStyle: 'hidden',
+          titleBarOverlay: {
+            color: '#00000000',
+            symbolColor: '#314038',
+            height: 42
+          }
         }
       : {};
 

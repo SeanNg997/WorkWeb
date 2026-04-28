@@ -5,6 +5,7 @@ import Image from '@tiptap/extension-image';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 const mountedEditors = new Map();
+const IMAGE_RESIZE_HOTSPOT_SIZE = 16;
 
 function looksLikeHtml(value) {
   return /<\/?[a-z][\s\S]*>/i.test(value || '');
@@ -444,6 +445,7 @@ function mountNovelProjectEditor(el, options = {}) {
     editor: null,
     version: 0
   };
+  let resizeReadyImage = null;
 
   function handleHostMouseDown(event) {
     if (!isBlankSpaceClick(el, event)) return;
@@ -451,11 +453,37 @@ function mountNovelProjectEditor(el, options = {}) {
     focusEditorEnd(state.editor, el);
   }
 
+  function isResizeHandleHit(event, rect) {
+    return event.clientX >= rect.right - IMAGE_RESIZE_HOTSPOT_SIZE
+      && event.clientY >= rect.bottom - IMAGE_RESIZE_HOTSPOT_SIZE;
+  }
+
+  function setResizeReadyImage(nextImage) {
+    if (resizeReadyImage && resizeReadyImage !== nextImage) {
+      resizeReadyImage.classList.remove('resize-ready');
+    }
+    resizeReadyImage = nextImage || null;
+    resizeReadyImage?.classList.add('resize-ready');
+  }
+
+  function handleImagePointerMove(event) {
+    const img = event.target instanceof HTMLImageElement ? event.target : null;
+    if (!img) {
+      setResizeReadyImage(null);
+      return;
+    }
+    setResizeReadyImage(isResizeHandleHit(event, img.getBoundingClientRect()) ? img : null);
+  }
+
+  function clearImageResizeReady() {
+    setResizeReadyImage(null);
+  }
+
   function handleImagePointerDown(event) {
     const img = event.target instanceof HTMLImageElement ? event.target : null;
     if (!img || event.button !== 0 || !state.editor?.view) return;
     const rect = img.getBoundingClientRect();
-    if (event.clientX < rect.right - 16 && event.clientY < rect.bottom - 16) return;
+    if (!isResizeHandleHit(event, rect)) return;
 
     event.preventDefault();
     const prose = el.querySelector('.novel-project-editor-prose');
@@ -505,7 +533,9 @@ function mountNovelProjectEditor(el, options = {}) {
 
   render();
   el.addEventListener('mousedown', handleHostMouseDown);
+  el.addEventListener('pointermove', handleImagePointerMove, true);
   el.addEventListener('pointerdown', handleImagePointerDown, true);
+  el.addEventListener('pointerleave', clearImageResizeReady, true);
 
   const api = {
     setValue(nextValue) {
@@ -533,7 +563,10 @@ function mountNovelProjectEditor(el, options = {}) {
     },
     destroy() {
       el.removeEventListener('mousedown', handleHostMouseDown);
+      el.removeEventListener('pointermove', handleImagePointerMove, true);
       el.removeEventListener('pointerdown', handleImagePointerDown, true);
+      el.removeEventListener('pointerleave', clearImageResizeReady, true);
+      clearImageResizeReady();
       root.unmount();
       mountedEditors.delete(el);
     }

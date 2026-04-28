@@ -333,7 +333,7 @@ body.sidebar-collapsed .workspace {
 
 html.platform-win32 .workspace-header {
   min-height: 86px;
-  padding-right: 168px;
+  padding-right: 32px;
 }
 
 .workspace-body {
@@ -382,8 +382,16 @@ html.desktop-window .novel-toolbar {
   transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sidebar-toggle-zone.is-animating .sidebar-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 body.sidebar-collapsed .sidebar-toggle-zone {
   left: 0;
+}
+
+.sidebar-toggle-zone[data-visual-state="collapsed"] {
   justify-content: flex-start;
 }
 
@@ -404,15 +412,15 @@ body.sidebar-collapsed .sidebar-toggle-zone {
               box-shadow var(--transition);
 }
 
-.sidebar-toggle-zone:hover .sidebar-toggle,
-.sidebar-toggle:focus-visible {
-  opacity: 1;
-}
-
-body.sidebar-collapsed .sidebar-toggle {
+.sidebar-toggle-zone[data-visual-state="collapsed"] .sidebar-toggle {
   border-right: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
   border-left: none;
   border-radius: 0 12px 12px 0;
+}
+
+.sidebar-toggle-zone:hover .sidebar-toggle,
+.sidebar-toggle:focus-visible {
+  opacity: 1;
 }
 
 .sidebar-toggle:hover {
@@ -428,18 +436,34 @@ body.sidebar-collapsed .sidebar-toggle {
   transform: translateY(-1px);
 }
 
-.windows-window-controls {
+.desktop-titlebar {
   position: fixed;
+  left: 0;
   top: 0;
   right: 0;
-  z-index: 80;
+  z-index: 70;
   display: none;
+  height: 42px;
+  -webkit-app-region: drag;
+}
+
+.windows-window-controls {
+  position: absolute;
+  right: 0;
+  z-index: 1;
   height: 42px;
   -webkit-app-region: no-drag;
 }
 
 html.platform-win32 .windows-window-controls {
   display: flex;
+}
+
+.windows-window-controls,
+.windows-window-controls *,
+.window-control,
+.window-control * {
+  -webkit-app-region: no-drag;
 }
 
 .window-control {
@@ -453,19 +477,31 @@ html.platform-win32 .windows-window-controls {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.16s ease, color 0.16s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+  transform: scale(1);
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
 }
 
 .window-control:hover {
-  background: color-mix(in srgb, var(--accent-soft) 78%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, rgb(69, 69, 69) 18%);
+  color: var(--accent-hover);
 }
 
 .window-control:active {
-  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  background: color-mix(in srgb, var(--accent) 38%, rgb(69, 69, 69) 6%);
+  color: var(--accent-hover);
+  transform: scale(0.94);
 }
 
 .window-control.close:hover {
-  background: #c7504a;
+  background: #b93f39;
+  color: #fff;
+}
+
+.window-control.close:active {
+  background: #982d28;
   color: #fff;
 }
 
@@ -1439,6 +1475,10 @@ html.platform-win32 .windows-window-controls {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
+  cursor: default;
+}
+
+.project-page-editor .novel-project-editor-prose img.resize-ready {
   cursor: nwse-resize;
 }
 
@@ -2209,16 +2249,18 @@ textarea.form-input {
   </button>
 </div>
 
-<div class="windows-window-controls" aria-label="窗口控制">
-  <button class="window-control minimize" type="button" title="最小化" onclick="minimizeDesktopWindow()">
-    <span class="window-control-icon" aria-hidden="true"></span>
-  </button>
-  <button class="window-control maximize" id="windowMaximizeBtn" type="button" title="最大化" onclick="toggleDesktopMaximize()">
-    <span class="window-control-icon" aria-hidden="true"></span>
-  </button>
-  <button class="window-control close" type="button" title="关闭" onclick="closeDesktopWindow()">
-    <span class="window-control-icon" aria-hidden="true"></span>
-  </button>
+<div class="desktop-titlebar">
+  <div class="windows-window-controls" aria-label="窗口控制">
+    <button class="window-control minimize" id="windowMinimizeBtn" type="button" title="最小化" aria-label="最小化">
+      <span class="window-control-icon" aria-hidden="true"></span>
+    </button>
+    <button class="window-control maximize" id="windowMaximizeBtn" type="button" title="最大化" aria-label="最大化">
+      <span class="window-control-icon" aria-hidden="true"></span>
+    </button>
+    <button class="window-control close" id="windowCloseBtn" type="button" title="关闭" aria-label="关闭">
+      <span class="window-control-icon" aria-hidden="true"></span>
+    </button>
+  </div>
 </div>
 
 <!-- 工作区 -->
@@ -2723,6 +2765,9 @@ let projectFindResults = [];
 let projectFindIndex = -1;
 let projectFindQuery = '';
 const SIDEBAR_COLLAPSED_KEY = 'wb_sidebar_collapsed';
+const SIDEBAR_TRANSITION_MS = 320;
+let sidebarToggleAnimating = false;
+let sidebarTransitionTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
@@ -2752,18 +2797,51 @@ function loadTheme() {
   setTheme(localStorage.getItem('wb_theme') || 'sage');
 }
 
-function setSidebarCollapsed(collapsed, persist = true) {
-  const isCollapsed = Boolean(collapsed);
-  document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+function applySidebarToggleVisual(collapsed) {
+  const zone = document.querySelector('.sidebar-toggle-zone');
   const button = document.getElementById('sidebarToggleBtn');
   const icon = button?.querySelector('.sidebar-toggle-icon');
-  if (button) button.setAttribute('aria-label', isCollapsed ? '展开导航栏' : '收起导航栏');
-  if (icon) icon.textContent = isCollapsed ? '›' : '‹';
+  if (zone) zone.dataset.visualState = collapsed ? 'collapsed' : 'expanded';
+  if (button) button.setAttribute('aria-label', collapsed ? '展开导航栏' : '收起导航栏');
+  if (icon) icon.textContent = collapsed ? '›' : '‹';
+}
+
+function clearSidebarTransitionTimer() {
+  if (!sidebarTransitionTimer) return;
+  clearTimeout(sidebarTransitionTimer);
+  sidebarTransitionTimer = null;
+}
+
+function finalizeSidebarToggle(collapsed) {
+  const zone = document.querySelector('.sidebar-toggle-zone');
+  const button = document.getElementById('sidebarToggleBtn');
+  clearSidebarTransitionTimer();
+  sidebarToggleAnimating = false;
+  zone?.classList.remove('is-animating');
+  if (button) button.disabled = false;
+  applySidebarToggleVisual(collapsed);
+}
+
+function setSidebarCollapsed(collapsed, persist = true, syncVisual = true) {
+  const isCollapsed = Boolean(collapsed);
+  document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+  if (syncVisual) applySidebarToggleVisual(isCollapsed);
   if (persist) localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isCollapsed ? '1' : '0');
 }
 
 function toggleSidebar() {
-  setSidebarCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+  if (sidebarToggleAnimating) return;
+  const currentCollapsed = document.body.classList.contains('sidebar-collapsed');
+  const nextCollapsed = !currentCollapsed;
+  const zone = document.querySelector('.sidebar-toggle-zone');
+  const button = document.getElementById('sidebarToggleBtn');
+  sidebarToggleAnimating = true;
+  zone?.classList.add('is-animating');
+  if (button) button.disabled = true;
+  applySidebarToggleVisual(currentCollapsed);
+  setSidebarCollapsed(nextCollapsed, true, false);
+  clearSidebarTransitionTimer();
+  sidebarTransitionTimer = setTimeout(() => finalizeSidebarToggle(nextCollapsed), SIDEBAR_TRANSITION_MS + 40);
 }
 
 function loadSidebarState() {
@@ -2775,10 +2853,36 @@ function updateWindowMaximizeButton(maximized) {
   if (!button) return;
   button.classList.toggle('is-maximized', Boolean(maximized));
   button.title = maximized ? '还原' : '最大化';
+  button.setAttribute('aria-label', maximized ? '还原' : '最大化');
+}
+
+function bindDesktopWindowControl(buttonId, handler) {
+  const button = document.getElementById(buttonId);
+  if (!button || button.dataset.bound === '1') return;
+  button.dataset.bound = '1';
+  ['pointerdown', 'mousedown', 'dblclick'].forEach(eventName => {
+    button.addEventListener(eventName, event => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  });
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    handler();
+  });
 }
 
 async function initWindowControls() {
   if (workwebDesktopPlatform !== 'win32') return;
+  document.querySelector('.desktop-titlebar')?.remove();
+  bindDesktopWindowControl('windowMinimizeBtn', minimizeDesktopWindow);
+  bindDesktopWindowControl('windowMaximizeBtn', toggleDesktopMaximize);
+  bindDesktopWindowControl('windowCloseBtn', closeDesktopWindow);
+  document.querySelector('.sidebar-toggle-zone')?.addEventListener('transitionend', event => {
+    if (event.propertyName !== 'left' || !sidebarToggleAnimating) return;
+    finalizeSidebarToggle(document.body.classList.contains('sidebar-collapsed'));
+  });
   window.workwebDesktop?.onWindowMaximized?.(updateWindowMaximizeButton);
   if (window.workwebDesktop?.isWindowMaximized) {
     updateWindowMaximizeButton(await window.workwebDesktop.isWindowMaximized());
