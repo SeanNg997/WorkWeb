@@ -341,6 +341,12 @@ html.platform-win32 .workspace-header {
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
 }
 
+.workspace-body.project-book-open {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .workspace-body::-webkit-scrollbar { width: 6px; }
 .workspace-body::-webkit-scrollbar-track { background: transparent; }
 .workspace-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
@@ -928,6 +934,11 @@ html.platform-win32 .windows-window-controls {
   flex-direction: column;
 }
 
+.workspace-body.project-book-open .projects-shell {
+  flex: 1;
+  min-height: 0;
+}
+
 .project-shelf {
   display: grid;
   gap: 26px;
@@ -1267,6 +1278,8 @@ html.platform-win32 .windows-window-controls {
 
 .project-book-summary {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   font-size: 14px;
   line-height: 1.9;
   color: var(--text-light);
@@ -1296,15 +1309,18 @@ html.platform-win32 .windows-window-controls {
 }
 
 .project-page-editor {
-  flex: 1;
-  min-height: 240px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .project-source-editor {
   flex: 1;
-  min-height: 240px;
+  min-height: 0;
   width: 100%;
   display: none;
+  overflow: auto;
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -1334,6 +1350,10 @@ html.platform-win32 .windows-window-controls {
   border-radius: 18px 18px 0 0;
 }
 
+.project-editor-wrap.source-mode .project-page-editor .novel-project-editor-content > div:not(.novel-toolbar) {
+  display: none;
+}
+
 .project-editor-wrap.source-mode .project-page-editor .novel-project-editor-prose {
   display: none;
 }
@@ -1351,17 +1371,19 @@ html.platform-win32 .windows-window-controls {
 }
 
 .project-page-editor .novel-project-editor-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
-  min-height: 240px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(255,255,255,0.74);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .project-page-editor .novel-toolbar {
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
   z-index: 5;
   display: flex;
   flex-wrap: wrap;
@@ -1457,15 +1479,30 @@ html.platform-win32 .windows-window-controls {
   padding: 0 12px;
 }
 
+.project-page-editor .novel-project-editor-content > div:not(.novel-toolbar) {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .project-page-editor .novel-project-editor-prose {
-  min-height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: 20px 22px;
   outline: none;
   color: var(--text);
   font-family: inherit;
   font-size: calc(14px * var(--markdown-font-scale, 1));
   line-height: 1.85;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.14) transparent;
 }
+
+.project-page-editor .novel-project-editor-prose::-webkit-scrollbar { width: 6px; }
+.project-page-editor .novel-project-editor-prose::-webkit-scrollbar-track { background: transparent; }
+.project-page-editor .novel-project-editor-prose::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); border-radius: 3px; }
 
 .project-page-editor .novel-project-editor-prose p {
   margin: 0.5em 0;
@@ -2287,7 +2324,7 @@ textarea.form-input {
       <h2>项目书架</h2>
       <button class="btn btn-primary" onclick="openProjectEditor()"><span>&#43;</span> 添加项目</button>
     </div>
-    <div class="workspace-body" style="flex:1;padding-top: 0px">
+    <div class="workspace-body" id="projectWorkspaceBody" style="flex:1;padding-top: 0px">
       <div class="projects-shell">
         <div id="projectShelfView">
           <div class="project-shelf" id="projectShelf"></div>
@@ -3982,6 +4019,7 @@ function renderProjects() {
   const shelf = document.getElementById('projectShelf');
   const empty = document.getElementById('projectEmptyState');
   const shelfView = document.getElementById('projectShelfView');
+  const projectWorkspaceBody = document.getElementById('projectWorkspaceBody');
 
   if (!projects.length) {
     shelf.innerHTML = '';
@@ -4037,6 +4075,7 @@ function renderProjects() {
     activeProjectPageIndex = 0;
   }
 
+  projectWorkspaceBody?.classList.toggle('project-book-open', Boolean(activeProjectId || projectCloseTimer));
   shelfView.style.display = activeProjectId || projectCloseTimer ? 'none' : 'block';
   renderProjectBook();
 }
@@ -5328,7 +5367,25 @@ document.addEventListener('click', e => {
 window.addEventListener('beforeunload', flushProjectPersist);
 
 /* ==================== 快捷键 ==================== */
+const ALT_PAGE_SHORTCUTS = {
+  '1': 'todo',
+  '2': 'progress',
+  '3': 'info'
+};
+
+function hasActiveBlockingOverlay() {
+  return Boolean(document.querySelector('.modal-overlay.active, .confirm-overlay.active'));
+}
+
 document.addEventListener('keydown', e => {
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && ALT_PAGE_SHORTCUTS[e.key]) {
+    if (!hasActiveBlockingOverlay()) {
+      e.preventDefault();
+      switchPage(ALT_PAGE_SHORTCUTS[e.key]);
+    }
+    return;
+  }
+
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && activeProjectId) {
     const target = e.target;
     const inProjectEditor = target?.closest?.('#projectBookView');
