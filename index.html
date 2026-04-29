@@ -1248,6 +1248,7 @@ html.platform-win32 .windows-window-controls {
 }
 
 .project-left-page {
+  --project-summary-height: 32%;
   background: linear-gradient(180deg, var(--project-left-start), var(--project-left-end));
   display: flex;
   flex-direction: column;
@@ -1277,8 +1278,8 @@ html.platform-win32 .windows-window-controls {
 }
 
 .project-book-summary {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 var(--project-summary-height);
+  min-height: 72px;
   overflow: auto;
   font-size: 14px;
   line-height: 1.9;
@@ -1291,6 +1292,142 @@ html.platform-win32 .windows-window-controls {
   content: "还没有项目简介";
   color: var(--text-light);
 }
+
+.project-outline-resizer {
+  flex: 0 0 18px;
+  margin: 8px 0 4px;
+  display: flex;
+  align-items: center;
+  cursor: row-resize;
+  -webkit-app-region: no-drag;
+}
+
+.project-outline-resizer::before {
+  content: "";
+  width: 100%;
+  height: 1px;
+  border-radius: 999px;
+  background: rgba(62,79,71,0.16);
+  transition: height 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.project-outline-resizer:hover::before,
+.project-left-page.resizing-outline .project-outline-resizer::before {
+  height: 3px;
+  background: color-mix(in srgb, var(--accent) 46%, transparent);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.18);
+}
+
+.project-outline {
+  flex: 1;
+  min-height: 96px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-outline-title {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.project-outline-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-anchor: none;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47,56,52,0.18) transparent;
+}
+
+.project-outline-list::-webkit-scrollbar { width: 5px; }
+.project-outline-list::-webkit-scrollbar-track { background: transparent; }
+.project-outline-list::-webkit-scrollbar-thumb { background: rgba(47,56,52,0.18); border-radius: 3px; }
+
+.project-outline-empty {
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.project-outline-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.project-outline-toggle {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+}
+
+.project-outline-toggle:hover {
+  background: rgba(255,255,255,0.24);
+  color: var(--accent-hover);
+}
+
+.project-outline-toggle.is-placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.project-outline-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 30px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.project-outline-item:hover {
+  border-color: rgba(62,79,71,0.14);
+  background: rgba(255,255,255,0.28);
+  color: var(--accent-hover);
+}
+
+.project-outline-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-outline-level-2 { padding-left: 18px; }
+.project-outline-level-3 { padding-left: 30px; }
+.project-outline-level-4 { padding-left: 42px; }
+/* .project-outline-level-1 .project-outline-item,
+.project-outline-level-2 .project-outline-item {
+  font-weight: 700;
+} */
 
 .project-page-indicator {
   min-width: 78px;
@@ -1490,6 +1627,7 @@ html.platform-win32 .windows-window-controls {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  overflow-anchor: none;
   padding: 20px 22px;
   outline: none;
   color: var(--text);
@@ -1592,6 +1730,13 @@ html.platform-win32 .windows-window-controls {
 .project-page-editor .novel-project-editor-prose h4 {
   margin: 0.8em 0 0.35em;
   line-height: 1.3;
+  border-radius: 8px;
+  transition: background 0.28s ease, box-shadow 0.28s ease;
+}
+
+.project-page-editor .novel-project-editor-prose .project-heading-jump-highlight {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-soft) 70%, transparent);
 }
 
 .project-page-editor .novel-project-editor-prose ul,
@@ -2340,8 +2485,12 @@ textarea.form-input {
             <section class="project-left-page">
               <div class="project-title-kicker">PROJECT OVERVIEW</div>
               <h3 class="project-book-title" id="projectBookTitle"></h3>
-              <div class="project-tag-row project-overview-tags" id="projectBookTags"></div>
               <p class="project-book-summary" id="projectBookSummary"></p>
+              <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整简介和标题索引的边界"></div>
+              <nav class="project-outline" aria-label="项目标题索引">
+                <div class="project-outline-title">大纲</div>
+                <div class="project-outline-list" id="projectOutlineList"></div>
+              </nav>
               <div class="project-book-return-bar project-book-return-bar-summary">
                 <button class="btn btn-secondary btn-sm project-book-return" onclick="closeProjectBook()">返回书架</button>
               </div>
@@ -2801,6 +2950,11 @@ let projectSaveStatus = { text: '', visible: false, tone: '' };
 let projectFindResults = [];
 let projectFindIndex = -1;
 let projectFindQuery = '';
+let pendingProjectOutlineTarget = null;
+const projectOutlineCollapsedKeys = new Set();
+let projectSummaryHeight = null;
+const PROJECT_SUMMARY_MIN_HEIGHT = 72;
+const PROJECT_OUTLINE_MIN_HEIGHT = 96;
 const SIDEBAR_COLLAPSED_KEY = 'wb_sidebar_collapsed';
 const SIDEBAR_TRANSITION_MS = 320;
 let sidebarToggleAnimating = false;
@@ -2818,6 +2972,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderProjects();
   renderInfoPanels();
   applyProjectEditorMode();
+  bindProjectOutlineResizer();
+  bindProjectOutlineInteractions();
   updateDateDisplay();
   setInterval(updateDateDisplay, 60000);
 });
@@ -4359,6 +4515,219 @@ function htmlToSearchText(value) {
   return box.textContent || '';
 }
 
+function pageContentToDocument(value) {
+  const doc = document.implementation.createHTMLDocument('');
+  const body = doc.body;
+  const raw = String(value || '');
+  if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
+    body.innerHTML = raw;
+  } else if (window.marked?.parse) {
+    body.innerHTML = marked.parse(raw, { breaks: true });
+  } else {
+    body.textContent = raw;
+  }
+  return doc;
+}
+
+function getProjectOutlineItems(project) {
+  if (!project) return [];
+  const items = [];
+  const pages = project.pages.length ? project.pages : [''];
+  pages.forEach((page, pageIndex) => {
+    const doc = pageContentToDocument(page);
+    doc.body.querySelectorAll('h1, h2, h3, h4').forEach((heading, headingIndex) => {
+      const text = heading.textContent.trim().replace(/\s+/g, ' ');
+      if (!text) return;
+      items.push({
+        pageIndex,
+        headingIndex,
+        level: Math.min(4, Math.max(1, Number(heading.tagName.slice(1)) || 1)),
+        text
+      });
+    });
+  });
+  return items;
+}
+
+function getProjectOutlineKey(project, item) {
+  return [
+    project?.id || activeProjectId || '',
+    item.pageIndex,
+    item.headingIndex,
+    item.level,
+    item.text
+  ].join('|');
+}
+
+function projectOutlineItemHasChildren(items, index) {
+  const item = items[index];
+  for (let nextIndex = index + 1; nextIndex < items.length; nextIndex++) {
+    if (items[nextIndex].level <= item.level) return false;
+    if (items[nextIndex].level > item.level) return true;
+  }
+  return false;
+}
+
+function getVisibleProjectOutlineItems(project, items) {
+  const collapsedAncestorLevels = [];
+  const visibleItems = [];
+
+  items.forEach((item, index) => {
+    while (collapsedAncestorLevels.length && item.level <= collapsedAncestorLevels.at(-1)) {
+      collapsedAncestorLevels.pop();
+    }
+
+    const hidden = collapsedAncestorLevels.length > 0;
+    const key = getProjectOutlineKey(project, item);
+    const hasChildren = projectOutlineItemHasChildren(items, index);
+    const collapsed = hasChildren && projectOutlineCollapsedKeys.has(key);
+
+    if (!hidden) {
+      visibleItems.push({ ...item, index, key, hasChildren, collapsed });
+    }
+
+    if (!hidden && collapsed) collapsedAncestorLevels.push(item.level);
+  });
+
+  return visibleItems;
+}
+
+function renderProjectOutline(project) {
+  const list = document.getElementById('projectOutlineList');
+  if (!list) return;
+  const previousScrollTop = list.scrollTop;
+
+  const items = getProjectOutlineItems(project);
+  if (!items.length) {
+    list.innerHTML = '<div class="project-outline-empty">当前项目还没有可识别的标题</div>';
+    list.scrollTop = previousScrollTop;
+    return;
+  }
+
+  const visibleItems = getVisibleProjectOutlineItems(project, items);
+  list.innerHTML = visibleItems.map(item => `
+    <div class="project-outline-row project-outline-level-${item.level}">
+      <button
+        type="button"
+        class="project-outline-toggle${item.hasChildren ? '' : ' is-placeholder'}"
+        data-outline-key="${escAttr(item.key)}"
+        aria-label="${item.collapsed ? '展开标题' : '收起标题'}"
+        aria-expanded="${item.hasChildren ? String(!item.collapsed) : 'false'}"
+        aria-hidden="${item.hasChildren ? 'false' : 'true'}"
+        tabindex="-1"
+      >${item.hasChildren ? (item.collapsed ? '▸' : '▾') : ''}</button>
+      <button
+        type="button"
+        class="project-outline-item"
+        data-outline-page-index="${item.pageIndex}"
+        data-outline-heading-index="${item.headingIndex}"
+        title="第 ${item.pageIndex + 1} 页 · ${escAttr(item.text)}"
+        tabindex="-1"
+      >
+        <span class="project-outline-text">${escHtml(item.text)}</span>
+      </button>
+    </div>
+  `).join('');
+
+  list.scrollTop = previousScrollTop;
+  requestAnimationFrame(() => { list.scrollTop = previousScrollTop; });
+}
+
+function applyProjectSummaryHeight(height) {
+  const leftPage = document.querySelector('.project-left-page');
+  if (!leftPage) return;
+  projectSummaryHeight = Math.round(height);
+  leftPage.style.setProperty('--project-summary-height', `${projectSummaryHeight}px`);
+}
+
+function bindProjectOutlineResizer() {
+  const resizer = document.getElementById('projectOutlineResizer');
+  if (!resizer) return;
+
+  resizer.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+
+    const leftPage = document.querySelector('.project-left-page');
+    const summary = document.getElementById('projectBookSummary');
+    const outline = document.querySelector('.project-outline');
+    if (!leftPage || !summary || !outline) return;
+
+    event.preventDefault();
+    resizer.setPointerCapture?.(event.pointerId);
+    leftPage.classList.add('resizing-outline');
+
+    const startY = event.clientY;
+    const startHeight = summary.getBoundingClientRect().height;
+    const availableHeight = startHeight + outline.getBoundingClientRect().height;
+    const minHeight = PROJECT_SUMMARY_MIN_HEIGHT;
+    const maxHeight = Math.max(minHeight, availableHeight - PROJECT_OUTLINE_MIN_HEIGHT);
+
+    function handleMove(moveEvent) {
+      const nextHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + moveEvent.clientY - startY));
+      applyProjectSummaryHeight(nextHeight);
+    }
+
+    function handleUp() {
+      leftPage.classList.remove('resizing-outline');
+      resizer.releasePointerCapture?.(event.pointerId);
+      document.removeEventListener('pointermove', handleMove);
+      document.removeEventListener('pointerup', handleUp);
+      document.removeEventListener('pointercancel', handleUp);
+    }
+
+    document.addEventListener('pointermove', handleMove);
+    document.addEventListener('pointerup', handleUp);
+    document.addEventListener('pointercancel', handleUp);
+  });
+}
+
+function bindProjectOutlineInteractions() {
+  const list = document.getElementById('projectOutlineList');
+  if (!list) return;
+
+  function getOutlineButton(event) {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    return target?.closest?.('.project-outline-item') || null;
+  }
+
+  function getOutlineToggle(event) {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    return target?.closest?.('.project-outline-toggle') || null;
+  }
+
+  function keepOutlineScrollPosition(scrollTop) {
+    list.scrollTop = scrollTop;
+    requestAnimationFrame(() => { list.scrollTop = scrollTop; });
+    setTimeout(() => { list.scrollTop = scrollTop; }, 80);
+    setTimeout(() => { list.scrollTop = scrollTop; }, 180);
+  }
+
+  list.addEventListener('pointerdown', event => {
+    if (getOutlineButton(event) || getOutlineToggle(event)) event.preventDefault();
+  });
+
+  list.addEventListener('click', event => {
+    const outlineScrollTop = list.scrollTop;
+
+    const toggle = getOutlineToggle(event);
+    if (toggle && list.contains(toggle) && !toggle.classList.contains('is-placeholder')) {
+      event.preventDefault();
+      const key = toggle.dataset.outlineKey;
+      if (projectOutlineCollapsedKeys.has(key)) projectOutlineCollapsedKeys.delete(key);
+      else projectOutlineCollapsedKeys.add(key);
+      renderProjectOutline(getProjectById(activeProjectId));
+      keepOutlineScrollPosition(outlineScrollTop);
+      return;
+    }
+
+    const button = getOutlineButton(event);
+    if (!button || !list.contains(button)) return;
+    event.preventDefault();
+    jumpToProjectOutlineHeading(button.dataset.outlinePageIndex, button.dataset.outlineHeadingIndex);
+    keepOutlineScrollPosition(outlineScrollTop);
+  });
+}
+
 function openProjectFind() {
   if (!activeProjectId) return;
   const bar = document.getElementById('projectFindBar');
@@ -4506,8 +4875,8 @@ function renderProjectBook() {
   activeProjectPageIndex = Math.max(0, Math.min(activeProjectPageIndex, pageCount - 1));
 
   document.getElementById('projectBookTitle').textContent = project.title || '未命名项目';
-  document.getElementById('projectBookTags').innerHTML = renderProjectTags(project.tags);
   document.getElementById('projectBookSummary').textContent = project.summary || '';
+  renderProjectOutline(project);
   renderProjectPageTabs();
 
   view.classList.add('active');
@@ -4515,6 +4884,7 @@ function renderProjectBook() {
   syncProjectSourceEditor(content);
   if (!projectSourceMode) setProjectEditorMarkdown(content);
   applyProjectEditorMode();
+  scheduleProjectOutlineScroll();
 }
 
 function renderProjectPageTabs(previousRects = null, pageKeys = null) {
@@ -4820,6 +5190,7 @@ function handleProjectPageInput(value) {
   project.pages[activeProjectPageIndex] = value;
   project.updatedAt = Date.now();
   if (projectSourceMode) syncProjectSourceEditor(value);
+  renderProjectOutline(project);
   markProjectDirty();
   queuePersistProjects();
 }
@@ -4829,7 +5200,92 @@ function handleProjectSourceInput(value) {
   handleProjectPageInput(value);
 }
 
-function switchProjectPage(index) {
+function scrollProjectEditorToHeading(headingIndex, options = {}) {
+  const { highlight = true } = options;
+  const prose = document.getElementById('projectPageEditor')?.querySelector('.novel-project-editor-prose');
+  if (!prose) return { found: false };
+
+  const heading = prose.querySelectorAll('h1, h2, h3, h4')[headingIndex];
+  if (!heading) return { found: false };
+
+  const proseRect = prose.getBoundingClientRect();
+  const headingRect = heading.getBoundingClientRect();
+  const targetTop = Math.max(0, prose.scrollTop + headingRect.top - proseRect.top);
+  const maxScrollTop = Math.max(0, prose.scrollHeight - prose.clientHeight);
+  const canPlaceHeadingAtTop = targetTop <= maxScrollTop + 1;
+  const nextScrollTop = canPlaceHeadingAtTop ? targetTop : maxScrollTop;
+
+  if (Math.abs(prose.scrollTop - nextScrollTop) > 1) {
+    prose.scrollTo({
+      top: nextScrollTop,
+      behavior: 'auto'
+    });
+  }
+
+  if (highlight) {
+    heading.classList.add('project-heading-jump-highlight');
+    setTimeout(() => heading.classList.remove('project-heading-jump-highlight'), 1300);
+  }
+
+  const nextHeadingRect = heading.getBoundingClientRect();
+  const nextProseRect = prose.getBoundingClientRect();
+  return {
+    found: true,
+    canPlaceHeadingAtTop,
+    topDelta: nextHeadingRect.top - nextProseRect.top
+  };
+}
+
+function scheduleProjectOutlineScroll() {
+  if (!pendingProjectOutlineTarget || pendingProjectOutlineTarget.pageIndex !== activeProjectPageIndex) return;
+  const target = pendingProjectOutlineTarget;
+  pendingProjectOutlineTarget = null;
+  const retryDelays = [0, 80, 180, 320, 520, 800, 1200, 1700];
+
+  function attemptScroll(attempt = 0) {
+    requestAnimationFrame(() => {
+      if (target.pageIndex !== activeProjectPageIndex) return;
+
+      if (projectSourceMode) {
+        setProjectSourceMode(false, { focus: false });
+        setTimeout(() => attemptScroll(attempt + 1), retryDelays[Math.min(attempt + 1, retryDelays.length - 1)]);
+        return;
+      }
+
+      const result = scrollProjectEditorToHeading(target.headingIndex, { highlight: attempt === 0 });
+      if (!result.found && attempt < retryDelays.length - 1) {
+        setTimeout(() => attemptScroll(attempt + 1), retryDelays[attempt + 1]);
+        return;
+      }
+
+      if (result.canPlaceHeadingAtTop && Math.abs(result.topDelta) > 2 && attempt < retryDelays.length - 1) {
+        setTimeout(() => attemptScroll(attempt + 1), retryDelays[attempt + 1]);
+      }
+    });
+  }
+
+  attemptScroll();
+}
+
+function jumpToProjectOutlineHeading(pageIndex, headingIndex) {
+  const project = getProjectById(activeProjectId);
+  if (!project) return;
+
+  const targetPage = Math.max(0, Math.min(Number(pageIndex) || 0, project.pages.length - 1));
+  pendingProjectOutlineTarget = {
+    pageIndex: targetPage,
+    headingIndex: Math.max(0, Number(headingIndex) || 0)
+  };
+
+  if (targetPage !== activeProjectPageIndex) {
+    switchProjectPage(targetPage, { focus: false });
+  } else {
+    scheduleProjectOutlineScroll();
+  }
+}
+
+function switchProjectPage(index, options = {}) {
+  const { focus = true } = options;
   const project = getProjectById(activeProjectId);
   if (!project) return;
 
@@ -4838,7 +5294,7 @@ function switchProjectPage(index) {
   flushProjectPersist();
   activeProjectPageIndex = nextIndex;
   renderProjectBook();
-  focusProjectEditor();
+  if (focus) focusProjectEditor();
 }
 
 async function addProjectPage() {

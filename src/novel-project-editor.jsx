@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } fro
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
 import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 const mountedEditors = new Map();
@@ -200,6 +201,7 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
       <ToolbarButton title="正文" active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>正文</ToolbarButton>
       <ToolbarButton title="加粗" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
       <ToolbarButton title="斜体" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
+      <ToolbarButton title="下划线" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolbarButton>
       <ToolbarButton title="删除线" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
       <ToolbarDropdown
         title="列表"
@@ -267,6 +269,7 @@ function NovelProjectEditor({
 
   const extensions = useMemo(() => [
     StarterKit,
+    Underline,
     Image.extend({
       addAttributes() {
         return {

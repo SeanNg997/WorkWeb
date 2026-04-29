@@ -530,7 +530,7 @@ IPC：
 - Windows 发布配置指向 GitHub `SeanNg997/WorkWeb`
 - Windows target：`nsis`
 - macOS target：`dmg`
-- Windows NSIS 和 macOS DMG 的安装包命名模板都配置为 `${productName}_Setup_${version}.${ext}`，例如 `WorkWeb_Setup_1.0.4.exe` / `WorkWeb_Setup_1.0.4.dmg`；Windows 的 `latest.yml` 会跟随 NSIS 产物名写入同样的下划线文件名。
+- Windows NSIS 和 macOS DMG 的安装包命名模板都配置为 `${productName}_Setup_${version}.${ext}`，例如 `WorkWeb_Setup_1.0.5.exe` / `WorkWeb_Setup_1.0.5.dmg`；Windows 的 `latest.yml` 会跟随 NSIS 产物名写入同样的下划线文件名。
 
 `scripts/build-win.js` 的流程：
 
