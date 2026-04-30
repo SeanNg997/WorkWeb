@@ -2951,10 +2951,12 @@ let projectFindResults = [];
 let projectFindIndex = -1;
 let projectFindQuery = '';
 let pendingProjectOutlineTarget = null;
+let projectOutlineScrollRevision = 0;
 const projectOutlineCollapsedKeys = new Set();
 let projectSummaryHeight = null;
 const PROJECT_SUMMARY_MIN_HEIGHT = 72;
 const PROJECT_OUTLINE_MIN_HEIGHT = 96;
+const PROJECT_EDITOR_SCROLL_RETRY_DELAYS = [0, 80, 180, 320, 520, 800, 1200, 1700];
 const SIDEBAR_COLLAPSED_KEY = 'wb_sidebar_collapsed';
 const SIDEBAR_TRANSITION_MS = 320;
 let sidebarToggleAnimating = false;
@@ -4786,32 +4788,58 @@ function goToProjectFindResult(options = {}) {
   const result = projectFindResults[projectFindIndex];
   if (!result) return;
   document.getElementById('projectFindCount').textContent = `${projectFindIndex + 1}/${projectFindResults.length}`;
+  const targetQuery = projectFindQuery;
+  const targetFindIndex = projectFindIndex;
 
   const selectResult = () => {
+    if (!targetQuery) return false;
+
     if (projectSourceMode) {
       const source = document.getElementById('projectSourceEditor');
+      if (!source) return false;
       const text = source.value.toLowerCase();
-      const needle = projectFindQuery.toLowerCase();
+      const needle = targetQuery.toLowerCase();
       let pos = -1;
       for (let i = 0; i <= result.occurrenceInPage; i++) pos = text.indexOf(needle, pos + 1);
       if (pos >= 0) {
         source.focus();
-        source.setSelectionRange(pos, pos + projectFindQuery.length);
+        source.setSelectionRange(pos, pos + targetQuery.length);
+        return true;
       }
-      return;
+      return false;
     }
-    projectEditor?.selectText?.(projectFindQuery, result.occurrenceInPage);
+    return Boolean(projectEditor?.selectText?.(targetQuery, result.occurrenceInPage));
+  };
+
+  const scheduleSelectResult = (attempt = 0) => {
+    requestAnimationFrame(() => {
+      if (targetFindIndex !== projectFindIndex) return;
+      if (targetQuery !== projectFindQuery) return;
+      if (result.pageIndex !== activeProjectPageIndex) return;
+
+      if (!shouldSelect) {
+        if (keepFindFocus) document.getElementById('projectFindInput')?.focus();
+        return;
+      }
+
+      const selected = selectResult();
+      if (!selected && attempt < PROJECT_EDITOR_SCROLL_RETRY_DELAYS.length - 1) {
+        setTimeout(
+          () => scheduleSelectResult(attempt + 1),
+          PROJECT_EDITOR_SCROLL_RETRY_DELAYS[attempt + 1]
+        );
+        return;
+      }
+
+      if (!selected && keepFindFocus) document.getElementById('projectFindInput')?.focus();
+    });
   };
 
   if (result.pageIndex !== activeProjectPageIndex) {
     switchProjectPage(result.pageIndex);
-    setTimeout(() => {
-      if (shouldSelect) selectResult();
-      else if (keepFindFocus) document.getElementById('projectFindInput')?.focus();
-    }, 80);
+    scheduleSelectResult();
   } else {
-    if (shouldSelect) selectResult();
-    else if (keepFindFocus) document.getElementById('projectFindInput')?.focus();
+    scheduleSelectResult();
   }
 }
 
@@ -5201,7 +5229,7 @@ function handleProjectSourceInput(value) {
 }
 
 function scrollProjectEditorToHeading(headingIndex, options = {}) {
-  const { highlight = true } = options;
+  const { highlight = true, behavior = 'auto' } = options;
   const prose = document.getElementById('projectPageEditor')?.querySelector('.novel-project-editor-prose');
   if (!prose) return { found: false };
 
@@ -5218,7 +5246,7 @@ function scrollProjectEditorToHeading(headingIndex, options = {}) {
   if (Math.abs(prose.scrollTop - nextScrollTop) > 1) {
     prose.scrollTo({
       top: nextScrollTop,
-      behavior: 'auto'
+      behavior
     });
   }
 
@@ -5240,26 +5268,43 @@ function scheduleProjectOutlineScroll() {
   if (!pendingProjectOutlineTarget || pendingProjectOutlineTarget.pageIndex !== activeProjectPageIndex) return;
   const target = pendingProjectOutlineTarget;
   pendingProjectOutlineTarget = null;
-  const retryDelays = [0, 80, 180, 320, 520, 800, 1200, 1700];
+  const scrollRevision = ++projectOutlineScrollRevision;
+  const settleDelay = 520;
+  let smoothStarted = false;
 
   function attemptScroll(attempt = 0) {
     requestAnimationFrame(() => {
+      if (scrollRevision !== projectOutlineScrollRevision) return;
       if (target.pageIndex !== activeProjectPageIndex) return;
 
       if (projectSourceMode) {
         setProjectSourceMode(false, { focus: false });
-        setTimeout(() => attemptScroll(attempt + 1), retryDelays[Math.min(attempt + 1, retryDelays.length - 1)]);
+        setTimeout(
+          () => attemptScroll(attempt + 1),
+          PROJECT_EDITOR_SCROLL_RETRY_DELAYS[Math.min(attempt + 1, PROJECT_EDITOR_SCROLL_RETRY_DELAYS.length - 1)]
+        );
         return;
       }
 
-      const result = scrollProjectEditorToHeading(target.headingIndex, { highlight: attempt === 0 });
-      if (!result.found && attempt < retryDelays.length - 1) {
-        setTimeout(() => attemptScroll(attempt + 1), retryDelays[attempt + 1]);
+      const useSmoothScroll = !smoothStarted;
+      const result = scrollProjectEditorToHeading(target.headingIndex, {
+        highlight: useSmoothScroll,
+        behavior: useSmoothScroll ? 'smooth' : 'auto'
+      });
+
+      if (!result.found && attempt < PROJECT_EDITOR_SCROLL_RETRY_DELAYS.length - 1) {
+        setTimeout(() => attemptScroll(attempt + 1), PROJECT_EDITOR_SCROLL_RETRY_DELAYS[attempt + 1]);
         return;
       }
 
-      if (result.canPlaceHeadingAtTop && Math.abs(result.topDelta) > 2 && attempt < retryDelays.length - 1) {
-        setTimeout(() => attemptScroll(attempt + 1), retryDelays[attempt + 1]);
+      if (useSmoothScroll && result.found && attempt < PROJECT_EDITOR_SCROLL_RETRY_DELAYS.length - 1) {
+        smoothStarted = true;
+        setTimeout(() => attemptScroll(attempt + 1), settleDelay);
+        return;
+      }
+
+      if (!useSmoothScroll && result.canPlaceHeadingAtTop && Math.abs(result.topDelta) > 2 && attempt < PROJECT_EDITOR_SCROLL_RETRY_DELAYS.length - 1) {
+        setTimeout(() => attemptScroll(attempt + 1), PROJECT_EDITOR_SCROLL_RETRY_DELAYS[attempt + 1]);
       }
     });
   }

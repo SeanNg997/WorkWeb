@@ -386,6 +386,19 @@ function focusEditorEnd(editor, host) {
   selection?.addRange(range);
 }
 
+function scrollRangeIntoProseView(prose, range) {
+  const rangeRect = range.getBoundingClientRect?.();
+  if (!rangeRect) return;
+
+  const proseRect = prose.getBoundingClientRect();
+  const targetTop = prose.scrollTop + rangeRect.top - proseRect.top - 80;
+  const maxScrollTop = Math.max(0, prose.scrollHeight - prose.clientHeight);
+  prose.scrollTo({
+    top: Math.max(0, Math.min(maxScrollTop, targetTop)),
+    behavior: 'smooth'
+  });
+}
+
 function selectDomText(host, query, occurrenceIndex = 0) {
   const prose = host.querySelector('.novel-project-editor-prose');
   if (!prose || !query) return false;
@@ -418,10 +431,7 @@ function selectDomText(host, query, occurrenceIndex = 0) {
   selection?.removeAllRanges();
   selection?.addRange(range);
   prose.focus();
-  range.getBoundingClientRect && prose.parentElement?.scrollTo({
-    top: prose.parentElement.scrollTop + range.getBoundingClientRect().top - prose.parentElement.getBoundingClientRect().top - 80,
-    behavior: 'smooth'
-  });
+  scrollRangeIntoProseView(prose, range);
   return true;
 }
 
