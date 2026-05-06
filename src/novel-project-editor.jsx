@@ -69,25 +69,50 @@ function createAICompletionExtension() {
 
     setLoadingState(view, true);
 
-    const prompt = [
-      '你是一个 Markdown 写作助手，负责根据上下文续写内容。',
-      '',
-      '要求：',
-      '- 保持与原文风格、语气、格式一致',
-      '- 不要重复已有内容',
-      '- 直接输出续写部分，不要加任何解释或前缀',
-      '- 如果上下文是列表或分点内容，继续以相同格式输出',
-      '- 只续写一小段（1-3句话或1-2个列表项），保持简洁',
-      '',
-      docTitle ? `文档标题：${docTitle}` : '',
-      summary ? `文档摘要：${summary.slice(0, 300)}` : '',
-      '',
-      '前文内容：',
-      beforeText.slice(-400),
-      currentText ? `\n当前段落：${currentText}` : '',
-      '',
-      '请简洁续写：'
-    ].filter(Boolean).join('\n');
+    // 构建上下文
+    const contextParts = [];
+    if (docTitle) contextParts.push(`文档标题：${docTitle}`);
+    if (summary) contextParts.push(`文档摘要：${summary}`);
+    contextParts.push(`前文内容：\n${beforeText.slice(-600)}`);
+    const context = contextParts.join('\n\n');
+    
+    // 光标位置内容
+    const cursor = currentText || '(段落开头)';
+
+    const prompt = `你是笔记软件中的 AI 自动补全引擎。
+
+任务：
+基于用户光标前的内容，
+续写最自然的下一小段。
+
+核心原则：
+
+- 只续写，不创作
+- 不扩展新主题
+- 不总结
+- 不解释
+- 不输出完整文章结构
+- 不改变原文风格
+- 模仿用户最近的表达习惯
+- 优先保持"像用户自己写的"
+
+续写要求：
+
+- 最多 30 个中文字符
+- 最多一句话
+- 可以是不完整句子
+- 允许自然留白
+- 不要使用 AI 套话
+- 不要重复已有内容
+- 如果无法高质量续写，输出空字符串
+
+用户内容：
+
+${context}
+
+光标位置：
+
+${cursor}`;
 
     try {
       const res = await fetch('/api/ai/complete', {
