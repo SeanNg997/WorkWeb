@@ -54,7 +54,7 @@ function createAICompletionExtension() {
     
     return { 
       beforeText: before, 
-      currentText: currentBlock.textContent,
+      currentText: currentBlock.textBetween(0, cursorPos.parentOffset),
       docTitle,
       summary
     };
