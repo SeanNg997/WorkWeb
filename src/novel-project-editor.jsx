@@ -1,12 +1,189 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
+import { Extension } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Underline from '@tiptap/extension-underline';
-import { NodeSelection, TextSelection } from '@tiptap/pm/state';
+import { NodeSelection, TextSelection, Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 const mountedEditors = new Map();
 const IMAGE_RESIZE_HOTSPOT_SIZE = 16;
+const AI_PLUGIN_KEY = new PluginKey('aiCompletion');
+
+function createAICompletionExtension() {
+  let debounceTimer = null;
+  let pendingSuggestion = '';
+  let isLoading = false;
+
+  function clearSuggestion(view) {
+    pendingSuggestion = '';
+    isLoading = false;
+    view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: '', loading: false }));
+  }
+
+  function showSuggestion(view, text) {
+    pendingSuggestion = text;
+    view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: text, loading: false }));
+  }
+
+  function setLoadingState(view, loading) {
+    isLoading = loading;
+    view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: pendingSuggestion, loading }));
+  }
+
+  function extractContext(view) {
+    const { state } = view;
+    const { selection } = state;
+    const cursorPos = selection.$head;
+    const before = state.doc.textBetween(Math.max(0, cursorPos.pos - 600), cursorPos.pos, '\n');
+    const currentBlock = cursorPos.parent;
+    
+    // 提取文档标题（第一个标题节点）
+    let docTitle = '';
+    state.doc.descendants((node) => {
+      if (!docTitle && node.type.name === 'heading') {
+        docTitle = node.textContent;
+      }
+      return !docTitle;
+    });
+    
+    // 提取文档摘要（前500字符）
+    const fullText = state.doc.textContent;
+    const summary = fullText.slice(0, 500);
+    
+    return { 
+      beforeText: before, 
+      currentText: currentBlock.textContent,
+      docTitle,
+      summary
+    };
+  }
+
+  async function requestCompletion(view) {
+    const config = window.__aiConfig;
+    if (!config?.enabled || !config?.apiKey || !config?.baseUrl || !config?.model) return;
+
+    const { beforeText, currentText, docTitle, summary } = extractContext(view);
+    if (!beforeText.trim() && !currentText.trim()) return;
+
+    setLoadingState(view, true);
+
+    const prompt = [
+      '你是一个 Markdown 写作助手，负责根据上下文续写内容。',
+      '',
+      '要求：',
+      '- 保持与原文风格、语气、格式一致',
+      '- 不要重复已有内容',
+      '- 直接输出续写部分，不要加任何解释或前缀',
+      '- 如果上下文是列表或分点内容，继续以相同格式输出',
+      '- 只续写一小段（1-3句话或1-2个列表项），保持简洁',
+      '',
+      docTitle ? `文档标题：${docTitle}` : '',
+      summary ? `文档摘要：${summary.slice(0, 300)}` : '',
+      '',
+      '前文内容：',
+      beforeText.slice(-400),
+      currentText ? `\n当前段落：${currentText}` : '',
+      '',
+      '请简洁续写：'
+    ].filter(Boolean).join('\n');
+
+    try {
+      const res = await fetch('/api/ai/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          protocol: config.protocol,
+          baseUrl: config.baseUrl,
+          apiKey: config.apiKey,
+          model: config.model,
+          prompt,
+          maxTokens: 60
+        })
+      });
+      const data = await res.json();
+      if (data.text) {
+        showSuggestion(view, data.text.replace(/^\n+/, ''));
+      } else {
+        clearSuggestion(view);
+      }
+    } catch {
+      clearSuggestion(view);
+    }
+  }
+
+  function scheduleCompletion(view) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => requestCompletion(view), 500);
+  }
+
+  return Extension.create({
+    name: 'aiCompletion',
+
+    addKeyboardShortcuts() {
+      return {
+        Tab: ({ editor }) => {
+          if (!pendingSuggestion) return false;
+          const { view } = editor;
+          const tr = view.state.tr.insertText(pendingSuggestion);
+          view.dispatch(tr);
+          clearSuggestion(view);
+          return true;
+        },
+        Escape: ({ editor }) => {
+          if (!pendingSuggestion && !isLoading) return false;
+          clearSuggestion(editor.view);
+          return true;
+        }
+      };
+    },
+
+    onUpdate({ editor }) {
+      const config = window.__aiConfig;
+      if (!config?.enabled) return;
+      scheduleCompletion(editor.view);
+    },
+
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          key: AI_PLUGIN_KEY,
+          state: {
+            init() { return { suggestion: '', loading: false }; },
+            apply(tr, prev) {
+              const meta = tr.getMeta(AI_PLUGIN_KEY);
+              return meta || prev;
+            }
+          },
+          props: {
+            decorations(state) {
+              const { suggestion, loading } = this.getState(state);
+              if (!suggestion && !loading) return DecorationSet.empty;
+              const { selection } = state;
+              const pos = selection.$to.pos;
+              const text = loading ? ' 生成中...' : suggestion;
+              if (!text) return DecorationSet.empty;
+              const deco = Decoration.widget(pos, () => {
+                const span = document.createElement('span');
+                span.className = 'ai-completion-ghost';
+                span.textContent = text;
+                return span;
+              }, { side: 1, ignoreSelection: true });
+              return DecorationSet.create(state.doc, [deco]);
+            },
+            handleClick(view) {
+              if (pendingSuggestion || isLoading) {
+                clearSuggestion(view);
+              }
+              return false;
+            }
+          }
+        })
+      ];
+    }
+  });
+}
 
 function looksLikeHtml(value) {
   return /<\/?[a-z][\s\S]*>/i.test(value || '');
@@ -144,11 +321,19 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
 
   const headingActive = [1, 2, 3, 4].some(level => editor.isActive('heading', { level }));
   const listActive = editor.isActive('bulletList') || editor.isActive('orderedList');
+  const aiEnabled = window.__aiConfig?.enabled || false;
 
   async function handleImageFile(file) {
     if (!file || !onImageUpload) return;
     const attrs = await onImageUpload(file);
     editor.chain().focus().insertContent(imageAttrsToHtml(attrs)).run();
+  }
+
+  function toggleAI() {
+    const config = window.__aiConfig || {};
+    const newConfig = { ...config, enabled: !config.enabled };
+    window.__aiConfig = newConfig;
+    if (typeof window.__onAIToggle === 'function') window.__onAIToggle(newConfig);
   }
 
   return (
@@ -226,6 +411,7 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
       />
       <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
       <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
+      <ToolbarButton title={aiEnabled ? '关闭自动补全' : '开启自动补全'} active={aiEnabled} onClick={toggleAI}>自动补全</ToolbarButton>
       {onImageUpload ? (
         <ToolbarButton title="插入图片" active={false} onClick={() => fileInputRef.current?.click()}>图片</ToolbarButton>
       ) : null}
@@ -263,9 +449,17 @@ function NovelProjectEditor({
   showSourceToggle = true,
   saveStatus = null,
   onImageUpload,
-  onEditorReady
+  onEditorReady,
+  aiConfig
 }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
+
+  useEffect(() => {
+    window.__aiConfig = aiConfig || {};
+    return () => { window.__aiConfig = {}; };
+  }, [aiConfig]);
+
+  const aiExtension = useMemo(() => createAICompletionExtension(), []);
 
   const extensions = useMemo(() => [
     StarterKit,
@@ -286,7 +480,8 @@ function NovelProjectEditor({
     }).configure({ inline: false, allowBase64: false }),
     Placeholder.configure({
       placeholder: placeholder || '输入项目内容...'
-    })
+    }),
+    aiExtension
   ], [placeholder]);
 
   useEffect(() => {
@@ -455,6 +650,7 @@ function mountNovelProjectEditor(el, options = {}) {
     showSourceToggle: options.showSourceToggle !== false,
     saveStatus: options.saveStatus || null,
     onImageUpload: options.onImageUpload,
+    aiConfig: options.aiConfig || null,
     editor: null,
     version: 0
   };
@@ -540,6 +736,7 @@ function mountNovelProjectEditor(el, options = {}) {
         saveStatus={state.saveStatus}
         onImageUpload={state.onImageUpload}
         onEditorReady={editor => { state.editor = editor; }}
+        aiConfig={state.aiConfig}
       />
     );
   }
@@ -563,6 +760,10 @@ function mountNovelProjectEditor(el, options = {}) {
     },
     setSaveStatus(nextStatus) {
       state.saveStatus = nextStatus || null;
+      render();
+    },
+    setAIConfig(nextConfig) {
+      state.aiConfig = nextConfig || null;
       render();
     },
     focus() {

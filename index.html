@@ -2007,6 +2007,129 @@ html.platform-win32 .windows-window-controls {
   display: inline-flex;
 }
 
+/* AI 补全样式 */
+.ai-completion-ghost {
+  color: var(--text-light);
+  opacity: 0.5;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-row > label:first-child {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.form-row input[type="text"],
+.form-row input[type="password"] {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.form-row input:focus {
+  border-color: var(--accent);
+}
+
+.input-with-toggle {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.input-with-toggle input {
+  flex: 1;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--line);
+  border-radius: 22px;
+  transition: background var(--transition);
+}
+
+.switch .slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+
+.switch input:checked + .slider {
+  background: var(--accent);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(18px);
+}
+
+.ai-test-result {
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.ai-test-result.success {
+  color: var(--success);
+}
+
+.ai-test-result.error {
+  color: var(--danger);
+}
+
 .update-progress {
   display: none;
   gap: 8px;
@@ -2385,7 +2508,33 @@ textarea.form-input {
 
 .toast.show { transform: translateY(0); opacity: 1; }
 
-/* === Toast === */
+/* === 更新通知弹框 === */
+.update-toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--card-bg); border-radius: 12px; padding: 14px 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15); font-size: 13px; color: var(--text);
+  z-index: 1000; transform: translateY(20px); opacity: 0;
+  transition: all 0.3s ease; pointer-events: none;
+  max-width: 320px; border: 1px solid var(--line);
+}
+
+.update-toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+
+.update-toast-content {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.update-toast-close {
+  flex-shrink: 0; width: 24px; height: 24px;
+  border: none; background: transparent; color: var(--text-light);
+  cursor: pointer; border-radius: 6px; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+
+.update-toast-close:hover { background: var(--surface-muted); color: var(--text); }
+
+/* === 更新通知弹框 === */
 </style>
 </head>
 <body>
@@ -2652,6 +2801,49 @@ textarea.form-input {
     <div class="modal-body">
       <div class="settings-grid">
         <section class="settings-card">
+          <h4>Markdown 字体大小</h4>
+          <div class="font-size-options">
+            <button class="btn btn-secondary" data-font-size="large" onclick="setMarkdownFontSize('large')">增大</button>
+            <button class="btn btn-secondary" data-font-size="normal" onclick="setMarkdownFontSize('normal')">标准</button>
+            <button class="btn btn-secondary" data-font-size="small" onclick="setMarkdownFontSize('small')">缩小</button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h4>AI 写作助手</h4>
+          <p>配置第三方 AI 接口，在编辑时自动补全内容。支持 OpenAI 和 Anthropic 协议。</p>
+          <div class="settings-form">
+            <div class="form-row">
+              <label>接口协议</label>
+              <div class="radio-group">
+                <label><input type="radio" name="aiProtocol" value="openai" checked onchange="saveAISettings()"> OpenAI</label>
+                <label><input type="radio" name="aiProtocol" value="anthropic" onchange="saveAISettings()"> Anthropic</label>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Base URL</label>
+              <input type="text" id="aiBaseUrl" placeholder="https://api.openai.com" onchange="saveAISettings()">
+            </div>
+            <div class="form-row">
+              <label>API Key</label>
+              <div class="input-with-toggle">
+                <input type="password" id="aiApiKey" placeholder="sk-..." onchange="saveAISettings()">
+                <button class="btn btn-ghost btn-sm" onclick="toggleApiKeyVisibility()">显示</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Model ID</label>
+              <input type="text" id="aiModel" placeholder="gpt-4o-mini" onchange="saveAISettings()">
+            </div>
+            <div class="form-row">
+              <label></label>
+              <button class="btn btn-secondary btn-sm" onclick="testAIConnection()">测试连接</button>
+              <span id="aiTestResult" class="ai-test-result"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
           <h4>数据文件</h4>
           <p>导出会把当前数据目录压缩为 WorkWeb_data.workweb；导入只合并数据，不覆盖当前内容。</p>
           <div class="settings-actions">
@@ -2679,28 +2871,11 @@ textarea.form-input {
             </div>
           </div>
         </section>
-
-        <section class="settings-card">
-          <h4>检查更新</h4>
-          <p id="versionStatus">当前版本：读取中</p>
-          <div class="settings-actions">
-            <button class="btn btn-secondary" onclick="checkUpdateFromSettings()">检查更新</button>
-            <button class="btn btn-primary" id="downloadLatestBtn" onclick="startUpdateDownload()">立即更新</button>
-          </div>
-        </section>
-
-        <section class="settings-card">
-          <h4>Markdown 字体大小</h4>
-          <div class="font-size-options">
-            <button class="btn btn-secondary" data-font-size="large" onclick="setMarkdownFontSize('large')">增大</button>
-            <button class="btn btn-secondary" data-font-size="normal" onclick="setMarkdownFontSize('normal')">标准</button>
-            <button class="btn btn-secondary" data-font-size="small" onclick="setMarkdownFontSize('small')">缩小</button>
-          </div>
-        </section>
       </div>
       <p class="settings-message" id="settingsMessage"></p>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="checkUpdateFromSettings()" id="settingsCheckUpdateBtn">检查更新</button>
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
     </div>
   </div>
@@ -2755,6 +2930,14 @@ textarea.form-input {
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- 更新通知弹框 -->
+<div class="update-toast" id="updateToast">
+  <div class="update-toast-content">
+    <span id="updateToastMessage"></span>
+    <button class="update-toast-close" onclick="closeUpdateToast()">&times;</button>
+  </div>
+</div>
+
 <script>
 /* ==================== 数据层（API） ==================== */
 let notes = [];
@@ -2798,13 +2981,30 @@ function normalizeVersionText(value) {
   return String(value || '').trim().replace(/^v/i, '');
 }
 
-function updateSettingsVersionStatus(text = '') {
-  const el = document.getElementById('versionStatus');
-  if (el) el.textContent = text || `当前版本：v${currentAppVersion || '1.0.0'}`;
-}
-
 function updateDownloadButton(visible = false) {
   document.getElementById('downloadLatestBtn')?.classList.toggle('visible', Boolean(visible));
+}
+
+let updateToastTimer = null;
+
+function showUpdateToast(message, duration = 3000) {
+  const toast = document.getElementById('updateToast');
+  const msgEl = document.getElementById('updateToastMessage');
+  if (!toast || !msgEl) return;
+  
+  msgEl.textContent = message;
+  toast.classList.add('show');
+  
+  clearTimeout(updateToastTimer);
+  if (duration > 0) {
+    updateToastTimer = setTimeout(() => closeUpdateToast(), duration);
+  }
+}
+
+function closeUpdateToast() {
+  const toast = document.getElementById('updateToast');
+  if (toast) toast.classList.remove('show');
+  clearTimeout(updateToastTimer);
 }
 
 function renderUpdateProgress(state = updateState) {
@@ -2830,41 +3030,33 @@ function applyUpdateState(state = {}) {
   if (updateState.status === 'available') {
     document.getElementById('sidebarSettingsBtn')?.classList.add('has-update');
     updateDownloadButton(true);
-    updateSettingsVersionStatus(updateState.version
-      ? `有新的版本可以使用：v${updateState.version}`
-      : '有新的版本可以使用');
     return;
   }
 
   if (updateState.status === 'checking') {
     updateDownloadButton(false);
-    updateSettingsVersionStatus('正在检查更新...');
     return;
   }
 
   if (updateState.status === 'downloading' || updateState.status === 'downloaded') {
     updateDownloadButton(false);
-    updateSettingsVersionStatus(updateState.message || '正在更新');
     return;
   }
 
   if (updateState.status === 'latest') {
     document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
     updateDownloadButton(false);
-    updateSettingsVersionStatus('当前已经是最新版本');
     return;
   }
 
   if (updateState.status === 'unsupported') {
     document.getElementById('sidebarSettingsBtn')?.classList.remove('has-update');
     updateDownloadButton(false);
-    updateSettingsVersionStatus(updateState.message || '自动更新仅支持 Windows 安装版，不支持便携版');
     return;
   }
 
   if (updateState.status === 'error') {
     updateDownloadButton(false);
-    updateSettingsVersionStatus(updateState.message || '更新失败');
   }
 }
 
@@ -2880,7 +3072,6 @@ async function loadAppVersion() {
     if (!version) return;
 
     currentAppVersion = version;
-    updateSettingsVersionStatus();
     await loadUpdateState();
   } catch {}
 }
@@ -2967,6 +3158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadSidebarState();
   initWindowControls();
   await loadMarkdownFontSize();
+  await loadAISettings();
   window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
   await loadData();
@@ -2974,6 +3166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderProjects();
   renderInfoPanels();
   applyProjectEditorMode();
+  applyAIConfig();
   bindProjectOutlineResizer();
   bindProjectOutlineInteractions();
   updateDateDisplay();
@@ -3133,6 +3326,125 @@ async function loadMarkdownFontSize() {
   applyMarkdownFontSize(size);
 }
 
+/* ==================== AI 配置 ==================== */
+const AI_KEYS = ['wb_ai_enabled', 'wb_ai_protocol', 'wb_ai_base_url', 'wb_ai_api_key', 'wb_ai_model'];
+
+async function loadAISettings() {
+  const [enabled, protocol, baseUrl, apiKey, model] = await Promise.all(
+    AI_KEYS.map(k => readPreference(k, ''))
+  );
+  // 存储 enabled 状态到全局
+  window.__aiConfig = { ...window.__aiConfig, enabled: enabled === 'true' };
+  const radio = document.querySelector(`input[name="aiProtocol"][value="${protocol || 'openai'}"]`);
+  if (radio) radio.checked = true;
+  document.getElementById('aiBaseUrl').value = baseUrl || '';
+  document.getElementById('aiApiKey').value = apiKey || '';
+  document.getElementById('aiModel').value = model || '';
+}
+
+async function saveAISettings() {
+  const protocol = document.querySelector('input[name="aiProtocol"]:checked')?.value || 'openai';
+  const baseUrl = document.getElementById('aiBaseUrl').value.trim();
+  const apiKey = document.getElementById('aiApiKey').value.trim();
+  const model = document.getElementById('aiModel').value.trim();
+
+  writePreference('wb_ai_protocol', protocol);
+  writePreference('wb_ai_base_url', baseUrl);
+  writePreference('wb_ai_api_key', apiKey);
+  writePreference('wb_ai_model', model);
+
+  applyAIConfig();
+}
+
+function getAIConfig() {
+  const enabled = window.__aiConfig?.enabled || false;
+  const protocol = document.querySelector('input[name="aiProtocol"]:checked')?.value || 'openai';
+  const baseUrl = document.getElementById('aiBaseUrl')?.value.trim() || '';
+  const apiKey = document.getElementById('aiApiKey')?.value.trim() || '';
+  const model = document.getElementById('aiModel')?.value.trim() || '';
+  return { enabled, protocol, baseUrl, apiKey, model };
+}
+
+// 工具栏AI开关回调
+window.__onAIToggle = function(config) {
+  writePreference('wb_ai_enabled', String(config.enabled));
+  applyAIConfig();
+};
+
+function applyAIConfig() {
+  const config = getAIConfig();
+  if (projectEditor?.setAIConfig) projectEditor.setAIConfig(config);
+  document.querySelectorAll('.note-content-editor-host').forEach(host => {
+    const api = host.__editorApi;
+    if (api?.setAIConfig) api.setAIConfig(config);
+  });
+}
+
+function toggleApiKeyVisibility() {
+  const input = document.getElementById('aiApiKey');
+  const btn = input.nextElementSibling;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '隐藏';
+  } else {
+    input.type = 'password';
+    btn.textContent = '显示';
+  }
+}
+
+async function testAIConnection() {
+  const resultEl = document.getElementById('aiTestResult');
+  const config = getAIConfig();
+  console.log('[AI Test] Config:', config);
+  if (!config.baseUrl || !config.apiKey || !config.model) {
+    resultEl.textContent = '请填写完整配置';
+    resultEl.className = 'ai-test-result error';
+    return;
+  }
+  resultEl.textContent = '测试中...';
+  resultEl.className = 'ai-test-result';
+  try {
+    const body = {
+      protocol: config.protocol,
+      baseUrl: config.baseUrl,
+      apiKey: config.apiKey,
+      model: config.model,
+      prompt: '请用一句话介绍自己。',
+      maxTokens: 200
+    };
+    console.log('[AI Test] Sending:', body);
+    const res = await fetch('/api/ai/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    console.log('[AI Test] Response status:', res.status);
+    const text = await res.text();
+    console.log('[AI Test] Response text:', text);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('[AI Test] Parse error:', parseErr);
+      resultEl.textContent = '响应解析失败: ' + text.substring(0, 50);
+      resultEl.className = 'ai-test-result error';
+      return;
+    }
+    console.log('[AI Test] Parsed data:', data);
+    if (res.ok && data.text !== undefined) {
+      resultEl.textContent = '连接成功';
+      resultEl.className = 'ai-test-result success';
+    } else {
+      resultEl.textContent = data.error || '请求失败';
+      resultEl.className = 'ai-test-result error';
+    }
+  } catch (e) {
+    console.error('[AI Test] Error:', e);
+    resultEl.textContent = '网络错误: ' + e.message;
+    resultEl.className = 'ai-test-result error';
+  }
+}
+
 function updateDateDisplay() {
   const now = new Date();
   const days = ['日','一','二','三','四','五','六'];
@@ -3258,8 +3570,7 @@ function openSettings() {
   setSettingsMessage('');
   selectedNextDataDir = '';
   document.getElementById('nextDataDir').textContent = '未选择';
-  if (!updateState.status || updateState.status === 'idle') updateSettingsVersionStatus();
-  else applyUpdateState(updateState);
+  if (updateState.status && updateState.status !== 'idle') applyUpdateState(updateState);
   refreshDataDirDisplay();
   loadUpdateState();
   document.getElementById('settingsModal').classList.add('active');
@@ -3422,20 +3733,29 @@ function askClearTrash() {
 
 async function checkUpdateFromSettings() {
   if (!window.workwebDesktop?.checkForUpdates) {
-    applyUpdateState({ status: 'unsupported', message: '当前环境不支持自动更新', progress: 0 });
+    showUpdateToast('当前环境不支持自动更新');
     return;
   }
 
   try {
-    applyUpdateState({ status: 'checking', message: '正在检查更新', progress: 0 });
+    showUpdateToast('正在检查更新...', 0);
     const state = await window.workwebDesktop.checkForUpdates();
-    applyUpdateState(state);
+    
+    if (state.status === 'available') {
+      showUpdateToast('发现新版本，开始下载...', 2000);
+      applyUpdateState(state);
+      // 自动开始下载
+      setTimeout(() => startUpdateDownload(), 500);
+    } else if (state.status === 'latest') {
+      showUpdateToast('当前已经是最新版本');
+      applyUpdateState(state);
+    } else {
+      showUpdateToast(state.message || '检查更新失败');
+      applyUpdateState(state);
+    }
   } catch (error) {
-    applyUpdateState({
-      status: 'error',
-      message: error?.message || '获取新版本失败，请检查网络问题',
-      progress: 0
-    });
+    showUpdateToast(error?.message || '检查更新失败，请检查网络');
+    applyUpdateState({ status: 'error', message: error?.message || '检查更新失败', progress: 0 });
   }
 }
 
@@ -3883,6 +4203,7 @@ function bindInlineNoteEditor(card, note) {
     placeholder: '直接输入正文...',
     showToolbar: false,
     showSourceToggle: false,
+    aiConfig: getAIConfig(),
     onChange: value => {
       note.content = value;
       note.updatedAt = Date.now();
@@ -3891,7 +4212,10 @@ function bindInlineNoteEditor(card, note) {
     }
   });
 
-  if (editor) noteEditors.set(note.id, editor);
+  if (editor) {
+    noteEditors.set(note.id, editor);
+    editorHost.__editorApi = editor;
+  }
 }
 
 function renderNotes() {
@@ -5152,6 +5476,7 @@ function ensureProjectEditor() {
     saveStatus: projectSaveStatus,
     onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),
+    aiConfig: getAIConfig(),
     onChange: value => {
       if (isSettingProjectEditor) return;
       handleProjectPageInput(value);

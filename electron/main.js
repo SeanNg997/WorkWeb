@@ -10,7 +10,14 @@ const HOST = '127.0.0.1';
 const ICON_PATH = path.join(__dirname, '..', 'image', process.platform === 'darwin' ? 'icon.icns' : 'icon.ico');
 const SETTINGS_FILE_NAME = 'desktop-settings.json';
 const PRELOAD_PATH = path.join(__dirname, 'preload.js');
-const ALLOWED_DESKTOP_SETTING_KEYS = new Set(['wb_markdown_size']);
+const ALLOWED_DESKTOP_SETTING_KEYS = new Set([
+  'wb_markdown_size',
+  'wb_ai_enabled',
+  'wb_ai_protocol',
+  'wb_ai_base_url',
+  'wb_ai_api_key',
+  'wb_ai_model'
+]);
 const UPDATE_PUBLISH_CONFIG = {
   provider: 'github',
   owner: 'SeanNg997',

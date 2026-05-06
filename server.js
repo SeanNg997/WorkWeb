@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -54,10 +55,22 @@ function readRequestBody(req) {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
-      try { resolve(body ? JSON.parse(body) : {}); }
-      catch (error) { reject(error); }
+      console.log('[readRequestBody] Raw body length:', body.length);
+      console.log('[readRequestBody] Raw body preview:', body.substring(0, 200));
+      try {
+        const parsed = body ? JSON.parse(body) : {};
+        console.log('[readRequestBody] Parsed OK:', Object.keys(parsed));
+        resolve(parsed);
+      } catch (error) {
+        console.error('[readRequestBody] Parse error:', error.message);
+        console.error('[readRequestBody] Body that failed:', body);
+        reject(error);
+      }
     });
-    req.on('error', reject);
+    req.on('error', (err) => {
+      console.error('[readRequestBody] Request error:', err.message);
+      reject(err);
+    });
   });
 }
 
@@ -611,6 +624,89 @@ function createServer(options = {}) {
     if (pathname === '/api/clear-trash' && req.method === 'POST') {
       clearTrash(context.dataDir);
       sendJSON(res, 200, { ok: true });
+      return;
+    }
+
+    if (pathname === '/api/ai/complete' && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        console.log('[AI] Request body:', JSON.stringify(body));
+        const { protocol, baseUrl, apiKey, model, prompt, maxTokens } = body || {};
+        if (!apiKey || !baseUrl || !model || !prompt) {
+          console.log('[AI] Missing params:', { apiKey: !!apiKey, baseUrl: !!baseUrl, model: !!model, prompt: !!prompt });
+          sendJSON(res, 400, { error: '缺少必要参数' });
+          return;
+        }
+
+        const trimmedBase = baseUrl.replace(/\/+$/, '');
+        const isAnthropic = protocol === 'anthropic';
+        const baseWithoutV1 = trimmedBase.replace(/\/v1$/, '');
+        const endpoint = isAnthropic
+          ? `${baseWithoutV1}/v1/messages`
+          : `${baseWithoutV1}/v1/chat/completions`;
+
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(isAnthropic
+            ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+            : { 'Authorization': `Bearer ${apiKey}` })
+        };
+
+        const payload = isAnthropic
+          ? {
+              model,
+              max_tokens: maxTokens || 150,
+              messages: [{ role: 'user', content: prompt }]
+            }
+          : {
+              model,
+              max_tokens: maxTokens || 150,
+              messages: [{ role: 'user', content: prompt }]
+            };
+
+        const url = new URL(endpoint);
+        const requester = url.protocol === 'https:' ? https : http;
+
+        const apiReq = requester.request({
+          hostname: url.hostname,
+          port: url.port || (url.protocol === 'https:' ? 443 : 80),
+          path: url.pathname + url.search,
+          method: 'POST',
+          headers,
+          timeout: 15000
+        }, apiRes => {
+          let data = '';
+          apiRes.setEncoding('utf-8');
+          apiRes.on('data', chunk => { data += chunk; });
+          apiRes.on('end', () => {
+            try {
+              const json = JSON.parse(data);
+              if (apiRes.statusCode < 200 || apiRes.statusCode >= 300) {
+                sendJSON(res, apiRes.statusCode, { error: json.error?.message || 'AI 请求失败' });
+                return;
+              }
+              const choice = json.choices?.[0]?.message;
+              const text = isAnthropic
+                ? (json.content?.[0]?.text || '')
+                : (choice?.content || '');
+              sendJSON(res, 200, { text: text || '' });
+            } catch {
+              sendJSON(res, 502, { error: 'AI 返回内容无法解析' });
+            }
+          });
+        });
+
+        apiReq.on('error', err => {
+          sendJSON(res, 502, { error: err.message || 'AI 请求失败' });
+        });
+        apiReq.on('timeout', () => {
+          apiReq.destroy(new Error('AI 请求超时'));
+        });
+        apiReq.write(JSON.stringify(payload));
+        apiReq.end();
+      }).catch(err => {
+        console.error('[AI] Error:', err.message, err.stack);
+        sendJSON(res, 500, { error: err.message || '服务器内部错误' });
+      });
       return;
     }
 
