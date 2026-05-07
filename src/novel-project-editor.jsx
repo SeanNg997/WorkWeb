@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
 import { Extension } from '@tiptap/core';
@@ -9,9 +9,10 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 const mountedEditors = new Map();
 const IMAGE_RESIZE_HOTSPOT_SIZE = 16;
+const AI_CONTEXT_CHAR_LIMIT = 600;
 const AI_PLUGIN_KEY = new PluginKey('aiCompletion');
 
-function createAICompletionExtension() {
+function createAICompletionExtension(getAIConfig) {
   let debounceTimer = null;
   let pendingSuggestion = '';
   let isLoading = false;
@@ -40,7 +41,7 @@ function createAICompletionExtension() {
     const { state } = view;
     const { selection } = state;
     const cursorPos = selection.$head;
-    const before = state.doc.textBetween(Math.max(0, cursorPos.pos - 600), cursorPos.pos, '\n');
+    const before = state.doc.textBetween(Math.max(0, cursorPos.pos - AI_CONTEXT_CHAR_LIMIT), cursorPos.pos, '\n');
     const currentBlock = cursorPos.parent;
 
     return { 
@@ -50,7 +51,7 @@ function createAICompletionExtension() {
   }
 
   async function requestCompletion(view) {
-    const config = window.__aiConfig;
+    const config = getAIConfig();
     if (!config?.enabled || !config?.apiKey || !config?.baseUrl || !config?.model) return;
 
     const { beforeText, currentText } = extractContext(view);
@@ -66,7 +67,7 @@ function createAICompletionExtension() {
     const contextParts = [];
     if (projectTitle) contextParts.push(`项目标题：${projectTitle}`);
     if (projectSummary) contextParts.push(`项目摘要：${projectSummary}`);
-    contextParts.push(`光标前最近内容：\n${beforeText.slice(-600)}`);
+    contextParts.push(`光标前最近内容：\n${beforeText.slice(-AI_CONTEXT_CHAR_LIMIT)}`);
     const context = contextParts.join('\n\n');
 
     const cursor = currentText || '(段落开头)';
@@ -109,7 +110,7 @@ ${cursor}`;
         })
       });
       const data = await res.json();
-      if (requestId !== requestVersion || !window.__aiConfig?.enabled) return;
+      if (requestId !== requestVersion || !getAIConfig()?.enabled) return;
       if (data.text) {
         showSuggestion(view, data.text.replace(/^\n+/, ''));
       } else {
@@ -156,7 +157,7 @@ ${cursor}`;
     },
 
     onUpdate({ editor }) {
-      const config = window.__aiConfig;
+      const config = getAIConfig();
       if (!config?.enabled) return;
       scheduleCompletion(editor.view);
     },
@@ -320,31 +321,36 @@ function imageAttrsToHtml(attrs = {}) {
   return `<img src="${safeSrc}" alt="${safeAlt}"${width}>`;
 }
 
-function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus, onImageUpload }) {
+function isClickBelowLastBlock(prose, event, emptyResult = false) {
+  const lastBlock = Array.from(prose.children).at(-1);
+  if (!lastBlock) return emptyResult;
+  return event.clientY > lastBlock.getBoundingClientRect().bottom;
+}
+
+function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus, onImageUpload, aiConfig, onAIToggle }) {
   const { editor } = useEditor();
   const fileInputRef = useRef(null);
-  const tick = useSyncExternalStore(
-    callback => {
-      if (!editor) return () => {};
-      editor.on('selectionUpdate', callback);
-      editor.on('transaction', callback);
-      editor.on('update', callback);
-      return () => {
-        editor.off('selectionUpdate', callback);
-        editor.off('transaction', callback);
-        editor.off('update', callback);
-      };
-    },
-    () => Date.now(),
-    () => 0
-  );
+  const [, forceToolbarRender] = useState(0);
+
+  useEffect(() => {
+    if (!editor) return undefined;
+
+    const refresh = () => forceToolbarRender(value => value + 1);
+    editor.on('selectionUpdate', refresh);
+    editor.on('transaction', refresh);
+    editor.on('update', refresh);
+    return () => {
+      editor.off('selectionUpdate', refresh);
+      editor.off('transaction', refresh);
+      editor.off('update', refresh);
+    };
+  }, [editor]);
 
   if (!editor) return null;
-  void tick;
 
   const headingActive = [1, 2, 3, 4].some(level => editor.isActive('heading', { level }));
   const listActive = editor.isActive('bulletList') || editor.isActive('orderedList');
-  const aiEnabled = window.__aiConfig?.enabled || false;
+  const aiEnabled = Boolean(aiConfig?.enabled);
 
   async function handleImageFile(file) {
     if (!file || !onImageUpload) return;
@@ -353,11 +359,10 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
   }
 
   function toggleAI() {
-    const config = window.__aiConfig || {};
+    const config = aiConfig || {};
     const newConfig = { ...config, enabled: !config.enabled };
     if (config.enabled) editor.commands.clearAICompletion?.();
-    window.__aiConfig = newConfig;
-    if (typeof window.__onAIToggle === 'function') window.__onAIToggle(newConfig);
+    onAIToggle?.(newConfig);
   }
 
   return (
@@ -474,16 +479,17 @@ function NovelProjectEditor({
   saveStatus = null,
   onImageUpload,
   onEditorReady,
+  onAIToggle,
   aiConfig
 }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
+  const aiConfigRef = useRef(aiConfig || {});
 
   useEffect(() => {
-    window.__aiConfig = aiConfig || {};
-    return () => { window.__aiConfig = {}; };
+    aiConfigRef.current = aiConfig || {};
   }, [aiConfig]);
 
-  const aiExtension = useMemo(() => createAICompletionExtension(), []);
+  const aiExtension = useMemo(() => createAICompletionExtension(() => aiConfigRef.current), []);
 
   const extensions = useMemo(() => [
     StarterKit,
@@ -508,19 +514,13 @@ function NovelProjectEditor({
     aiExtension
   ], [placeholder]);
 
-  useEffect(() => {
-    return () => {};
-  }, [value]);
-
   function focusEndWhenClickingBlankSpace(view, event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return false;
 
     const prose = target.closest('.novel-project-editor-prose');
     if (!prose || target !== prose) return false;
-
-    const lastBlock = Array.from(prose.children).at(-1);
-    if (!lastBlock || event.clientY <= lastBlock.getBoundingClientRect().bottom) return false;
+    if (!isClickBelowLastBlock(prose, event)) return false;
 
     view.dispatch(view.state.tr.setSelection(TextSelection.atEnd(view.state.doc)));
     view.focus();
@@ -564,6 +564,8 @@ function NovelProjectEditor({
             showSourceToggle={showSourceToggle}
             saveStatus={saveStatus}
             onImageUpload={onImageUpload}
+            aiConfig={aiConfig}
+            onAIToggle={onAIToggle}
           />
         </>
       ) : null}
@@ -582,10 +584,7 @@ function isBlankSpaceClick(host, event) {
   const prose = host.querySelector('.novel-project-editor-prose');
   if (!content || !prose || !content.contains(target)) return false;
   if (target.closest('.novel-toolbar')) return false;
-
-  const lastBlock = Array.from(prose.children).at(-1);
-  if (!lastBlock) return true;
-  return event.clientY > lastBlock.getBoundingClientRect().bottom;
+  return isClickBelowLastBlock(prose, event, true);
 }
 
 function focusEditorEnd(editor, host) {
@@ -674,6 +673,7 @@ function mountNovelProjectEditor(el, options = {}) {
     showSourceToggle: options.showSourceToggle !== false,
     saveStatus: options.saveStatus || null,
     onImageUpload: options.onImageUpload,
+    onAIToggle: options.onAIToggle,
     aiConfig: options.aiConfig || null,
     editor: null,
     version: 0
@@ -760,6 +760,7 @@ function mountNovelProjectEditor(el, options = {}) {
         saveStatus={state.saveStatus}
         onImageUpload={state.onImageUpload}
         onEditorReady={editor => { state.editor = editor; }}
+        onAIToggle={state.onAIToggle}
         aiConfig={state.aiConfig}
       />
     );

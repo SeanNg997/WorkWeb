@@ -2691,31 +2691,6 @@ textarea.form-input {
   </div>
 </main>
 
-<!-- 便笺编辑模态框 -->
-<div class="modal-overlay" id="editorModal">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3 id="modalTitle">新建便笺</h3>
-      <button class="modal-close" onclick="closeNoteEditor()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>标题</label>
-        <input type="text" class="form-input" id="noteTitle" placeholder="输入便笺标题..." maxlength="50">
-      </div>
-      <div class="form-group">
-        <label>内容</label>
-        <textarea class="form-input" id="noteContent" placeholder="支持 Markdown 语法..."></textarea>
-        <p class="form-hint">支持 Markdown：**粗体**、*斜体*、- 列表、`代码`、&gt; 引用 等</p>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeNoteEditor()">取消</button>
-      <button class="btn btn-primary" onclick="saveNote()">保存</button>
-    </div>
-  </div>
-</div>
-
 <!-- 信息面板编辑模态框 -->
 <div class="modal-overlay" id="infoEditorModal">
   <div class="modal" onclick="event.stopPropagation()">
@@ -2944,24 +2919,14 @@ let notes = [];
 let infoPanels = [];
 let projects = [];
 let serverOnline = false;
-let currentAppVersion = '';
 let selectedNextDataDir = '';
 let updateState = { supported: false, status: 'idle', message: '尚未检查更新', progress: 0 };
+let lastPersistWarningAt = 0;
 
 const MARKDOWN_FONT_SIZE_KEY = 'wb_markdown_size';
 
 async function apiGet(key) {
   const res = await fetch(`/api/${key}`);
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json();
-}
-
-async function apiSave(key, data) {
-  const res = await fetch(`/api/${key}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
   if (!res.ok) throw new Error(res.statusText);
   return res.json();
 }
@@ -3071,7 +3036,6 @@ async function loadAppVersion() {
     const version = normalizeVersionText(meta?.version);
     if (!version) return;
 
-    currentAppVersion = version;
     await loadUpdateState();
   } catch {}
 }
@@ -3091,30 +3055,41 @@ async function loadData() {
   }
 }
 
-async function persistNotes() {
+function saveLocalData(storageKey, data) {
+  localStorage.setItem(storageKey, JSON.stringify(data));
+}
+
+function showPersistFallbackWarning() {
+  const now = Date.now();
+  if (now - lastPersistWarningAt < 5000) return;
+  lastPersistWarningAt = now;
+  showToast('服务器保存失败，已临时保存到本地');
+}
+
+async function persistData(apiKey, storageKey, data) {
   try {
-    if (serverOnline) await apiSave('notes', notes);
-    else localStorage.setItem('wb_notes', JSON.stringify(notes));
-  } catch { localStorage.setItem('wb_notes', JSON.stringify(notes)); }
+    if (serverOnline) await apiPost(apiKey, data);
+    else saveLocalData(storageKey, data);
+  } catch {
+    saveLocalData(storageKey, data);
+    if (serverOnline) showPersistFallbackWarning();
+  }
+}
+
+async function persistNotes() {
+  await persistData('notes', 'wb_notes', notes);
 }
 
 async function persistInfo() {
-  try {
-    if (serverOnline) await apiSave('info', infoPanels);
-    else localStorage.setItem('wb_info', JSON.stringify(infoPanels));
-  } catch { localStorage.setItem('wb_info', JSON.stringify(infoPanels)); }
+  await persistData('info', 'wb_info', infoPanels);
 }
 
 async function persistProjects(revision = null) {
-  try {
-    if (serverOnline) await apiSave('projects', projects);
-    else localStorage.setItem('wb_projects', JSON.stringify(projects));
-  } catch { localStorage.setItem('wb_projects', JSON.stringify(projects)); }
+  await persistData('projects', 'wb_projects', projects);
   if (revision !== null) markProjectSaved(revision);
 }
 
 /* ==================== 初始化 ==================== */
-let editingNoteId = null;
 let editingInfoId = null;
 let editingProjectId = null;
 let pendingAction = null;
@@ -3468,9 +3443,7 @@ function switchPage(page) {
 
 /* ==================== 通用工具 ==================== */
 function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  return escAttr(s);
 }
 
 function escAttr(s) {
@@ -3480,6 +3453,33 @@ function escAttr(s) {
     .replace(/'/g, '&#39;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function groupItemsByTag(items, getTag) {
+  const groups = new Map();
+  const tagOrder = [];
+
+  items.forEach(item => {
+    const tag = getTag(item);
+    if (!groups.has(tag)) {
+      groups.set(tag, []);
+      tagOrder.push(tag);
+    }
+    groups.get(tag).push(item);
+  });
+
+  return { groups, tagOrder };
+}
+
+function reorderTaggedItems(items, getTag, fromTag, toTag) {
+  const { groups, tagOrder } = groupItemsByTag(items, getTag);
+  const fromIdx = tagOrder.indexOf(fromTag);
+  const toIdx = tagOrder.indexOf(toTag);
+  if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return items;
+
+  const [moved] = tagOrder.splice(fromIdx, 1);
+  tagOrder.splice(toIdx, 0, moved);
+  return tagOrder.flatMap(tag => groups.get(tag));
 }
 
 function renderMd(text) {
@@ -4075,10 +4075,6 @@ function bindPointerSortable(container, itemSelector, options = {}) {
 }
 
 function isModalContentEmpty(modalId) {
-  if (modalId === 'editorModal') {
-    return !document.getElementById('noteTitle').value.trim()
-        && !document.getElementById('noteContent').value.trim();
-  }
   if (modalId === 'infoEditorModal') {
     return !document.getElementById('infoTitle').value.trim()
         && !document.getElementById('infoTag').value.trim()
@@ -4401,61 +4397,6 @@ function reorderNotes(fromId, toId) {
   renderNotes();
 }
 
-function openNoteEditor(id) {
-  editingNoteId = id || null;
-  const title = document.getElementById('noteTitle');
-  const content = document.getElementById('noteContent');
-  const modalTitle = document.getElementById('modalTitle');
-
-  if (id) {
-    const note = notes.find(n => n.id === id);
-    if (!note) return;
-    title.value = note.title;
-    content.value = note.content;
-    modalTitle.textContent = '编辑便笺';
-  } else {
-    title.value = '';
-    content.value = '';
-    modalTitle.textContent = '新建便笺';
-  }
-
-  document.getElementById('editorModal').classList.add('active');
-  setTimeout(() => title.focus(), 150);
-}
-
-function closeNoteEditor() {
-  document.getElementById('editorModal').classList.remove('active');
-  editingNoteId = null;
-}
-
-async function saveNote() {
-  const title = document.getElementById('noteTitle').value.trim();
-  const content = document.getElementById('noteContent').value;
-
-  if (!title && !content) {
-    document.getElementById('noteTitle').focus();
-    return;
-  }
-
-  if (editingNoteId) {
-    const note = notes.find(n => n.id === editingNoteId);
-    if (note) {
-      note.title = title;
-      note.content = content;
-      note.updatedAt = Date.now();
-    }
-  } else {
-    notes.push({
-      id: genId('n'), title, content, span: 1,
-      createdAt: Date.now(), updatedAt: Date.now()
-    });
-  }
-
-  await persistNotes();
-  renderNotes();
-  closeNoteEditor();
-}
-
 function askDeleteNote(id) {
   const note = notes.find(n => n.id === id);
   openConfirm(
@@ -4514,26 +4455,17 @@ function renderProjects() {
   } else {
     shelf.style.display = 'grid';
     empty.style.display = 'none';
-    const groups = {};
-    const tagOrder = [];
-    projects.forEach(project => {
-      const tag = getProjectGroupTag(project);
-      if (!groups[tag]) {
-        groups[tag] = [];
-        tagOrder.push(tag);
-      }
-      groups[tag].push(project);
-    });
+    const { groups, tagOrder } = groupItemsByTag(projects, getProjectGroupTag);
 
     let enterIndex = 0;
     shelf.innerHTML = tagOrder.map(tag => `
       <section class="project-tag-section" data-tag="${escAttr(tag)}">
         <div class="project-tag-header">
           <span class="project-tag-name">${escHtml(tag)}</span>
-          <span class="project-tag-count">${groups[tag].length}</span>
+          <span class="project-tag-count">${groups.get(tag).length}</span>
         </div>
         <div class="project-tag-books">
-          ${groups[tag].map(project => {
+          ${groups.get(tag).map(project => {
             const html = `
               <article class="project-book-card page-reveal" style="--project-enter-index:${enterIndex};" data-id="${escAttr(project.id)}" onclick="handleProjectBookClick('${project.id}')">
                 <div class="project-book-actions">
@@ -4759,24 +4691,9 @@ function bindProjectShelfDrag() {
 }
 
 function reorderProjectTags(fromTag, toTag) {
-  const groups = {};
-  const tagOrder = [];
-  projects.forEach(project => {
-    const tag = getProjectGroupTag(project);
-    if (!groups[tag]) {
-      groups[tag] = [];
-      tagOrder.push(tag);
-    }
-    groups[tag].push(project);
-  });
-
-  const fromIdx = tagOrder.indexOf(fromTag);
-  const toIdx = tagOrder.indexOf(toTag);
-  if (fromIdx < 0 || toIdx < 0) return;
-
-  const [moved] = tagOrder.splice(fromIdx, 1);
-  tagOrder.splice(toIdx, 0, moved);
-  projects = tagOrder.flatMap(tag => groups[tag]);
+  const reordered = reorderTaggedItems(projects, getProjectGroupTag, fromTag, toTag);
+  if (reordered === projects) return;
+  projects = reordered;
   persistProjects();
   renderProjects();
 }
@@ -5482,6 +5399,7 @@ function ensureProjectEditor() {
     onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),
     aiConfig: getProjectAIConfig(),
+    onAIToggle: config => window.__onAIToggle?.(config),
     onChange: value => {
       if (isSettingProjectEditor) return;
       handleProjectPageInput(value);
@@ -5763,17 +5681,7 @@ function renderInfoPanels() {
   container.style.display = 'grid';
   empty.style.display = 'none';
 
-  // 按标签分组，并保留用户拖拽后的标签顺序。
-  const groups = {};
-  const tagOrder = [];
-  infoPanels.forEach(p => {
-    const tag = p.tag || '未分类';
-    if (!groups[tag]) {
-      groups[tag] = [];
-      tagOrder.push(tag);
-    }
-    groups[tag].push(p);
-  });
+  const { groups, tagOrder } = groupItemsByTag(infoPanels, getInfoTag);
 
   container.innerHTML = '';
   tagOrder.forEach(tag => {
@@ -5786,14 +5694,14 @@ function renderInfoPanels() {
       <div class="info-tag-header" onclick="this.parentElement.classList.toggle('collapsed')">
         <span class="info-tag-arrow">&#9660;</span>
         <span class="info-tag-name">${escHtml(tag)}</span>
-        <span class="info-tag-count">${groups[tag].length}</span>
+        <span class="info-tag-count">${groups.get(tag).length}</span>
       </div>
       <div class="info-tag-body info-panels"></div>
     `;
     bindInfoTagDrag(group);
 
     const panelsContainer = group.querySelector('.info-tag-body');
-    groups[tag].forEach(panel => {
+    groups.get(tag).forEach(panel => {
       const el = document.createElement('div');
       el.className = 'info-panel';
       el.dataset.id = panel.id;
@@ -5935,24 +5843,9 @@ function getInfoTag(panel) {
 }
 
 function reorderInfoTags(fromTag, toTag) {
-  const groups = {};
-  const tagOrder = [];
-  infoPanels.forEach(panel => {
-    const tag = getInfoTag(panel);
-    if (!groups[tag]) {
-      groups[tag] = [];
-      tagOrder.push(tag);
-    }
-    groups[tag].push(panel);
-  });
-
-  const fromIdx = tagOrder.indexOf(fromTag);
-  const toIdx = tagOrder.indexOf(toTag);
-  if (fromIdx < 0 || toIdx < 0) return;
-
-  const [moved] = tagOrder.splice(fromIdx, 1);
-  tagOrder.splice(toIdx, 0, moved);
-  infoPanels = tagOrder.flatMap(tag => groups[tag]);
+  const reordered = reorderTaggedItems(infoPanels, getInfoTag, fromTag, toTag);
+  if (reordered === infoPanels) return;
+  infoPanels = reordered;
   persistInfo();
   renderInfoPanels();
 }
@@ -6173,9 +6066,6 @@ function askDeleteInfo(id) {
 }
 
 /* ==================== 模态框遮罩点击（仅内容为空时允许遮罩关闭） ==================== */
-document.getElementById('editorModal').addEventListener('click', e => {
-  if (e.target === e.currentTarget && isModalContentEmpty('editorModal')) closeNoteEditor();
-});
 document.getElementById('infoEditorModal').addEventListener('click', e => {
   if (e.target === e.currentTarget && isModalContentEmpty('infoEditorModal')) closeInfoEditor();
 });
@@ -6235,7 +6125,6 @@ document.addEventListener('keydown', e => {
       return;
     }
 
-    const editorModal = document.getElementById('editorModal');
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
     const settingsModal = document.getElementById('settingsModal');
@@ -6245,17 +6134,14 @@ document.addEventListener('keydown', e => {
     if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
     if (trashModal.classList.contains('active')) { closeTrashRestore(); return; }
     if (settingsModal.classList.contains('active')) { closeSettings(); return; }
-    if (editorModal.classList.contains('active')) { closeNoteEditor(); return; }
     if (infoModal.classList.contains('active')) { closeInfoEditor(); return; }
     if (projectModal.classList.contains('active')) { closeProjectEditor(); return; }
     if (activeProjectId) { closeProjectBook(); return; }
   }
 
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-    const editorModal = document.getElementById('editorModal');
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
-    if (editorModal.classList.contains('active')) saveNote();
     if (infoModal.classList.contains('active')) saveInfoPanel();
     if (projectModal.classList.contains('active')) saveProject();
   }

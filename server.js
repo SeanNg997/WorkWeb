@@ -13,6 +13,20 @@ const EXPORT_MAGIC = 'workweb-data-export';
 const EXPORT_FILE_NAME = 'WorkWeb_data.workweb';
 const TRASH_DIR = 'trash';
 const FIGURES_DIR = path.join('projects', 'figures');
+const DEFAULT_AI_MAX_TOKENS = 150;
+const AI_REQUEST_TIMEOUT_MS = 15000;
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.ico': 'image/x-icon',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp'
+};
 const LEGACY_COLLECTION_FILES = {
   notes: 'notes.json',
   projects: 'projects.json'
@@ -55,28 +69,39 @@ function readRequestBody(req) {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
-      console.log('[readRequestBody] Raw body length:', body.length);
-      console.log('[readRequestBody] Raw body preview:', body.substring(0, 200));
       try {
         const parsed = body ? JSON.parse(body) : {};
-        console.log('[readRequestBody] Parsed OK:', Object.keys(parsed));
         resolve(parsed);
       } catch (error) {
-        console.error('[readRequestBody] Parse error:', error.message);
-        console.error('[readRequestBody] Body that failed:', body);
         reject(error);
       }
     });
-    req.on('error', (err) => {
-      console.error('[readRequestBody] Request error:', err.message);
-      reject(err);
-    });
+    req.on('error', reject);
   });
 }
 
 function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
+}
+
+function collectFiles(root, shouldInclude = () => true) {
+  if (!fs.existsSync(root)) return [];
+
+  const files = [];
+  function walk(dir) {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+        return;
+      }
+      if (entry.isFile() && shouldInclude(fullPath, entry)) files.push(fullPath);
+    });
+  }
+
+  walk(root);
+  return files;
 }
 
 function listCollectionFiles(dataDir, key) {
@@ -204,20 +229,7 @@ function saveProjectFigure(dataDir, body = {}) {
 
 function listTrash(dataDir) {
   const root = path.join(dataDir, TRASH_DIR);
-  if (!fs.existsSync(root)) return [];
-
-  const files = [];
-  function walk(dir) {
-    fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-        return;
-      }
-      if (entry.isFile() && entry.name.endsWith('.json')) files.push(fullPath);
-    });
-  }
-  walk(root);
+  const files = collectFiles(root, filePath => filePath.endsWith('.json'));
 
   return files.map(filePath => {
     let item = {};
@@ -273,28 +285,10 @@ function clearTrash(dataDir) {
 
 function listDataFiles(dataDir) {
   const root = path.resolve(dataDir);
-  if (!fs.existsSync(root)) return [];
-
-  const files = [];
-  function walk(currentDir) {
-    fs.readdirSync(currentDir, { withFileTypes: true }).forEach(entry => {
-      const fullPath = path.join(currentDir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-        return;
-      }
-      if (!entry.isFile()) return;
-
-      const relativePath = path.relative(root, fullPath).replace(/\\/g, '/');
-      files.push({
-        path: relativePath,
-        data: fs.readFileSync(fullPath).toString('base64')
-      });
-    });
-  }
-
-  walk(root);
-  return files;
+  return collectFiles(root).map(filePath => ({
+    path: path.relative(root, filePath).replace(/\\/g, '/'),
+    data: fs.readFileSync(filePath).toString('base64')
+  }));
 }
 
 function createDataExport(dataDir, outputDir) {
@@ -448,6 +442,40 @@ function createServerContext(options = {}) {
   };
 }
 
+function handleJsonPost(req, res, handler, fallbackMessage = '保存失败') {
+  readRequestBody(req).then(body => {
+    try {
+      handler(body);
+      sendJSON(res, 200, { ok: true });
+    } catch (error) {
+      sendJSON(res, 500, { error: error instanceof Error ? error.message : fallbackMessage });
+    }
+  }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
+}
+
+function resolveMaxTokens(maxTokens) {
+  const value = Number(maxTokens);
+  if (!Number.isFinite(value) || value <= 0) return DEFAULT_AI_MAX_TOKENS;
+  return Math.floor(value);
+}
+
+function buildAIRequestPayload({ isAnthropic, model, prompt, maxTokens }) {
+  const tokenLimit = resolveMaxTokens(maxTokens);
+  if (isAnthropic) {
+    return {
+      model,
+      max_tokens: tokenLimit,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }]
+    };
+  }
+
+  return {
+    model,
+    max_tokens: tokenLimit,
+    messages: [{ role: 'user', content: prompt }]
+  };
+}
+
 function createServer(options = {}) {
   const context = createServerContext(options);
 
@@ -534,18 +562,7 @@ function createServer(options = {}) {
     }
 
     if (pathname === '/api/notes' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', () => {
-        try {
-          writeCollection(context.dataDir, 'notes', JSON.parse(body));
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-        }
-      });
+      handleJsonPost(req, res, body => writeCollection(context.dataDir, 'notes', body));
       return;
     }
 
@@ -556,18 +573,7 @@ function createServer(options = {}) {
     }
 
     if (pathname === '/api/info' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', () => {
-        try {
-          writeJSON(context.dataDir, INFO_FILE, JSON.parse(body));
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-        }
-      });
+      handleJsonPost(req, res, body => writeJSON(context.dataDir, INFO_FILE, body));
       return;
     }
 
@@ -578,18 +584,7 @@ function createServer(options = {}) {
     }
 
     if (pathname === '/api/projects' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', () => {
-        try {
-          writeCollection(context.dataDir, 'projects', JSON.parse(body));
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-        } catch {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON' }));
-        }
-      });
+      handleJsonPost(req, res, body => writeCollection(context.dataDir, 'projects', body));
       return;
     }
 
@@ -629,10 +624,8 @@ function createServer(options = {}) {
 
     if (pathname === '/api/ai/complete' && req.method === 'POST') {
       readRequestBody(req).then(body => {
-        console.log('[AI] Request body:', JSON.stringify(body));
         const { protocol, baseUrl, apiKey, model, prompt, maxTokens } = body || {};
         if (!apiKey || !baseUrl || !model || !prompt) {
-          console.log('[AI] Missing params:', { apiKey: !!apiKey, baseUrl: !!baseUrl, model: !!model, prompt: !!prompt });
           sendJSON(res, 400, { error: '缺少必要参数' });
           return;
         }
@@ -651,17 +644,7 @@ function createServer(options = {}) {
             : { 'Authorization': `Bearer ${apiKey}` })
         };
 
-        const payload = isAnthropic
-          ? {
-              model,
-              max_tokens: maxTokens || 150,
-              messages: [{ role: 'user', content: prompt }]
-            }
-          : {
-              model,
-              max_tokens: maxTokens || 150,
-              messages: [{ role: 'user', content: prompt }]
-            };
+        const payload = buildAIRequestPayload({ isAnthropic, model, prompt, maxTokens });
 
         const url = new URL(endpoint);
         const requester = url.protocol === 'https:' ? https : http;
@@ -672,7 +655,7 @@ function createServer(options = {}) {
           path: url.pathname + url.search,
           method: 'POST',
           headers,
-          timeout: 15000
+          timeout: AI_REQUEST_TIMEOUT_MS
         }, apiRes => {
           let data = '';
           apiRes.setEncoding('utf-8');
@@ -703,10 +686,7 @@ function createServer(options = {}) {
         });
         apiReq.write(JSON.stringify(payload));
         apiReq.end();
-      }).catch(err => {
-        console.error('[AI] Error:', err.message, err.stack);
-        sendJSON(res, 500, { error: err.message || '服务器内部错误' });
-      });
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
       return;
     }
 
@@ -724,14 +704,7 @@ function createServer(options = {}) {
         res.end('Not Found');
         return;
       }
-      const figureMime = {
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp'
-      };
-      res.writeHead(200, { 'Content-Type': figureMime[path.extname(figurePath).toLowerCase()] || 'application/octet-stream' });
+      res.writeHead(200, { 'Content-Type': MIME_TYPES[path.extname(figurePath).toLowerCase()] || 'application/octet-stream' });
       fs.createReadStream(figurePath).pipe(res);
       return;
     }
@@ -750,21 +723,8 @@ function createServer(options = {}) {
       return;
     }
 
-    const ext = path.extname(filePath);
-    const mime = {
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.ico': 'image/x-icon',
-      '.js': 'application/javascript',
-      '.json': 'application/json',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp'
-    };
-
-    res.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream' });
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
     fs.createReadStream(filePath).pipe(res);
   });
 

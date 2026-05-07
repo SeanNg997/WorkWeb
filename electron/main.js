@@ -28,6 +28,7 @@ const UPDATE_RELEASE_API = `https://api.github.com/repos/${UPDATE_PUBLISH_CONFIG
 
 let mainWindow = null;
 let localServer = null;
+let closingLocalServer = false;
 let updateState = {
   supported: false,
   status: 'idle',
@@ -603,9 +604,14 @@ if (!isSingleInstance) {
     app.quit();
   });
 
-  app.on('before-quit', async () => {
-    if (!localServer?.server) return;
-    await new Promise(resolve => localServer.server.close(resolve));
-    localServer = null;
+  app.on('before-quit', event => {
+    if (!localServer?.server || closingLocalServer) return;
+
+    event.preventDefault();
+    closingLocalServer = true;
+    localServer.server.close(() => {
+      localServer = null;
+      app.quit();
+    });
   });
 }
