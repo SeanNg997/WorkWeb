@@ -15,8 +15,11 @@ function createAICompletionExtension() {
   let debounceTimer = null;
   let pendingSuggestion = '';
   let isLoading = false;
+  let requestVersion = 0;
 
   function clearSuggestion(view) {
+    requestVersion += 1;
+    clearTimeout(debounceTimer);
     pendingSuggestion = '';
     isLoading = false;
     view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: '', loading: false }));
@@ -24,6 +27,7 @@ function createAICompletionExtension() {
 
   function showSuggestion(view, text) {
     pendingSuggestion = text;
+    isLoading = false;
     view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: text, loading: false }));
   }
 
@@ -38,25 +42,10 @@ function createAICompletionExtension() {
     const cursorPos = selection.$head;
     const before = state.doc.textBetween(Math.max(0, cursorPos.pos - 600), cursorPos.pos, '\n');
     const currentBlock = cursorPos.parent;
-    
-    // 提取文档标题（第一个标题节点）
-    let docTitle = '';
-    state.doc.descendants((node) => {
-      if (!docTitle && node.type.name === 'heading') {
-        docTitle = node.textContent;
-      }
-      return !docTitle;
-    });
-    
-    // 提取文档摘要（前500字符）
-    const fullText = state.doc.textContent;
-    const summary = fullText.slice(0, 500);
-    
+
     return { 
       beforeText: before, 
-      currentText: currentBlock.textBetween(0, cursorPos.parentOffset),
-      docTitle,
-      summary
+      currentText: currentBlock.textBetween(0, cursorPos.parentOffset)
     };
   }
 
@@ -64,53 +53,45 @@ function createAICompletionExtension() {
     const config = window.__aiConfig;
     if (!config?.enabled || !config?.apiKey || !config?.baseUrl || !config?.model) return;
 
-    const { beforeText, currentText, docTitle, summary } = extractContext(view);
+    const { beforeText, currentText } = extractContext(view);
     if (!beforeText.trim() && !currentText.trim()) return;
 
+    const requestId = requestVersion + 1;
+    requestVersion = requestId;
     setLoadingState(view, true);
 
-    // 构建上下文
+    const projectTitle = String(config.projectTitle || '').trim();
+    const projectSummary = String(config.projectSummary || '').trim();
+
     const contextParts = [];
-    if (docTitle) contextParts.push(`文档标题：${docTitle}`);
-    if (summary) contextParts.push(`文档摘要：${summary}`);
-    contextParts.push(`前文内容：\n${beforeText.slice(-600)}`);
+    if (projectTitle) contextParts.push(`项目标题：${projectTitle}`);
+    if (projectSummary) contextParts.push(`项目摘要：${projectSummary}`);
+    contextParts.push(`光标前最近内容：\n${beforeText.slice(-600)}`);
     const context = contextParts.join('\n\n');
-    
-    // 光标位置内容
+
     const cursor = currentText || '(段落开头)';
 
-    const prompt = `你是笔记软件中的 AI 自动补全引擎。
+    const prompt = `你是笔记应用里的行内自动补全引擎。
 
-任务：
-基于用户光标前的内容，
-续写最自然的下一小段。
+你的任务：
+根据光标前的项目笔记内容，补出最自然的后续文字。
 
-核心原则：
-
-- 只续写，不创作
-- 不扩展新主题
-- 不总结
-- 不解释
-- 不输出完整文章结构
-- 不改变原文风格
-- 模仿用户最近的表达习惯
-- 优先保持"像用户自己写的"
-
-续写要求：
-
+必须遵守：
+- 只输出补全文字本身
+- 不要解释，不要总结，不要加标题
+- 不要输出 Markdown、列表、引号或前后缀
+- 不要重复前文已经出现的内容
+- 不要引入新主题
+- 保持用户最近的语气、措辞和信息密度
 - 最多 30 个中文字符
-- 最多一句话
-- 可以是不完整句子
-- 允许自然留白
-- 不要使用 AI 套话
-- 不要重复已有内容
-- 如果无法高质量续写，输出空字符串
+- 最多一句话，可以是不完整短语
+- 如果没有高质量补全，直接输出空内容
 
-用户内容：
+上下文：
 
 ${context}
 
-光标位置：
+当前段落已输入：
 
 ${cursor}`;
 
@@ -128,6 +109,7 @@ ${cursor}`;
         })
       });
       const data = await res.json();
+      if (requestId !== requestVersion || !window.__aiConfig?.enabled) return;
       if (data.text) {
         showSuggestion(view, data.text.replace(/^\n+/, ''));
       } else {
@@ -158,6 +140,15 @@ ${cursor}`;
         },
         Escape: ({ editor }) => {
           if (!pendingSuggestion && !isLoading) return false;
+          clearSuggestion(editor.view);
+          return true;
+        }
+      };
+    },
+
+    addCommands() {
+      return {
+        clearAICompletion: () => ({ editor }) => {
           clearSuggestion(editor.view);
           return true;
         }
@@ -198,6 +189,13 @@ ${cursor}`;
               return DecorationSet.create(state.doc, [deco]);
             },
             handleClick(view) {
+              if (pendingSuggestion || isLoading) {
+                clearSuggestion(view);
+              }
+              return false;
+            },
+            handleKeyDown(view, event) {
+              if (event.key === 'Tab' || event.key === 'Escape') return false;
               if (pendingSuggestion || isLoading) {
                 clearSuggestion(view);
               }
@@ -357,6 +355,7 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
   function toggleAI() {
     const config = window.__aiConfig || {};
     const newConfig = { ...config, enabled: !config.enabled };
+    if (config.enabled) editor.commands.clearAICompletion?.();
     window.__aiConfig = newConfig;
     if (typeof window.__onAIToggle === 'function') window.__onAIToggle(newConfig);
   }

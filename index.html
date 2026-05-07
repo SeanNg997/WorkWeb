@@ -3365,6 +3365,14 @@ function getAIConfig() {
   return { enabled, protocol, baseUrl, apiKey, model };
 }
 
+function getProjectAIConfig(project = getProjectById(activeProjectId)) {
+  return {
+    ...getAIConfig(),
+    projectTitle: project?.title || '',
+    projectSummary: project?.summary || ''
+  };
+}
+
 // 工具栏AI开关回调
 window.__onAIToggle = function(config) {
   writePreference('wb_ai_enabled', String(config.enabled));
@@ -3372,12 +3380,8 @@ window.__onAIToggle = function(config) {
 };
 
 function applyAIConfig() {
-  const config = getAIConfig();
+  const config = getProjectAIConfig();
   if (projectEditor?.setAIConfig) projectEditor.setAIConfig(config);
-  document.querySelectorAll('.note-content-editor-host').forEach(host => {
-    const api = host.__editorApi;
-    if (api?.setAIConfig) api.setAIConfig(config);
-  });
 }
 
 function toggleApiKeyVisibility() {
@@ -4203,7 +4207,7 @@ function bindInlineNoteEditor(card, note) {
     placeholder: '直接输入正文...',
     showToolbar: false,
     showSourceToggle: false,
-    aiConfig: getAIConfig(),
+    aiConfig: { ...getAIConfig(), enabled: false },
     onChange: value => {
       note.content = value;
       note.updatedAt = Date.now();
@@ -5232,6 +5236,7 @@ function renderProjectBook() {
   renderProjectPageTabs();
 
   view.classList.add('active');
+  if (projectEditor?.setAIConfig) projectEditor.setAIConfig(getProjectAIConfig(project));
   const content = project.pages[activeProjectPageIndex] || '';
   syncProjectSourceEditor(content);
   if (!projectSourceMode) setProjectEditorMarkdown(content);
@@ -5476,7 +5481,7 @@ function ensureProjectEditor() {
     saveStatus: projectSaveStatus,
     onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),
-    aiConfig: getAIConfig(),
+    aiConfig: getProjectAIConfig(),
     onChange: value => {
       if (isSettingProjectEditor) return;
       handleProjectPageInput(value);
