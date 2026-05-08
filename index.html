@@ -3350,6 +3350,10 @@ function getProjectAIConfig(project = getProjectById(activeProjectId)) {
 
 // 工具栏AI开关回调
 window.__onAIToggle = function(config) {
+  window.__aiConfig = {
+    ...window.__aiConfig,
+    enabled: Boolean(config.enabled)
+  };
   writePreference('wb_ai_enabled', String(config.enabled));
   applyAIConfig();
 };
@@ -4326,21 +4330,32 @@ function renderNotes() {
       card.style.setProperty('--resize-width', startWidth + 'px');
       card.style.setProperty('--resize-min-width', colW + 'px');
       card.style.setProperty('--resize-max-width', maxWidth + 'px');
-      card.style.setProperty('--resize-grid-column', `${startCol} / span ${maxSpan}`);
       card.style.setProperty('--resize-max-span', maxSpan);
-      card.dataset.snapSpan = Math.min(note.span || 1, maxSpan);
+      const startSpan = Math.max(1, Math.min(note.span || 1, maxSpan));
+      card.dataset.snapSpan = startSpan;
+      card.style.setProperty('--resize-grid-column', `${startCol} / span ${startSpan}`);
       indicator.textContent = `${Math.round(startWidth)}px`;
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+
+      function updateResizeSpan(span) {
+        const nextSpan = Math.max(1, Math.min(maxSpan, span));
+        if (parseInt(card.dataset.snapSpan, 10) === nextSpan) return;
+
+        const previousRects = captureSortableRects(gridEl, '.note-card');
+        card.dataset.snapSpan = nextSpan;
+        card.style.setProperty('--resize-grid-column', `${startCol} / span ${nextSpan}`);
+        animateSortableRects(gridEl, '.note-card', previousRects);
+      }
 
       function onMove(ev) {
         const dx = ev.clientX - startX;
         const newWidth = Math.max(colW, Math.min(maxWidth, startWidth + dx));
 
-        const span = Math.max(1, Math.min(maxSpan, Math.round(newWidth / unitWidth)));
+        const span = Math.max(1, Math.min(maxSpan, Math.round((newWidth + gridGap) / unitWidth)));
 
         card.style.setProperty('--resize-width', newWidth + 'px');
-        card.dataset.snapSpan = span;
+        updateResizeSpan(span);
         indicator.textContent = `${Math.round(newWidth)}px`;
       }
 
@@ -4353,6 +4368,7 @@ function renderNotes() {
 
         card.classList.add('resize-snap');
         card.style.setProperty('--resize-width', finalWidth + 'px');
+        card.style.setProperty('--resize-grid-column', `${startCol} / span ${finalSpan}`);
         card.dataset.span = finalSpan;
         indicator.textContent = `${Math.round(finalWidth)}px`;
 
