@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
-const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, screen } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { startServer } = require('../server');
 
@@ -25,6 +25,13 @@ const UPDATE_PUBLISH_CONFIG = {
   updaterCacheDirName: 'workweb-updater'
 };
 const UPDATE_RELEASE_API = `https://api.github.com/repos/${UPDATE_PUBLISH_CONFIG.owner}/${UPDATE_PUBLISH_CONFIG.repo}/releases/latest`;
+const DEFAULT_WINDOW_BOUNDS = {
+  width: 1480,
+  height: 940,
+  minWidth: 1080,
+  minHeight: 620
+};
+const WINDOW_WORK_AREA_MARGIN = 32;
 
 let mainWindow = null;
 let localServer = null;
@@ -243,6 +250,39 @@ function configureAutoUpdater() {
   });
 }
 
+function clampWindowBoundsToWorkArea() {
+  const display = screen.getPrimaryDisplay();
+  const workArea = display?.workArea || {};
+  const availableWidth = Number.isFinite(workArea.width)
+    ? Math.max(720, workArea.width - WINDOW_WORK_AREA_MARGIN)
+    : DEFAULT_WINDOW_BOUNDS.width;
+  const availableHeight = Number.isFinite(workArea.height)
+    ? Math.max(520, workArea.height - WINDOW_WORK_AREA_MARGIN)
+    : DEFAULT_WINDOW_BOUNDS.height;
+  const minWidth = Math.min(DEFAULT_WINDOW_BOUNDS.minWidth, availableWidth);
+  const minHeight = Math.min(DEFAULT_WINDOW_BOUNDS.minHeight, availableHeight);
+  const width = Math.round(Math.max(minWidth, Math.min(DEFAULT_WINDOW_BOUNDS.width, availableWidth)));
+  const height = Math.round(Math.max(minHeight, Math.min(DEFAULT_WINDOW_BOUNDS.height, availableHeight)));
+  const bounds = {
+    width,
+    height,
+    minWidth: Math.round(minWidth),
+    minHeight: Math.round(minHeight)
+  };
+
+  if (
+    Number.isFinite(workArea.x) &&
+    Number.isFinite(workArea.y) &&
+    Number.isFinite(workArea.width) &&
+    Number.isFinite(workArea.height)
+  ) {
+    bounds.x = Math.round(workArea.x + Math.max(0, (workArea.width - width) / 2));
+    bounds.y = Math.round(workArea.y + Math.max(0, (workArea.height - height) / 2));
+  }
+
+  return bounds;
+}
+
 function isWritableDir(dirPath) {
   try {
     ensureDir(dirPath);
@@ -399,6 +439,7 @@ async function ensureServer() {
 }
 
 function createWindow() {
+  const windowBounds = clampWindowBoundsToWorkArea();
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
@@ -416,10 +457,7 @@ function createWindow() {
       : {};
 
   mainWindow = new BrowserWindow({
-    width: 1480,
-    height: 940,
-    minWidth: 1180,
-    minHeight: 760,
+    ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
     backgroundColor: '#f4efe4',
