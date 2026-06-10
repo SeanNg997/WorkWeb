@@ -10,6 +10,7 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 const mountedEditors = new Map();
 const IMAGE_RESIZE_HOTSPOT_SIZE = 16;
 const AI_CONTEXT_CHAR_LIMIT = 600;
+const AI_NO_COMPLETION = '__NO_COMPLETION__';
 const AI_PLUGIN_KEY = new PluginKey('aiCompletion');
 
 function createAICompletionExtension(getAIConfig) {
@@ -37,16 +38,41 @@ function createAICompletionExtension(getAIConfig) {
     view.dispatch(view.state.tr.setMeta(AI_PLUGIN_KEY, { suggestion: pendingSuggestion, loading }));
   }
 
+  function normalizeCompletionText(text) {
+    const value = String(text || '').replace(/^\n+/, '').trimEnd();
+    if (!value.trim() || value.trim() === AI_NO_COMPLETION) return '';
+    return value;
+  }
+
+  function describeCursorStructure(cursorPos) {
+    const labels = new Set();
+
+    for (let depth = 0; depth <= cursorPos.depth; depth += 1) {
+      const nodeName = cursorPos.node(depth).type.name;
+      if (nodeName === 'heading') labels.add('Markdown 标题');
+      if (nodeName === 'bulletList') labels.add('无序列表');
+      if (nodeName === 'orderedList') labels.add('有序列表');
+      if (nodeName === 'listItem') labels.add('列表项');
+      if (nodeName === 'codeBlock') labels.add('代码块');
+      if (nodeName === 'blockquote') labels.add('引用');
+    }
+
+    return Array.from(labels).join(' / ') || '普通段落';
+  }
+
   function extractContext(view) {
     const { state } = view;
     const { selection } = state;
     const cursorPos = selection.$head;
     const before = state.doc.textBetween(Math.max(0, cursorPos.pos - AI_CONTEXT_CHAR_LIMIT), cursorPos.pos, '\n');
+    const after = state.doc.textBetween(cursorPos.pos, Math.min(state.doc.content.size, cursorPos.pos + AI_CONTEXT_CHAR_LIMIT), '\n');
     const currentBlock = cursorPos.parent;
 
     return { 
       beforeText: before, 
-      currentText: currentBlock.textBetween(0, cursorPos.parentOffset)
+      afterText: after,
+      currentText: currentBlock.textBetween(0, cursorPos.parentOffset),
+      cursorStructure: describeCursorStructure(cursorPos)
     };
   }
 
@@ -54,7 +80,7 @@ function createAICompletionExtension(getAIConfig) {
     const config = getAIConfig();
     if (!config?.enabled || !config?.apiKey || !config?.baseUrl || !config?.model) return;
 
-    const { beforeText, currentText } = extractContext(view);
+    const { beforeText, afterText, currentText, cursorStructure } = extractContext(view);
     if (!beforeText.trim() && !currentText.trim()) return;
 
     const requestId = requestVersion + 1;
@@ -64,37 +90,53 @@ function createAICompletionExtension(getAIConfig) {
     const projectTitle = String(config.projectTitle || '').trim();
     const projectSummary = String(config.projectSummary || '').trim();
 
-    const contextParts = [];
-    if (projectTitle) contextParts.push(`项目标题：${projectTitle}`);
-    if (projectSummary) contextParts.push(`项目摘要：${projectSummary}`);
-    contextParts.push(`光标前最近内容：\n${beforeText.slice(-AI_CONTEXT_CHAR_LIMIT)}`);
-    const context = contextParts.join('\n\n');
-
     const cursor = currentText || '(段落开头)';
 
-    const prompt = `你是笔记应用里的行内自动补全引擎。
+    const prompt = `你是科研项目笔记软件中的行内补全引擎。
 
-你的任务：
-根据光标前的项目笔记内容，补出最自然的后续文字。
+你的唯一任务，是预测“光标处应该插入的一小段文本”，让用户可以直接插入原文。
 
-必须遵守：
-- 只输出补全文字本身
-- 不要解释，不要总结，不要加标题
-- 不要输出 Markdown、列表、引号或前后缀
-- 不要重复前文已经出现的内容
-- 不要引入新主题
-- 保持用户最近的语气、措辞和信息密度
-- 最多 30 个中文字符
-- 最多一句话，可以是不完整短语
-- 如果没有高质量补全，直接输出空内容
+请按以下优先级工作：
+1. 严格延续当前项目主题、术语和论证方向，只补当前局部，不扩展成新话题。
+2. 严格匹配上下文的语言、语气、信息密度与格式。
+3. 如果当前句子未完成，优先把它自然补完；如果当前句子已完成，只补一个紧接其后的高价值短句、短语或单个列表项。
+4. 如果当前处于 Markdown 标题、列表、表格、LaTeX 公式、代码块或引用中，优先保持该结构正确。
+5. 科研笔记场景下，不要凭空引入未经上下文支持的新事实、数据、结论、引用或参考文献。
+6. 只输出应插入的文本本身；不要解释，不要总结，不要加引号，不要加标题，不要输出任何元说明。
+7. 不要重复已经出现在局部上下文中的内容，也不要复述项目标题或项目摘要。
+8. 如果没有高质量补全，精确输出：${AI_NO_COMPLETION}
 
-上下文：
+补全文本应满足：
+- 可直接插入光标处
+- 默认尽量短
+- 最多一句
+- 如果当前在列表、公式或代码中，可以输出一个列表项、一行公式或一行代码
 
-${context}
+[项目标题]
+${projectTitle || '(未提供)'}
+[/项目标题]
 
-当前段落已输入：
+[项目摘要]
+${projectSummary || '(未提供)'}
+[/项目摘要]
 
-${cursor}`;
+[光标前最近内容]
+${beforeText.slice(-AI_CONTEXT_CHAR_LIMIT)}
+[/光标前最近内容]
+
+[光标后最近内容]
+${afterText.slice(0, AI_CONTEXT_CHAR_LIMIT) || '(未提供)'}
+[/光标后最近内容]
+
+[当前位置结构]
+${cursorStructure}
+[/当前位置结构]
+
+[当前段落已输入]
+${cursor}
+[/当前段落已输入]
+
+现在输出可直接插入光标处的补全文字；若无高质量结果，只输出 ${AI_NO_COMPLETION} 。`;
 
     try {
       const res = await fetch('/api/ai/complete', {
@@ -111,8 +153,9 @@ ${cursor}`;
       });
       const data = await res.json();
       if (requestId !== requestVersion || !getAIConfig()?.enabled) return;
-      if (data.text) {
-        showSuggestion(view, data.text.replace(/^\n+/, ''));
+      const suggestion = normalizeCompletionText(data.text);
+      if (suggestion) {
+        showSuggestion(view, suggestion);
       } else {
         clearSuggestion(view);
       }
