@@ -74,14 +74,14 @@ async function patchWindowsExecutable() {
 }
 
 async function main() {
-  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--win', 'dir']);
+  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--win', 'dir', '--publish', 'never']);
 
   if (!fs.existsSync(EXE_PATH)) {
     throw new Error(`未找到打包后的程序：${EXE_PATH}`);
   }
 
   await patchWindowsExecutable();
-  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--prepackaged', UNPACKED_DIR, '--win', 'nsis']);
+  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--prepackaged', UNPACKED_DIR, '--win', 'nsis', '--publish', 'never']);
 }
 
 main().catch(error => {
