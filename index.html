@@ -804,6 +804,12 @@ html.platform-win32 .windows-window-controls {
   color: var(--danger);
 }
 
+.note-save-status.error,
+.project-page-editor .novel-save-status.error {
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  color: var(--danger);
+}
+
 .note-save-status.saved,
 .project-page-editor .novel-save-status.saved {
   border-color: color-mix(in srgb, var(--success) 26%, transparent);
@@ -2890,6 +2896,24 @@ textarea.form-input {
   </div>
 </div>
 
+<!-- 数据结构升级进度 -->
+<div class="modal-overlay" id="storageMigrationModal">
+  <div class="modal update-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>正在升级数据存储</h3>
+    </div>
+    <div class="modal-body update-modal-body">
+      <p class="settings-message" id="storageMigrationMessage">正在准备升级...</p>
+      <div class="update-progress visible">
+        <div class="update-progress-bar">
+          <div class="update-progress-fill" id="storageMigrationProgressFill"></div>
+        </div>
+        <div class="update-progress-text" id="storageMigrationProgressText">0%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 确认框 -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
@@ -2939,6 +2963,34 @@ async function apiPost(key, data = {}) {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body?.error || res.statusText);
+  return body;
+}
+
+async function apiPut(key, data = {}) {
+  const res = await fetch(`/api/${key}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const error = new Error(body?.error || res.statusText);
+    error.status = res.status;
+    error.body = body;
+    throw error;
+  }
+  return body;
+}
+
+async function apiDelete(key) {
+  const res = await fetch(`/api/${key}`, { method: 'DELETE' });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const error = new Error(body?.error || res.statusText);
+    error.status = res.status;
+    error.body = body;
+    throw error;
+  }
   return body;
 }
 
@@ -3040,6 +3092,51 @@ async function loadAppVersion() {
   } catch {}
 }
 
+function renderStorageMigrationProgress(state = {}) {
+  const progress = Math.max(0, Math.min(100, Number(state.progress || 0)));
+  const fill = document.getElementById('storageMigrationProgressFill');
+  if (fill) fill.style.width = `${progress}%`;
+
+  const text = document.getElementById('storageMigrationProgressText');
+  if (text) text.textContent = `${Math.round(progress)}%`;
+
+  const message = document.getElementById('storageMigrationMessage');
+  if (message) {
+    const backupText = state.backupPath ? `备份位置：${state.backupPath}` : '';
+    message.textContent = [state.message || '正在准备升级...', backupText].filter(Boolean).join('；');
+  }
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function ensureStorageReady() {
+  let status = await apiGet('storage-status');
+  if (!status?.needsMigration && status?.state !== 'needed' && status?.state !== 'running') return;
+
+  const modal = document.getElementById('storageMigrationModal');
+  modal?.classList.add('active');
+  renderStorageMigrationProgress(status);
+
+  if (status.state !== 'running') {
+    status = await apiPost('storage-migrate');
+    renderStorageMigrationProgress(status);
+  }
+
+  while (true) {
+    await wait(350);
+    status = await apiGet('storage-status');
+    renderStorageMigrationProgress(status);
+    if (status.state === 'complete' || status.state === 'ready') break;
+    if (status.state === 'error') {
+      throw new Error(status.error || status.message || '数据结构升级失败');
+    }
+  }
+
+  modal?.classList.remove('active');
+}
+
 async function loadData() {
   try {
     notes = await apiGet('notes');
@@ -3077,7 +3174,7 @@ async function persistData(apiKey, storageKey, data) {
 }
 
 async function persistNotes() {
-  await persistData('notes', 'wb_notes', notes);
+  await persistNoteOrder();
 }
 
 async function persistInfo() {
@@ -3085,8 +3182,125 @@ async function persistInfo() {
 }
 
 async function persistProjects(revision = null) {
-  await persistData('projects', 'wb_projects', projects);
+  await persistProjectOrder();
   if (revision !== null) markProjectSaved(revision);
+}
+
+function handlePersistError(error, fallbackKey, fallbackData) {
+  if (error?.status === 409) {
+    showToast('检测到其他设备已更新，已停止覆盖');
+    return 'conflict';
+  }
+  saveLocalData(fallbackKey, fallbackData);
+  if (serverOnline) showPersistFallbackWarning();
+  return 'error';
+}
+
+async function persistNote(noteId) {
+  const note = notes.find(item => item.id === noteId);
+  if (!note) return null;
+  try {
+    if (!serverOnline) {
+      saveLocalData('wb_notes', notes);
+      return note;
+    }
+    const result = await apiPut(`notes/${encodeURIComponent(note.id)}`, {
+      item: { ...note, order: notes.findIndex(item => item.id === note.id) },
+      baseRevision: note.revision || null
+    });
+    if (result?.item) Object.assign(note, result.item);
+    return note;
+  } catch (error) {
+    handlePersistError(error, 'wb_notes', notes);
+    throw error;
+  }
+}
+
+async function persistNoteOrder() {
+  try {
+    if (serverOnline) await apiPost('notes/order', { ids: notes.map(note => note.id) });
+    else saveLocalData('wb_notes', notes);
+  } catch (error) {
+    handlePersistError(error, 'wb_notes', notes);
+  }
+}
+
+async function deleteNoteRemote(noteId) {
+  try {
+    if (serverOnline) await apiDelete(`notes/${encodeURIComponent(noteId)}`);
+    else saveLocalData('wb_notes', notes);
+  } catch (error) {
+    handlePersistError(error, 'wb_notes', notes);
+  }
+}
+
+async function persistProject(project, revision = null) {
+  if (!project) return null;
+  try {
+    if (!serverOnline) {
+      saveLocalData('wb_projects', projects);
+      if (revision !== null) markProjectSaved(revision);
+      return project;
+    }
+    const result = await apiPut(`projects/${encodeURIComponent(project.id)}`, {
+      item: { ...project, order: projects.findIndex(item => item.id === project.id) },
+      baseRevision: project.revision || null
+    });
+    if (result?.item) Object.assign(project, normalizeProject(result.item));
+    if (revision !== null) markProjectSaved(revision);
+    return project;
+  } catch (error) {
+    handlePersistError(error, 'wb_projects', projects);
+    throw error;
+  }
+}
+
+async function persistProjectOrder() {
+  try {
+    if (serverOnline) await apiPost('projects/order', { ids: projects.map(project => project.id) });
+    else saveLocalData('wb_projects', projects);
+  } catch (error) {
+    handlePersistError(error, 'wb_projects', projects);
+  }
+}
+
+async function persistProjectPageByIndex(projectId, pageIndex, revision = null) {
+  const project = getProjectById(projectId);
+  if (!project) return null;
+  const pageId = project.pageIds?.[pageIndex];
+  if (!pageId) return null;
+
+  try {
+    if (!serverOnline) {
+      saveLocalData('wb_projects', projects);
+      if (revision !== null) markProjectSaved(revision);
+      return null;
+    }
+    const result = await apiPut(
+      `projects/${encodeURIComponent(project.id)}/pages/${encodeURIComponent(pageId)}`,
+      {
+        content: project.pages[pageIndex] || '',
+        baseRevision: project.pageRevisions?.[pageId] || null
+      }
+    );
+    if (result?.pageId) {
+      project.pageRevisions = { ...(project.pageRevisions || {}), [result.pageId]: result.revision || 0 };
+    }
+    if (revision !== null) markProjectSaved(revision);
+    return result;
+  } catch (error) {
+    handlePersistError(error, 'wb_projects', projects);
+    throw error;
+  }
+}
+
+async function deleteProjectRemote(projectId) {
+  try {
+    if (serverOnline) await apiDelete(`projects/${encodeURIComponent(projectId)}`);
+    else saveLocalData('wb_projects', projects);
+  } catch (error) {
+    handlePersistError(error, 'wb_projects', projects);
+  }
 }
 
 /* ==================== 初始化 ==================== */
@@ -3136,6 +3350,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAISettings();
   window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
+  try {
+    await ensureStorageReady();
+  } catch (error) {
+    renderStorageMigrationProgress({ state: 'error', progress: 0, message: error.message || '数据结构升级失败' });
+    document.getElementById('storageMigrationModal')?.classList.add('active');
+    return;
+  }
   await loadData();
   renderNotes();
   renderProjects();
@@ -3520,14 +3741,23 @@ function normalizeProject(project) {
   const pages = Array.isArray(project.pages) && project.pages.length
     ? project.pages.map(page => String(page ?? ''))
     : [''];
+  const rawPageIds = Array.isArray(project.pageIds) ? project.pageIds : [];
+  const pageIds = pages.map((_page, index) => rawPageIds[index] || genId('pg'));
+  const pageRevisions = project.pageRevisions && typeof project.pageRevisions === 'object'
+    ? { ...project.pageRevisions }
+    : {};
   return {
     id: project.id || genId('p'),
     title: String(project.title || ''),
     summary: String(project.summary || ''),
     tags: normalizeTags(project.tags || project.tag || ''),
     pages,
+    pageIds,
+    pageRevisions,
     createdAt: project.createdAt || Date.now(),
-    updatedAt: project.updatedAt || Date.now()
+    updatedAt: project.updatedAt || Date.now(),
+    order: Number.isFinite(Number(project.order)) ? Number(project.order) : 0,
+    revision: Number(project.revision) || 0
   };
 }
 
@@ -4129,8 +4359,12 @@ async function persistInlineNote(noteId) {
   if (!note) return;
   const revision = noteSaveStates.get(noteId)?.revision || 0;
   note.updatedAt = Date.now();
-  await persistNotes();
-  markNoteSaved(noteId, revision);
+  try {
+    await persistNote(noteId);
+    markNoteSaved(noteId, revision);
+  } catch (error) {
+    setNoteSaveBadge(noteId, error?.status === 409 ? '保存冲突' : '保存失败', 'error', true);
+  }
 }
 
 function focusNote(noteId, target = 'title') {
@@ -4157,7 +4391,7 @@ async function createNote() {
   notes.push(note);
   renderNotes();
   focusNote(note.id);
-  await persistNotes();
+  await persistNote(note.id).catch(() => {});
 }
 
 function bindInlineNoteEditor(card, note) {
@@ -4389,7 +4623,7 @@ function renderNotes() {
 
         if (finalSpan !== (note.span || 1)) {
           note.span = finalSpan;
-          persistNotes();
+          persistNote(note.id).catch(() => {});
         }
       }
 
@@ -4409,7 +4643,7 @@ function reorderNotes(fromId, toId) {
   if (fromIdx < 0 || toIdx < 0) return;
   const [moved] = notes.splice(fromIdx, 1);
   notes.splice(toIdx, 0, moved);
-  persistNotes();
+  persistNoteOrder();
   renderNotes();
 }
 
@@ -4421,8 +4655,8 @@ function askDeleteNote(id) {
       clearTimeout(noteDraftTimers.get(id));
       noteDraftTimers.delete(id);
       noteSaveStates.delete(id);
+      await deleteNoteRemote(id);
       notes = notes.filter(n => n.id !== id);
-      await persistNotes();
       renderNotes();
     }
   );
@@ -4436,9 +4670,14 @@ function getProjectById(id) {
 function queuePersistProjects() {
   if (projectPersistTimer) clearTimeout(projectPersistTimer);
   const revision = projectSaveRevision;
+  const projectId = activeProjectId;
+  const pageIndex = activeProjectPageIndex;
   projectPersistTimer = setTimeout(() => {
     projectPersistTimer = null;
-    persistProjects(revision);
+    persistProjectPageByIndex(projectId, pageIndex, revision).catch(error => {
+      projectSaveStatus = { text: error?.status === 409 ? '保存冲突' : '保存失败', visible: true, tone: 'error' };
+      syncProjectSaveStatus();
+    });
   }, 260);
 }
 
@@ -4446,7 +4685,10 @@ function flushProjectPersist() {
   if (!projectPersistTimer) return;
   clearTimeout(projectPersistTimer);
   projectPersistTimer = null;
-  persistProjects(projectSaveRevision);
+  persistProjectPageByIndex(activeProjectId, activeProjectPageIndex, projectSaveRevision).catch(error => {
+    projectSaveStatus = { text: error?.status === 409 ? '保存冲突' : '保存失败', visible: true, tone: 'error' };
+    syncProjectSaveStatus();
+  });
 }
 
 function replayProjectShelfAnimation() {
@@ -4710,7 +4952,7 @@ function reorderProjectTags(fromTag, toTag) {
   const reordered = reorderTaggedItems(projects, getProjectGroupTag, fromTag, toTag);
   if (reordered === projects) return;
   projects = reordered;
-  persistProjects();
+  persistProjectOrder();
   renderProjects();
 }
 
@@ -4721,7 +4963,7 @@ function reorderProjects(fromId, toId) {
 
   const [moved] = projects.splice(fromIdx, 1);
   projects.splice(toIdx, 0, moved);
-  persistProjects();
+  persistProjectOrder();
   renderProjects();
 }
 
@@ -5319,9 +5561,14 @@ async function saveProject() {
       project.tags = tags;
       project.summary = summary;
       project.updatedAt = Date.now();
+      try {
+        await persistProject(project);
+      } catch {
+        return;
+      }
     }
   } else {
-    projects.push(normalizeProject({
+    const project = normalizeProject({
       id: genId('p'),
       title,
       tags,
@@ -5329,10 +5576,16 @@ async function saveProject() {
       pages: [''],
       createdAt: Date.now(),
       updatedAt: Date.now()
-    }));
+    });
+    projects.push(project);
+    try {
+      await persistProject(project);
+    } catch {
+      projects = projects.filter(item => item.id !== project.id);
+      return;
+    }
   }
 
-  await persistProjects();
   closeProjectEditor();
   renderProjects();
 }
@@ -5348,6 +5601,7 @@ function askDeleteProject(id) {
         projectCloseTimer = null;
       }
 
+      await deleteProjectRemote(id);
       projects = projects.filter(p => p.id !== id);
 
       if (activeProjectId === id) {
@@ -5356,7 +5610,6 @@ function askDeleteProject(id) {
         document.getElementById('projectBookView').classList.remove('active', 'opening', 'closing');
       }
 
-      await persistProjects();
       renderProjects();
     }
   );
@@ -5612,9 +5865,11 @@ async function addProjectPage() {
 
   flushProjectPersist();
   project.pages.push('');
+  project.pageIds = [...(project.pageIds || []), genId('pg')];
   project.updatedAt = Date.now();
   activeProjectPageIndex = project.pages.length - 1;
-  await persistProjects();
+  const revision = markProjectDirty();
+  await persistProject(project, revision).catch(() => {});
   renderProjectBook();
   focusProjectEditor();
 }
@@ -5634,11 +5889,14 @@ async function deleteProjectPage(index) {
   if (!project || index < 0 || index >= project.pages.length) return;
 
   flushProjectPersist();
-  if (project.pages.length <= 1) {
+  const clearedOnlyPage = project.pages.length <= 1;
+  if (clearedOnlyPage) {
     project.pages = [''];
+    project.pageIds = project.pageIds?.length ? [project.pageIds[0]] : [genId('pg')];
     activeProjectPageIndex = 0;
   } else {
     project.pages.splice(index, 1);
+    project.pageIds?.splice(index, 1);
     if (activeProjectPageIndex === index) {
       activeProjectPageIndex = Math.min(index, project.pages.length - 1);
     } else if (activeProjectPageIndex > index) {
@@ -5648,7 +5906,11 @@ async function deleteProjectPage(index) {
 
   project.updatedAt = Date.now();
   markProjectDirty();
-  await persistProjects(projectSaveRevision);
+  if (clearedOnlyPage) {
+    await persistProjectPageByIndex(project.id, 0, projectSaveRevision).catch(() => {});
+  } else {
+    await persistProject(project, projectSaveRevision).catch(() => {});
+  }
   renderProjectBook();
   focusProjectEditor();
 }
@@ -5666,6 +5928,10 @@ async function reorderProjectPages(fromIndex, toIndex) {
   const activeBefore = activeProjectPageIndex;
   const [movedPage] = project.pages.splice(fromIndex, 1);
   project.pages.splice(toIndex, 0, movedPage);
+  if (Array.isArray(project.pageIds)) {
+    const [movedPageId] = project.pageIds.splice(fromIndex, 1);
+    project.pageIds.splice(toIndex, 0, movedPageId);
+  }
   const [movedKey] = pageKeys.splice(fromIndex, 1);
   pageKeys.splice(toIndex, 0, movedKey);
 
@@ -5680,7 +5946,7 @@ async function reorderProjectPages(fromIndex, toIndex) {
   project.updatedAt = Date.now();
   markProjectDirty();
   renderProjectPageTabs(previousRects, pageKeys);
-  await persistProjects(projectSaveRevision);
+  await persistProject(project, projectSaveRevision).catch(() => {});
 }
 
 /* ==================== 常用个人信息 ==================== */
