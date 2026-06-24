@@ -378,8 +378,9 @@ function writeProjectSnapshot(dataDir, project, index = 0) {
     });
   });
 
+  const pageOrderSet = new Set(pageOrder);
   readProjectPageFiles(dataDir, snapshot.id).forEach(filePath => {
-    if (pageOrder.includes(path.basename(filePath, '.json'))) return;
+    if (pageOrderSet.has(path.basename(filePath, '.json'))) return;
     fs.unlinkSync(filePath);
   });
 
@@ -421,6 +422,7 @@ function saveProjectMeta(dataDir, project, options = {}) {
   }, order);
   const existingPageIds = new Set(existing?.pageIds || []);
   const pageOrder = snapshot.pageIds;
+  const pageOrderSet = new Set(pageOrder);
 
   pageOrder.forEach((pageId, pageIndex) => {
     const pagePath = getProjectPagePath(dataDir, snapshot.id, pageId);
@@ -437,7 +439,7 @@ function saveProjectMeta(dataDir, project, options = {}) {
   });
 
   existingPageIds.forEach(pageId => {
-    if (pageOrder.includes(pageId)) return;
+    if (pageOrderSet.has(pageId)) return;
     const pagePath = getProjectPagePath(dataDir, snapshot.id, pageId);
     if (fs.existsSync(pagePath)) fs.unlinkSync(pagePath);
   });
@@ -458,23 +460,25 @@ function saveProjectMeta(dataDir, project, options = {}) {
 }
 
 function saveProjectPage(dataDir, projectId, pageId, content, options = {}) {
-  const project = readProject(dataDir, projectId);
-  if (!project) throw new Error('项目不存在');
+  const safeProjectId = sanitizeEntityId(projectId, 'p');
+  const meta = readOptionalJSON(getProjectMetaPath(dataDir, safeProjectId), null);
+  if (!meta || typeof meta !== 'object') throw new Error('项目不存在');
+  const normalizedProjectId = sanitizeEntityId(meta.id || safeProjectId, 'p');
   const safePageId = sanitizePageId(pageId);
-  const pagePath = getProjectPagePath(dataDir, project.id, safePageId);
+  const pagePath = getProjectPagePath(dataDir, normalizedProjectId, safePageId);
   const existing = readOptionalJSON(pagePath, null);
   if (!existing) throw new Error('项目页面不存在');
 
   const baseRevision = options.baseRevision;
   if (baseRevision != null && Number(baseRevision) !== Number(existing.revision || 0)) {
-    throw new ConflictError('项目页面已在其他设备更新', project);
+    throw new ConflictError('项目页面已在其他设备更新', readProject(dataDir, normalizedProjectId));
   }
 
   const revision = nextRevision(existing.revision);
   writeJSONFile(pagePath, {
     ...existing,
     id: safePageId,
-    projectId: project.id,
+    projectId: normalizedProjectId,
     content: String(content || ''),
     updatedAt: Date.now(),
     revision
@@ -505,8 +509,6 @@ function updateCollectionOrder(dataDir, key, ids = []) {
   }
 
   safeIds.forEach((id, index) => {
-    const project = readProject(dataDir, id);
-    if (!project) return;
     const metaPath = getProjectMetaPath(dataDir, id);
     const meta = readOptionalJSON(metaPath, null);
     if (!meta) return;
@@ -527,9 +529,10 @@ function writeCollection(dataDir, key, items) {
       keepIds.add(project.id);
     });
 
-    readProjects(dataDir).forEach(project => {
-      if (keepIds.has(project.id)) return;
-      moveProjectToTrash(dataDir, project.id);
+    listProjectDirs(dataDir).forEach(projectDir => {
+      const projectId = path.basename(projectDir);
+      if (keepIds.has(projectId)) return;
+      moveProjectToTrash(dataDir, projectId);
     });
     return;
   }
@@ -569,14 +572,6 @@ function writeCollection(dataDir, key, items) {
     fs.writeFileSync(trashPath, JSON.stringify({ ...item, deletedAt }, null, 2), 'utf-8');
     fs.unlinkSync(filePath);
   });
-}
-
-function migrateLegacyCollection(dataDir, key) {
-  if (listCollectionFiles(dataDir, key).length > 0) return;
-
-  const legacyFile = LEGACY_COLLECTION_FILES[key];
-  const legacyData = readJSON(dataDir, legacyFile, []);
-  if (Array.isArray(legacyData) && legacyData.length) writeCollection(dataDir, key, legacyData);
 }
 
 function ensureBaseDataLayout(dataDir) {
@@ -976,8 +971,7 @@ function mergeInfoFile(dataDir, content) {
   return nextItems.length;
 }
 
-function mergeCollectionFile(dataDir, key, relativePath, content) {
-  const item = JSON.parse(content);
+function mergeCollectionItem(dataDir, key, item) {
   if (!item || typeof item !== 'object') return 0;
 
   const fallbackPrefix = key === 'notes' ? 'n' : 'p';
@@ -994,17 +988,15 @@ function mergeCollectionFile(dataDir, key, relativePath, content) {
   return 1;
 }
 
+function mergeCollectionFile(dataDir, key, content) {
+  return mergeCollectionItem(dataDir, key, JSON.parse(content));
+}
+
 function mergeLegacyCollectionFile(dataDir, key, content) {
   const items = JSON.parse(content);
   if (!Array.isArray(items)) return 0;
 
-  return items.reduce((count, item) => {
-    const file = {
-      path: `${key}/${sanitizeEntityId(item?.id, key === 'notes' ? 'n' : 'p')}.json`,
-      data: Buffer.from(JSON.stringify(item || {})).toString('base64')
-    };
-    return count + writeImportedFile(dataDir, file);
-  }, 0);
+  return items.reduce((count, item) => count + mergeCollectionItem(dataDir, key, item || {}), 0);
 }
 
 function writeImportedFile(dataDir, file) {
@@ -1017,7 +1009,7 @@ function writeImportedFile(dataDir, file) {
   if (relativePath === 'notes.json') return mergeLegacyCollectionFile(dataDir, 'notes', content);
   if (relativePath === 'projects.json') return mergeLegacyCollectionFile(dataDir, 'projects', content);
   if (relativePath.startsWith('notes/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, 'notes', relativePath, content);
+    return mergeCollectionFile(dataDir, 'notes', content);
   }
   if (relativePath.startsWith(`${PROJECT_ITEMS_DIR.replace(/\\/g, '/')}/`) && relativePath.endsWith('.json')) {
     const targetPath = path.join(dataDir, relativePath);
@@ -1026,7 +1018,7 @@ function writeImportedFile(dataDir, file) {
     return 1;
   }
   if (relativePath.startsWith('projects/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, 'projects', relativePath, content);
+    return mergeCollectionFile(dataDir, 'projects', content);
   }
 
   const targetPath = makeUniqueFilePath(path.join(dataDir, relativePath));

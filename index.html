@@ -1430,10 +1430,6 @@ html.platform-win32 .windows-window-controls {
 .project-outline-level-2 { padding-left: 18px; }
 .project-outline-level-3 { padding-left: 30px; }
 .project-outline-level-4 { padding-left: 42px; }
-/* .project-outline-level-1 .project-outline-item,
-.project-outline-level-2 .project-outline-item {
-  font-weight: 700;
-} */
 
 .project-page-indicator {
   min-width: 78px;
@@ -3173,17 +3169,8 @@ async function persistData(apiKey, storageKey, data) {
   }
 }
 
-async function persistNotes() {
-  await persistNoteOrder();
-}
-
 async function persistInfo() {
   await persistData('info', 'wb_info', infoPanels);
-}
-
-async function persistProjects(revision = null) {
-  await persistProjectOrder();
-  if (revision !== null) markProjectSaved(revision);
 }
 
 function handlePersistError(error, fallbackKey, fallbackData) {
@@ -3311,7 +3298,6 @@ let draggedId = null;
 const noteEditors = new Map();
 const noteDraftTimers = new Map();
 const noteSaveStates = new Map();
-let draggedProjectId = null;
 let draggedProjectTag = null;
 let draggedInfoTag = null;
 let draggedInfoPanelId = null;
@@ -3705,12 +3691,6 @@ function reorderTaggedItems(items, getTag, fromTag, toTag) {
   const [moved] = tagOrder.splice(fromIdx, 1);
   tagOrder.splice(toIdx, 0, moved);
   return tagOrder.flatMap(tag => groups.get(tag));
-}
-
-function renderMd(text) {
-  if (!text) return '<span style="color:var(--text-light);">空便笺</span>';
-  try { return marked.parse(text, { breaks: true }); }
-  catch { return escHtml(text); }
 }
 
 function maskValue(text) {
@@ -4871,7 +4851,6 @@ function bindProjectShelfDrag() {
         proxy.style.height = `${sourceRect.height}px`;
         document.body.appendChild(proxy);
 
-        draggedProjectId = sourceId;
         suppressProjectOpen = true;
         if (suppressProjectOpenTimer) clearTimeout(suppressProjectOpenTimer);
         suppressProjectOpenTimer = setTimeout(() => {
@@ -4910,7 +4889,6 @@ function bindProjectShelfDrag() {
         source.classList.remove('dragging');
         proxy?.remove();
         document.body.style.userSelect = '';
-        draggedProjectId = null;
         clearSuppressProjectOpen();
         suppressProjectOpen = true;
         setTimeout(() => { suppressProjectOpen = false; }, 0);
@@ -5066,11 +5044,7 @@ function getProjectOutlineKey(project, item) {
 
 function projectOutlineItemHasChildren(items, index) {
   const item = items[index];
-  for (let nextIndex = index + 1; nextIndex < items.length; nextIndex++) {
-    if (items[nextIndex].level <= item.level) return false;
-    if (items[nextIndex].level > item.level) return true;
-  }
-  return false;
+  return Boolean(items[index + 1] && items[index + 1].level > item.level);
 }
 
 function getVisibleProjectOutlineItems(project, items) {
@@ -5265,9 +5239,11 @@ function updateProjectFind(query) {
   const needle = projectFindQuery.toLowerCase();
   project.pages.forEach((page, pageIndex) => {
     const text = htmlToSearchText(page).toLowerCase();
+    let occurrenceInPage = 0;
     let start = text.indexOf(needle);
     while (start >= 0) {
-      projectFindResults.push({ pageIndex, occurrenceInPage: projectFindResults.filter(result => result.pageIndex === pageIndex).length });
+      projectFindResults.push({ pageIndex, occurrenceInPage });
+      occurrenceInPage += 1;
       start = text.indexOf(needle, start + needle.length);
     }
   });

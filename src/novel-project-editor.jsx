@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
 import { Extension } from '@tiptap/core';
@@ -666,17 +666,20 @@ function selectDomText(host, query, occurrenceIndex = 0) {
 
   const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
   const parts = [];
+  let offset = 0;
   let node = walker.nextNode();
   while (node) {
-    parts.push({ node, start: parts.reduce((sum, part) => sum + part.node.nodeValue.length, 0) });
+    parts.push({ node, start: offset });
+    offset += node.nodeValue.length;
     node = walker.nextNode();
   }
 
   const text = parts.map(part => part.node.nodeValue).join('');
+  const lowerText = text.toLowerCase();
   const needle = query.toLowerCase();
   let index = -1;
   for (let i = 0; i <= occurrenceIndex; i++) {
-    index = text.toLowerCase().indexOf(needle, index + 1);
+    index = lowerText.indexOf(needle, index + 1);
     if (index < 0) return false;
   }
 
