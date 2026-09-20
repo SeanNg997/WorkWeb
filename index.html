@@ -181,7 +181,6 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 .sidebar-header,
 .sidebar-nav,
-.theme-panel,
 .sidebar-version {
   width: var(--sidebar-width);
 }
@@ -206,11 +205,6 @@ body.sidebar-collapsed .sidebar {
 .sidebar-header p { font-size: 14px; color: var(--sidebar-text); margin-top: 8px; }
 
 .sidebar-nav { padding: 12px 12px; flex: 1; }
-
-.theme-panel {
-  padding: 14px 16px 4px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
 
 .sidebar-version {
   padding: 6px 16px 10px;
@@ -252,41 +246,6 @@ body.sidebar-collapsed .sidebar {
 .sidebar-settings.has-update {
   background: var(--sidebar-active);
   color: var(--sidebar-text-active);
-}
-
-.theme-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.theme-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 34px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
-  background: rgba(255,255,255,0.05);
-  color: var(--sidebar-text);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.theme-btn:hover,
-.theme-btn.active {
-  background: var(--sidebar-active);
-  color: var(--sidebar-text-active);
-}
-
-.theme-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--dot-color);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.16);
 }
 
 .nav-item {
@@ -1988,17 +1947,10 @@ html.platform-win32 .windows-window-controls {
   z-index: 120;
 }
 
-.settings-actions,
-.font-size-options {
+.settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.font-size-options .active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent-hover);
 }
 
 #downloadLatestBtn {
@@ -2068,6 +2020,11 @@ html.platform-win32 .windows-window-controls {
   display: flex;
   gap: 16px;
   font-size: 13px;
+}
+
+.display-theme-options {
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 .radio-group label {
@@ -2558,22 +2515,6 @@ textarea.form-input {
     </div>
   </nav>
   <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
-  <div class="theme-panel">
-    <div class="theme-options">
-      <button class="theme-btn" data-theme="sage" onclick="setTheme('sage')">
-        <span class="theme-dot" style="--dot-color:#70857a"></span>雾灰绿
-      </button>
-      <button class="theme-btn" data-theme="sand" onclick="setTheme('sand')">
-        <span class="theme-dot" style="--dot-color:#a4835f"></span>暖沙
-      </button>
-      <button class="theme-btn" data-theme="blue" onclick="setTheme('blue')">
-        <span class="theme-dot" style="--dot-color:#6f8796"></span>静谧蓝
-      </button>
-      <button class="theme-btn" data-theme="stone" onclick="setTheme('stone')">
-        <span class="theme-dot" style="--dot-color:#747a74"></span>岩灰
-      </button>
-    </div>
-  </div>
 </aside>
 
 <div class="sidebar-toggle-zone" aria-hidden="false">
@@ -2778,17 +2719,38 @@ textarea.form-input {
     <div class="modal-body">
       <div class="settings-grid">
         <section class="settings-card">
-          <h4>Markdown 字体大小</h4>
-          <div class="font-size-options">
-            <button class="btn btn-secondary" data-font-size="large" onclick="setMarkdownFontSize('large')">增大</button>
-            <button class="btn btn-secondary" data-font-size="normal" onclick="setMarkdownFontSize('normal')">标准</button>
-            <button class="btn btn-secondary" data-font-size="small" onclick="setMarkdownFontSize('small')">缩小</button>
+          <h4>显示设置</h4>
+          <div class="settings-form">
+            <div class="form-row">
+              <label>字体大小</label>
+              <div class="radio-group">
+                <label><input type="radio" name="markdownFontSize" value="large" onchange="setMarkdownFontSize(this.value)"> 增大</label>
+                <label><input type="radio" name="markdownFontSize" value="normal" onchange="setMarkdownFontSize(this.value)"> 标准</label>
+                <label><input type="radio" name="markdownFontSize" value="small" onchange="setMarkdownFontSize(this.value)"> 缩小</label>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>拼写检查</label>
+              <div class="radio-group">
+                <label><input type="radio" name="markdownSpellcheck" value="true" onchange="setMarkdownSpellcheck(this.value)"> 开启</label>
+                <label><input type="radio" name="markdownSpellcheck" value="false" onchange="setMarkdownSpellcheck(this.value)"> 关闭</label>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>软件皮肤</label>
+              <div class="radio-group display-theme-options">
+                <label><input type="radio" name="appTheme" value="sage" onchange="setTheme(this.value)"> 雾灰绿</label>
+                <label><input type="radio" name="appTheme" value="sand" onchange="setTheme(this.value)"> 暖沙</label>
+                <label><input type="radio" name="appTheme" value="blue" onchange="setTheme(this.value)"> 静谧蓝</label>
+                <label><input type="radio" name="appTheme" value="stone" onchange="setTheme(this.value)"> 岩灰</label>
+              </div>
+            </div>
           </div>
         </section>
 
         <section class="settings-card">
           <h4>AI 写作助手</h4>
-          <p>配置第三方 AI 接口，在编辑时自动补全内容。支持 OpenAI 和 Anthropic 协议。</p>
+          <p>配置第三方 AI 接口，在编辑时自动补全内容。</p>
           <div class="settings-form">
             <div class="form-row">
               <label>接口协议</label>
@@ -2944,6 +2906,8 @@ let updateState = { supported: false, status: 'idle', message: '尚未检查更�
 let lastPersistWarningAt = 0;
 
 const MARKDOWN_FONT_SIZE_KEY = 'wb_markdown_size';
+const MARKDOWN_SPELLCHECK_KEY = 'wb_markdown_spellcheck';
+let markdownSpellcheckEnabled = true;
 
 async function apiGet(key) {
   const res = await fetch(`/api/${key}`);
@@ -3333,6 +3297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadSidebarState();
   initWindowControls();
   await loadMarkdownFontSize();
+  await loadMarkdownSpellcheck();
   await loadAISettings();
   window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
@@ -3359,8 +3324,9 @@ function setTheme(theme) {
   const safeTheme = ['sage', 'sand', 'blue', 'stone'].includes(theme) ? theme : 'sage';
   document.body.dataset.theme = safeTheme;
   localStorage.setItem('wb_theme', safeTheme);
-  document.querySelectorAll('.theme-btn').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.theme === safeTheme));
+  document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
+    radio.checked = radio.value === safeTheme;
+  });
 }
 
 function loadTheme() {
@@ -3493,8 +3459,9 @@ function writePreference(key, value) {
 function applyMarkdownFontSize(size) {
   const safeSize = ['large', 'normal', 'small'].includes(size) ? size : 'normal';
   document.body.dataset.markdownSize = safeSize;
-  document.querySelectorAll('[data-font-size]').forEach(btn =>
-    btn.classList.toggle('active', btn.dataset.fontSize === safeSize));
+  document.querySelectorAll('input[name="markdownFontSize"]').forEach(radio => {
+    radio.checked = radio.value === safeSize;
+  });
   return safeSize;
 }
 
@@ -3506,6 +3473,32 @@ function setMarkdownFontSize(size) {
 async function loadMarkdownFontSize() {
   const size = await readPreference(MARKDOWN_FONT_SIZE_KEY, localStorage.getItem(MARKDOWN_FONT_SIZE_KEY) || 'normal');
   applyMarkdownFontSize(size);
+}
+
+function applyMarkdownSpellcheck(enabled) {
+  const safeEnabled = enabled === true || enabled === 'true';
+  markdownSpellcheckEnabled = safeEnabled;
+  document.querySelectorAll('input[name="markdownSpellcheck"]').forEach(radio => {
+    radio.checked = radio.value === String(safeEnabled);
+  });
+  const sourceEditor = document.getElementById('projectSourceEditor');
+  if (sourceEditor) sourceEditor.spellcheck = safeEnabled;
+  projectEditor?.setSpellcheck?.(safeEnabled);
+  noteEditors.forEach(editor => editor?.setSpellcheck?.(safeEnabled));
+  return safeEnabled;
+}
+
+function setMarkdownSpellcheck(enabled) {
+  const safeEnabled = applyMarkdownSpellcheck(enabled);
+  writePreference(MARKDOWN_SPELLCHECK_KEY, String(safeEnabled));
+}
+
+async function loadMarkdownSpellcheck() {
+  const enabled = await readPreference(
+    MARKDOWN_SPELLCHECK_KEY,
+    localStorage.getItem(MARKDOWN_SPELLCHECK_KEY) || 'true'
+  );
+  applyMarkdownSpellcheck(enabled);
 }
 
 /* ==================== AI 配置 ==================== */
@@ -3694,7 +3687,7 @@ function reorderTaggedItems(items, getTag, fromTag, toTag) {
 }
 
 function maskValue(text) {
-  return '*'.repeat(Array.from(text || '').length);
+  return '*'.repeat(8);
 }
 
 function normalizeTags(value) {
@@ -4421,6 +4414,7 @@ function bindInlineNoteEditor(card, note) {
     placeholder: '直接输入正文...',
     showToolbar: false,
     showSourceToggle: false,
+    spellcheck: markdownSpellcheckEnabled,
     aiConfig: { ...getAIConfig(), enabled: false },
     onChange: value => {
       note.content = value;
@@ -4974,7 +4968,7 @@ function setProjectSourceMode(nextMode, options = {}) {
   }
 
   if (targetMode) {
-    syncProjectSourceEditor(getActiveProjectPageContent());
+    syncProjectSourceEditor(projectHtmlToMarkdown(getActiveProjectPageContent()));
     projectSourceMode = true;
     applyProjectEditorMode();
   } else {
@@ -4998,11 +4992,175 @@ function htmlToSearchText(value) {
   return box.textContent || '';
 }
 
+const PROJECT_HTML_START_PATTERN = /^(?:<!doctype\s+html\b|<(?:html|body|p|h[1-6]|ul|ol|li|blockquote|pre|hr|img|div|table|figure|section|article|aside|dl|details|summary|main|header|footer|nav|address|fieldset)\b)/i;
+
+function looksLikeProjectHtml(value) {
+  return PROJECT_HTML_START_PATTERN.test(String(value || '').trimStart());
+}
+
+function escapeProjectMarkdownText(value) {
+  const specialCharacters = new Set(['\\', String.fromCharCode(96), '*', '_', '{', '}', '[', ']', '(', ')', '#', '+', '-', '.', '!', '|', '<', '>', '~']);
+  return Array.from(String(value || ''), character =>
+    specialCharacters.has(character) ? `\\${character}` : character
+  ).join('');
+}
+
+function escapeProjectMarkdownDestination(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/\s/g, '%20');
+}
+
+function escapeProjectHtmlAttribute(value) {
+  return String(value || '').replace(/[&"<>]/g, character => ({
+    '&': '&amp;',
+    '"': '&quot;',
+    '<': '&lt;',
+    '>': '&gt;'
+  }[character]));
+}
+
+function projectHtmlToMarkdown(value) {
+  const raw = String(value || '');
+  if (!looksLikeProjectHtml(raw)) return raw;
+
+  const root = document.createElement('div');
+  root.innerHTML = raw;
+
+  function serializeInline(node) {
+    if (node.nodeType === Node.TEXT_NODE) return escapeProjectMarkdownText(node.nodeValue);
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const tag = node.tagName.toLowerCase();
+    const content = Array.from(node.childNodes, serializeInline).join('');
+    if (tag === 'br') return '  \n';
+    if (tag === 'strong' || tag === 'b') return `**${content}**`;
+    if (tag === 'em' || tag === 'i') return `*${content}*`;
+    if (tag === 's' || tag === 'del' || tag === 'strike') return `~~${content}~~`;
+    if (tag === 'u' || tag === 'sub' || tag === 'sup') return `<${tag}>${content}</${tag}>`;
+    if (tag === 'code') {
+      const text = node.textContent || '';
+      const tick = String.fromCharCode(96);
+      const runs = text.match(new RegExp(tick + '+', 'g')) || [];
+      const longestRun = runs.reduce((longest, run) => Math.max(longest, run.length), 0);
+      const fence = tick.repeat(longestRun + 1);
+      const padding = text.startsWith(tick) || text.endsWith(tick) || /^\s|\s$/.test(text) ? ' ' : '';
+      return `${fence}${padding}${text}${padding}${fence}`;
+    }
+    if (tag === 'a') {
+      const href = node.getAttribute('href');
+      if (!href) return content;
+      const title = node.getAttribute('title');
+      const titleSuffix = title ? ` "${title.replace(/"/g, '\\"')}"` : '';
+      return `[${content}](${escapeProjectMarkdownDestination(href)}${titleSuffix})`;
+    }
+    if (tag === 'img') {
+      if (node.style?.width || node.getAttribute('width')) {
+        const attributes = Array.from(node.attributes, attribute =>
+          `${attribute.name}="${escapeProjectHtmlAttribute(attribute.value)}"`
+        ).join(' ');
+        return `<img ${attributes}>`;
+      }
+      const alt = escapeProjectMarkdownText(node.getAttribute('alt') || '');
+      const src = escapeProjectMarkdownDestination(node.getAttribute('src') || '');
+      return `![${alt}](${src})`;
+    }
+    return content;
+  }
+
+  function serializeList(list, depth = 0) {
+    const ordered = list.tagName.toLowerCase() === 'ol';
+    const start = Math.max(1, Number(list.getAttribute('start')) || 1);
+    return Array.from(list.children)
+      .filter(item => item.tagName.toLowerCase() === 'li')
+      .map((item, index) => {
+        const blocks = [];
+        const nestedLists = [];
+        Array.from(item.childNodes).forEach(child => {
+          const tag = child.nodeType === Node.ELEMENT_NODE ? child.tagName.toLowerCase() : '';
+          if (tag === 'ul' || tag === 'ol') nestedLists.push(serializeList(child, depth + 1));
+          else if (child.nodeType === Node.TEXT_NODE) {
+            const text = escapeProjectMarkdownText(child.nodeValue || '').trim();
+            if (text) blocks.push(text);
+          } else {
+            const block = serializeBlock(child);
+            if (block) blocks.push(block);
+          }
+        });
+
+        const indent = '  '.repeat(depth);
+        const marker = ordered ? `${start + index}.` : '-';
+        const main = blocks.join('\n\n').split('\n');
+        const lines = main.length && main.some(Boolean)
+          ? main.map((line, lineIndex) => `${indent}${lineIndex === 0 ? `${marker} ` : '  '}${line}`).join('\n')
+          : `${indent}${marker}`;
+        return [lines, ...nestedLists].filter(Boolean).join('\n');
+      })
+      .join('\n');
+  }
+
+  function serializeBlock(node) {
+    if (node.nodeType === Node.TEXT_NODE) return escapeProjectMarkdownText(node.nodeValue || '').trim();
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const tag = node.tagName.toLowerCase();
+    if (/^h[1-6]$/.test(tag)) {
+      return `${'#'.repeat(Number(tag.slice(1)))} ${Array.from(node.childNodes, serializeInline).join('').trim()}`;
+    }
+    if (tag === 'p') return Array.from(node.childNodes, serializeInline).join('').trim();
+    if (tag === 'img') return serializeInline(node);
+    if (tag === 'pre') {
+      const code = node.querySelector('code');
+      const text = (code?.textContent || node.textContent || '').replace(/\n+$/, '');
+      const codeClass = code?.getAttribute('class') || '';
+      const language = codeClass.match(/(?:^|\s)language-([\w+-]+)/)?.[1] || '';
+      const tick = String.fromCharCode(96);
+      const runs = text.match(new RegExp(tick + '+', 'g')) || [];
+      const longestRun = runs.reduce((longest, run) => Math.max(longest, run.length), 0);
+      const fence = tick.repeat(Math.max(3, longestRun + 1));
+      return `${fence}${language}\n${text}\n${fence}`;
+    }
+    if (tag === 'ul' || tag === 'ol') return serializeList(node);
+    if (tag === 'blockquote') {
+      const quoted = serializeBlocks(node);
+      return quoted.split('\n').map(line => line ? `> ${line}` : '>').join('\n');
+    }
+    if (tag === 'table') {
+      const rows = Array.from(node.querySelectorAll('tr')).map(row =>
+        Array.from(row.children)
+          .filter(cell => ['th', 'td'].includes(cell.tagName.toLowerCase()))
+          .map(cell => Array.from(cell.childNodes, serializeInline).join('').trim())
+      );
+      if (!rows.length) return node.outerHTML || '';
+      const columnCount = Math.max(...rows.map(row => row.length));
+      const renderRow = row => `| ${Array.from({ length: columnCount }, (_, index) => row[index] || '').join(' | ')} |`;
+      return [renderRow(rows[0]), renderRow(Array(columnCount).fill('---')), ...rows.slice(1).map(renderRow)].join('\n');
+    }
+    if (tag === 'hr') return '---';
+    if (['html', 'body', 'div', 'section', 'article', 'aside', 'main', 'header', 'footer', 'nav'].includes(tag)) {
+      return serializeBlocks(node);
+    }
+    if (['details', 'summary', 'fieldset', 'dl'].includes(tag)) return node.outerHTML || '';
+    return Array.from(node.childNodes, serializeInline).join('').trim();
+  }
+
+  function serializeBlocks(container) {
+    return Array.from(container.childNodes)
+      .map(serializeBlock)
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return serializeBlocks(root);
+}
+
 function pageContentToDocument(value) {
   const doc = document.implementation.createHTMLDocument('');
   const body = doc.body;
   const raw = String(value || '');
-  if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
+  if (looksLikeProjectHtml(raw)) {
     body.innerHTML = raw;
   } else if (window.marked?.parse) {
     body.innerHTML = marked.parse(raw, { breaks: true });
@@ -5016,17 +5174,16 @@ function getProjectOutlineItems(project) {
   if (!project) return [];
   const items = [];
   const pages = project.pages.length ? project.pages : [''];
-  pages.forEach((page, pageIndex) => {
-    const doc = pageContentToDocument(page);
-    doc.body.querySelectorAll('h1, h2, h3, h4').forEach((heading, headingIndex) => {
-      const text = heading.textContent.trim().replace(/\s+/g, ' ');
-      if (!text) return;
-      items.push({
-        pageIndex,
-        headingIndex,
-        level: Math.min(4, Math.max(1, Number(heading.tagName.slice(1)) || 1)),
-        text
-      });
+  const pageIndex = Math.max(0, Math.min(activeProjectPageIndex, pages.length - 1));
+  const doc = pageContentToDocument(pages[pageIndex] || '');
+  doc.body.querySelectorAll('h1, h2, h3, h4').forEach((heading, headingIndex) => {
+    const text = heading.textContent.trim().replace(/\s+/g, ' ');
+    if (!text) return;
+    items.push({
+      pageIndex,
+      headingIndex,
+      level: Math.min(4, Math.max(1, Number(heading.tagName.slice(1)) || 1)),
+      text
     });
   });
   return items;
@@ -5640,6 +5797,7 @@ function ensureProjectEditor() {
     value: '',
     placeholder: '输入项目内容...',
     sourceMode: projectSourceMode,
+    spellcheck: markdownSpellcheckEnabled,
     saveStatus: projectSaveStatus,
     onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),

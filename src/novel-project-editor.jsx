@@ -253,7 +253,8 @@ ${cursor}
 }
 
 function looksLikeHtml(value) {
-  return /<\/?[a-z][\s\S]*>/i.test(value || '');
+  return /^(?:<!doctype\s+html\b|<(?:html|body|p|h[1-6]|ul|ol|li|blockquote|pre|hr|img|div|table|figure|section|article|aside|dl|details|summary|main|header|footer|nav|address|fieldset)\b)/i
+    .test(String(value || '').trimStart());
 }
 
 function markdownToHtml(value) {
@@ -523,7 +524,8 @@ function NovelProjectEditor({
   onImageUpload,
   onEditorReady,
   onAIToggle,
-  aiConfig
+  aiConfig,
+  spellcheck = true
 }) {
   const initialContent = useMemo(() => markdownToHtml(value), []);
   const aiConfigRef = useRef(aiConfig || {});
@@ -585,19 +587,27 @@ function NovelProjectEditor({
         immediatelyRender={false}
         initialContent={initialContent}
         extensions={extensions}
-      editorProps={{
-        attributes: {
-          class: 'novel-project-editor-prose'
-        },
-        handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event),
-        handlePaste: (view, event) => {
-          const files = Array.from(event.clipboardData?.files || []).filter(file => file.type.startsWith('image/'));
-          if (!files.length || !onImageUpload) return false;
-          event.preventDefault();
-          files.forEach(file => insertUploadedImage(view, file));
-          return true;
-        }
-      }}
+        editorProps={{
+          attributes: {
+            class: 'novel-project-editor-prose',
+            spellcheck: String(spellcheck)
+          },
+          clipboardTextSerializer: slice => slice.content
+            .textBetween(0, slice.content.size, '\n', node => {
+              if (node.type.name === 'hardBreak') return '\n';
+              if (node.type.name === 'image') return node.attrs.alt || '';
+              return '';
+            })
+            .replace(/\n{2,}/g, '\n'),
+          handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event),
+          handlePaste: (view, event) => {
+            const files = Array.from(event.clipboardData?.files || []).filter(file => file.type.startsWith('image/'));
+            if (!files.length || !onImageUpload) return false;
+            event.preventDefault();
+            files.forEach(file => insertUploadedImage(view, file));
+            return true;
+          }
+        }}
       slotBefore={showToolbar ? (
         <>
           <EditorReadyBridge onReady={onEditorReady} />
@@ -721,6 +731,7 @@ function mountNovelProjectEditor(el, options = {}) {
     onImageUpload: options.onImageUpload,
     onAIToggle: options.onAIToggle,
     aiConfig: options.aiConfig || null,
+    spellcheck: options.spellcheck !== false,
     editor: null,
     version: 0
   };
@@ -808,6 +819,7 @@ function mountNovelProjectEditor(el, options = {}) {
         onEditorReady={editor => { state.editor = editor; }}
         onAIToggle={state.onAIToggle}
         aiConfig={state.aiConfig}
+        spellcheck={state.spellcheck}
       />
     );
   }
@@ -823,6 +835,10 @@ function mountNovelProjectEditor(el, options = {}) {
       state.value = nextValue || '';
       state.version += 1;
       render();
+    },
+    setSpellcheck(enabled) {
+      state.spellcheck = Boolean(enabled);
+      state.editor?.view.dom.setAttribute('spellcheck', String(state.spellcheck));
     },
     setSourceMode(nextMode) {
       state.sourceMode = Boolean(nextMode);
