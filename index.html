@@ -168,6 +168,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 .sidebar {
   width: var(--sidebar-width); min-width: var(--sidebar-width);
   background: var(--sidebar-bg);
+  position: relative;
   display: flex; flex-direction: column;
   user-select: none;
   padding-bottom: 20px;
@@ -207,8 +208,11 @@ body.sidebar-collapsed .sidebar {
 .sidebar-nav { padding: 12px 12px; flex: 1; }
 
 .sidebar-version {
+  position: absolute;
+  left: 0;
+  bottom: 0;
   padding: 6px 16px 10px;
-  color: rgba(255,255,255,0.48);
+  color: var(--sidebar-text);
   font-size: 13px;
   line-height: 1.35;
   letter-spacing: 0.04em;
@@ -2890,6 +2894,7 @@ textarea.form-input {
     </div>
   </nav>
   <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
+  <div class="sidebar-version" id="sidebarVersion">v3.0.0</div>
 </aside>
 
 <div class="sidebar-toggle-zone" aria-hidden="false">
@@ -3620,6 +3625,16 @@ async function loadAppVersion() {
     const meta = await apiGet('version');
     const version = normalizeVersionText(meta?.version);
     if (!version) return;
+
+    const versionEl = document.getElementById('sidebarVersion');
+    if (versionEl) versionEl.textContent = `v${version}`;
+    if (window.workwebDesktop?.checkLatestVersion) {
+      window.workwebDesktop.checkLatestVersion().then(result => {
+        if (result?.hasUpdate && versionEl) {
+          versionEl.textContent = `v${version}（有新版可用）`;
+        }
+      }).catch(() => {});
+    }
 
     await loadUpdateState();
   } catch {}

@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('workwebDesktop', {
   getSetting: key => ipcRenderer.invoke('workweb:getSetting', key),
   setSetting: (key, value) => ipcRenderer.invoke('workweb:setSetting', key, value),
   getUpdateState: () => ipcRenderer.invoke('workweb:getUpdateState'),
+  checkLatestVersion: () => ipcRenderer.invoke('workweb:checkLatestVersion'),
   checkForUpdates: () => ipcRenderer.invoke('workweb:checkForUpdates'),
   downloadUpdate: () => ipcRenderer.invoke('workweb:downloadUpdate'),
   onUpdateState: callback => {

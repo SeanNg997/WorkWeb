@@ -541,6 +541,19 @@ function registerIpcHandlers() {
 
   ipcMain.handle('workweb:getUpdateState', () => sendUpdateState());
 
+  ipcMain.handle('workweb:checkLatestVersion', async () => {
+    try {
+      const latestRelease = await getLatestRelease();
+      return {
+        hasUpdate: Boolean(
+          latestRelease.version && compareVersions(latestRelease.version, app.getVersion()) > 0
+        )
+      };
+    } catch {
+      return { hasUpdate: false };
+    }
+  });
+
   ipcMain.handle('workweb:checkForUpdates', async () => {
     if (!isWindowsUpdaterSupported()) {
       return sendUpdateState({
