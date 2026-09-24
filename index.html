@@ -34,7 +34,7 @@ if (workwebDesktopPlatform) {
   --secondary-hover: #eaeee8;
   --line: #dfe3dc;
   --card-shadow: 0 1px 2px rgba(35,45,41,0.05);
-  --card-shadow-hover: 0 10px 26px rgba(35,45,41,0.1);
+  --card-shadow-hover: 0 8px 20px rgba(35,45,41,0.085);
   --text: #2f3834;
   --text-light: #75817a;
   --accent: #70857a;
@@ -49,8 +49,8 @@ if (workwebDesktopPlatform) {
   --book-text: #f8faf6;
   --project-left-start: #d8e3da;
   --project-left-end: #c8d6cc;
-  --radius: 12px;
-  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius: 10px;
+  --transition: 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
   --col-unit: 270px;
   --sidebar-width: 240px;
 }
@@ -250,7 +250,7 @@ body.sidebar-collapsed .sidebar {
 
 .nav-item {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border-radius: 10px;
+  padding: 11px 14px; border-radius: 8px;
   color: var(--sidebar-text); cursor: pointer;
   transition: all var(--transition); font-size: 14px; margin-bottom: 4px;
 }
@@ -273,7 +273,7 @@ body.sidebar-collapsed .sidebar {
   background:
     radial-gradient(circle at 18% 12%, var(--bg-glow), transparent 32%),
     linear-gradient(135deg, var(--bg-start) 0%, var(--bg) 55%, var(--bg-end) 100%);
-  border-radius: 18px 0 0 18px;
+  border-radius: 14px 0 0 14px;
   transition: border-radius 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -282,13 +282,14 @@ body.sidebar-collapsed .workspace {
 }
 
 .workspace-header {
-  padding: 24px 32px 16px;
+  padding: 22px 32px 14px;
   display: flex; align-items: center; justify-content: space-between;
   position: relative;
   z-index: 2;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 64%, transparent);
 }
 
-.workspace-header h2 { font-size: 22px; font-weight: 600; color: var(--text); }
+.workspace-header h2 { font-size: 21px; font-weight: 600; color: var(--text); line-height: 1.3; }
 
 html.platform-win32 .workspace-header {
   min-height: 86px;
@@ -563,6 +564,17 @@ html.platform-win32 .windows-window-controls {
   box-shadow: none !important;
 }
 
+.btn:active:not(:disabled) { transform: scale(0.985); }
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+  outline-offset: 2px;
+}
+
 /* === 便笺网格 === */
 .notes-grid {
   display: grid;
@@ -572,6 +584,7 @@ html.platform-win32 .windows-window-controls {
 
 .note-card {
   background: var(--card-bg);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: var(--radius);
   box-shadow: var(--card-shadow);
   padding: 20px;
@@ -607,12 +620,14 @@ html.platform-win32 .windows-window-controls {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.note-entrance { animation: noteIn 0.3s ease both; }
+
 @keyframes projectShelfIn {
-  from { opacity: 0; transform: translateY(16px) rotate(1.2deg) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.note-card:not(.dragging):hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
+.note-card:not(.dragging):hover { box-shadow: var(--card-shadow-hover); transform: translateY(-1px); }
 
 .note-card.dragging { opacity: 0.4; transform: scale(0.96); cursor: grabbing; }
 
@@ -778,7 +793,7 @@ html.platform-win32 .windows-window-controls {
 .note-content {
   flex: 1; overflow: hidden;
   display: flex;
-  font-size: calc(13px * var(--markdown-font-scale, 1)); line-height: 1.7; color: var(--text);
+  font-size: calc(14px * var(--markdown-font-scale, 1)); line-height: 1.65; color: var(--text);
   word-break: break-word;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
 }
@@ -811,8 +826,8 @@ html.platform-win32 .windows-window-controls {
   outline: none;
   color: var(--text);
   font: inherit;
-  font-size: calc(13px * var(--markdown-font-scale, 1));
-  line-height: 1.7;
+  font-size: calc(14px * var(--markdown-font-scale, 1));
+  line-height: 1.65;
 }
 
 .note-content-editor-host .novel-project-editor-prose p {
@@ -962,7 +977,7 @@ html.platform-win32 .windows-window-controls {
   min-height: 260px;
   padding: 26px 22px 22px;
   display: flex;
-  border-radius: 18px 14px 14px 18px;
+  border-radius: 14px 12px 12px 14px;
   background: linear-gradient(145deg, var(--book-start) 0%, var(--book-mid) 48%, var(--book-end) 100%);
   color: var(--book-text);
   box-shadow: 0 14px 30px rgba(59,76,68,0.14);
@@ -1008,13 +1023,13 @@ html.platform-win32 .windows-window-controls {
   position: absolute;
   inset: 12px;
   border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 12px;
+  border-radius: var(--radius);
   pointer-events: none;
 }
 
 .project-book-card:hover {
-  transform: translateY(-4px) rotate(-0.6deg);
-  box-shadow: 0 18px 38px rgba(59,76,68,0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(59,76,68,0.16);
   z-index: 3;
 }
 
@@ -1855,7 +1870,8 @@ html.platform-win32 .windows-window-controls {
 
 .modal {
   background: var(--card-bg);
-  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 12px;
   width: 560px; max-width: 90vw; max-height: 80vh;
   display: flex; flex-direction: column;
   box-shadow: 0 18px 54px rgba(35,45,41,0.14);
@@ -1898,7 +1914,7 @@ html.platform-win32 .windows-window-controls {
 .settings-card {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface-muted) 74%, white);
 }
 
@@ -2290,6 +2306,7 @@ textarea.form-input {
 
 .info-panel {
   background: var(--card-bg);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: var(--radius);
   box-shadow: var(--card-shadow);
   overflow: hidden; transition: box-shadow var(--transition);
@@ -2327,6 +2344,7 @@ textarea.form-input {
 
 .info-panel-actions { display: flex; gap: 2px; opacity: 0; transition: opacity var(--transition); }
 .info-panel:hover .info-panel-actions { opacity: 1; }
+.info-panel:focus-within .info-panel-actions { opacity: 1; }
 
 .info-panel-body {
   max-height: 0; overflow: hidden;
@@ -2456,6 +2474,247 @@ textarea.form-input {
   }
 }
 
+/* === 运动日志 === */
+.fitness-workspace-body { padding-top: 18px; }
+.fitness-page-header { align-items: center; }
+.fitness-view-actions { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: color-mix(in srgb, var(--surface-muted) 84%, transparent); }
+.fitness-view-actions .btn { min-width: 76px; min-height: 42px; justify-content: center; padding: 8px 12px; border-color: transparent; font-size: 13px; text-align: center; }
+.fitness-view-actions .btn.active { background: var(--card-bg); border-color: var(--line); color: var(--text); box-shadow: var(--card-shadow); }
+.fitness-calendar-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.95fr); gap: 18px; min-height: 0; container-type: inline-size; }
+.fitness-calendar-panel,
+.fitness-detail-panel,
+.fitness-chart-card { background: color-mix(in srgb, var(--card-bg) 88%, transparent); border: 1px solid color-mix(in srgb, var(--line) 86%, transparent); border-radius: var(--radius); box-shadow: var(--card-shadow); }
+.fitness-calendar-panel { min-width: 0; padding: 22px; }
+.fitness-panel-heading,
+.fitness-analytics-toolbar,
+.fitness-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.fitness-eyebrow,
+.fitness-calendar-panel .fitness-eyebrow,
+.fitness-detail-panel .fitness-eyebrow { color: var(--text-light); font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; }
+.fitness-calendar-layout[hidden],
+.fitness-analytics[hidden],
+#fitnessTrainingChartCard[hidden],
+#fitnessGrowthChartCard[hidden] { display: none !important; }
+.fitness-panel-heading h3,
+.fitness-analytics-toolbar h3 { margin-top: 5px; color: var(--text); font-size: 20px; font-weight: 650; line-height: 1.25; }
+.fitness-calendar-nav { display: flex; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0; }
+.fitness-calendar-nav .btn { min-width: 32px; justify-content: center; padding: 7px 8px; text-align: center; }
+.fitness-weekdays,
+.fitness-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.fitness-weekdays { margin-top: 24px; color: var(--text-light); font-size: 11px; text-align: center; }
+.fitness-calendar { margin-top: 7px; container-type: inline-size; }
+.fitness-day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 76px; padding: 8px; border: 1px solid transparent; border-radius: 8px; background: color-mix(in srgb, var(--card-bg) 92%, var(--accent-soft)); color: var(--text); cursor: pointer; text-align: center; transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition); }
+.fitness-day:hover { border-color: var(--line); background: var(--card-bg); box-shadow: var(--card-shadow); transform: translateY(-1px); }
+.fitness-day:not(.is-outside-month) { background: color-mix(in srgb, var(--card-bg) 88%, var(--accent-soft)); }
+.fitness-day.is-outside-month { border-color: color-mix(in srgb, var(--line) 78%, transparent); background: color-mix(in srgb, var(--bg) 58%, var(--surface-muted)); color: var(--text-light); }
+.fitness-day.is-selected { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-soft) 70%, transparent); }
+.fitness-day-number { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin-inline: auto; border-radius: 50%; font-size: 15px; font-weight: 650; }
+.fitness-day.has-workout .fitness-day-number { background: var(--accent); color: #fff; }
+.fitness-day.is-today .fitness-day-number { outline: 1px solid var(--accent); outline-offset: 2px; }
+.fitness-day-exercises { display: none; width: 100%; margin-top: 6px; overflow: hidden; color: var(--text-light); font-size: 10px; line-height: 1.45; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.fitness-day-exercise + .fitness-day-exercise { margin-top: 2px; }
+.fitness-day-more { color: var(--accent); }
+.fitness-calendar.show-exercises .fitness-day-exercises { display: block; }
+.fitness-calendar-legend { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 16px; color: var(--text-light); font-size: 12px; }
+.fitness-calendar-legend-items { display: flex; gap: 14px; }
+.fitness-calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fitness-legend-dot { width: 9px; height: 9px; border: 1px solid var(--line); border-radius: 50%; }
+.fitness-legend-dot.has-workout { border-color: var(--accent); background: var(--accent); }
+.fitness-show-exercises { display: inline-flex; align-items: center; gap: 6px; color: var(--text-light); cursor: pointer; font-size: 12px; white-space: nowrap; }
+.fitness-show-exercises input { accent-color: var(--accent); }
+.fitness-detail-panel { min-width: 0; align-self: start; overflow: hidden; }
+.fitness-detail-heading { padding: 20px 20px 15px; border-bottom: 1px solid var(--line); }
+.fitness-detail-heading h3 { margin-top: 4px; color: var(--text); font-size: 17px; font-weight: 650; }
+.fitness-detail-heading p { margin-top: 4px; color: var(--text-light); font-size: 12px; }
+.fitness-detail-body { padding: 14px 16px 18px; }
+.fitness-detail-empty { padding: 26px 12px; color: var(--text-light); font-size: 13px; line-height: 1.7; text-align: center; }
+.fitness-exercise-card { padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface-muted) 48%, var(--card-bg)); }
+.fitness-exercise-card + .fitness-exercise-card { margin-top: 10px; }
+.fitness-exercise-title-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr) 30px; align-items: center; gap: 8px; margin-bottom: 0; }
+.fitness-exercise-title-row input { width: 100%; height: 32px; min-width: 0; padding: 6px 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 12px; }
+.fitness-exercise-title-row input:focus,
+.fitness-exercise-title-row input:focus { border-color: var(--accent); background: var(--card-bg); outline: none; }
+.fitness-exercise-title-row input[data-field="name"] { font-size: 14px; font-weight: 650; }
+.fitness-remove-button { width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--text-light); cursor: pointer; }
+.fitness-remove-button:hover { background: var(--accent-soft); color: var(--danger); }
+.fitness-detail-actions { display: flex; gap: 8px; margin-top: 14px; }
+.fitness-detail-actions .btn { flex: 1; }
+.fitness-analytics { position: relative; width: 100%; margin: 0; }
+.fitness-analytics-panel { padding: 18px 20px 16px; background: color-mix(in srgb, var(--card-bg) 88%, transparent); border: 1px solid color-mix(in srgb, var(--line) 86%, transparent); border-radius: var(--radius); box-shadow: var(--card-shadow); }
+.fitness-analytics-toolbar { align-items: center; margin-bottom: 14px; }
+.fitness-analytics-date-controls { display: flex; justify-content: flex-end; margin-left: auto; }
+.fitness-analytics-date-controls .fitness-date-range[hidden] { display: none; }
+.fitness-chart-card { position: relative; min-width: 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.fitness-training-chart-toolbar { display: flex; align-items: center; margin-bottom: 4px; }
+.fitness-date-range { position: relative; display: flex; align-items: center; gap: 8px; color: var(--text-light); font-size: 12px; }
+.fitness-date-button { min-width: 112px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-muted); color: var(--text); cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+.fitness-date-button:hover { border-color: var(--accent); background: var(--card-bg); }
+.fitness-date-picker { position: absolute; top: calc(100% + 8px); right: 0; z-index: 8; width: 264px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--card-bg); box-shadow: 0 14px 36px rgba(35,45,41,0.15); }
+.fitness-picker-header,
+.fitness-picker-weekdays,
+.fitness-picker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.fitness-picker-header { grid-template-columns: 30px 1fr 30px; align-items: center; margin-bottom: 10px; }
+.fitness-picker-header strong { font-size: 13px; text-align: center; }
+.fitness-picker-header button { border: 0; background: transparent; color: var(--text-light); cursor: pointer; }
+.fitness-picker-weekdays { margin-bottom: 4px; color: var(--text-light); font-size: 10px; text-align: center; }
+.fitness-picker-day { height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font: inherit; font-size: 11px; }
+.fitness-picker-day:hover { background: var(--accent-soft); }
+.fitness-picker-day.is-outside { color: var(--text-light); opacity: 0.5; }
+.fitness-picker-day.is-range { background: color-mix(in srgb, var(--accent-soft) 72%, transparent); }
+.fitness-picker-day.is-end,
+.fitness-picker-day.is-start { background: var(--accent); color: #fff; }
+.fitness-chart-wrap { position: relative; min-height: 230px; margin-top: 18px; }
+.fitness-chart { display: block; width: 100%; height: 230px; overflow: visible; }
+.fitness-chart-grid-line { stroke: var(--line); stroke-width: 1; }
+.fitness-chart-axis-label,
+.fitness-chart-axis-title { fill: var(--text-light); font-size: 12px; }
+.fitness-chart-area { fill: color-mix(in srgb, var(--accent-soft) 75%, transparent); }
+.fitness-chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.fitness-chart-fit-line { fill: none; stroke: var(--success); stroke-width: 2; stroke-dasharray: 5 4; }
+.fitness-chart-uncertainty { fill: color-mix(in srgb, var(--success) 20%, transparent); }
+.fitness-chart-point { fill: var(--card-bg); stroke: var(--accent); stroke-width: 2; cursor: pointer; }
+.fitness-chart-point:hover { fill: var(--accent); }
+.fitness-chart-empty { position: absolute; inset: 70px 0 auto; color: var(--text-light); font-size: 13px; text-align: center; }
+.fitness-select-label { display: flex; flex-direction: row; align-items: center; gap: 8px; max-width: 300px; color: var(--text); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.fitness-scale-select-label { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.fitness-select-picker { position: relative; flex: 1; min-width: 0; }
+.fitness-scale-picker { width: 132px; flex: 0 0 132px; }
+.fitness-exercise-picker { width: 132px; flex: 0 0 132px; }
+.fitness-select-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 34px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-muted); color: var(--text); cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+.fitness-select-trigger:hover,
+.fitness-select-trigger[aria-expanded="true"] { border-color: var(--accent); background: var(--card-bg); }
+.fitness-select-chevron { margin-left: 10px; color: var(--text-light); font-size: 10px; }
+.fitness-select-menu { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 12; display: grid; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(35,45,41,0.14); }
+.fitness-select-menu[hidden] { display: none; }
+.fitness-select-option { width: 100%; padding: 8px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--text); cursor: pointer; font: inherit; font-size: 12px; text-align: left; }
+.fitness-select-option:hover,
+.fitness-select-option[aria-selected="true"] { background: var(--accent-soft); color: var(--text); }
+.fitness-growth-chart-card .fitness-select-label { margin-bottom: 12px; }
+.reminder-workspace-body { padding-top: 18px; }
+.reminder-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 12px; align-content: start; }
+.reminder-card { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) 36px; align-items: center; gap: 12px; min-height: 120px; padding: 10px 16px 8px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--line) 88%, transparent); border-radius: var(--radius); background: color-mix(in srgb, var(--card-bg) 94%, var(--accent-soft)); box-shadow: var(--card-shadow); transition: opacity var(--transition), background var(--transition), border-color var(--transition), transform var(--transition); }
+.reminder-card::before { display: none; }
+.reminder-card::after { position: absolute; top: -35%; bottom: -35%; left: -42%; z-index: 0; width: 38%; background: linear-gradient(105deg, transparent 0%, color-mix(in srgb, var(--accent-soft) 34%, transparent) 32%, color-mix(in srgb, white 82%, var(--success)) 50%, color-mix(in srgb, var(--success) 32%, transparent) 68%, transparent 100%); content: ''; opacity: 0; pointer-events: none; transform: skewX(-16deg); }
+.reminder-card > * { position: relative; z-index: 2; }
+.reminder-card.is-sweeping::after { animation: reminderLightSweep .82s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes reminderLightSweep { 0% { left: -42%; opacity: 0; } 12% { opacity: .92; } 82% { opacity: .68; } 100% { left: 108%; opacity: 0; } }
+.reminder-card.is-charging .reminder-ring { animation: reminderRingSpin .62s linear both; }
+@keyframes reminderRingSpin { 0% { opacity: 0; transform: rotate(0turn); } 12% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; transform: rotate(1turn); } }
+.reminder-card.is-bursting .reminder-burst { animation: reminderRadialBurst .72s cubic-bezier(.2,.75,.3,1) both; }
+@keyframes reminderRadialBurst { 0% { opacity: 0; transform: scale(.72) rotate(-4deg); } 15% { opacity: .9; } 100% { opacity: 0; transform: scale(1.24) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reminder-card.is-charging .reminder-ring { animation-name: reminderRingFade; animation-duration: .16s !important; }
+  .reminder-card.is-bursting .reminder-burst { animation-name: reminderRadialFade; animation-duration: .16s !important; }
+  @keyframes reminderRingFade { 0% { opacity: 0; } 24% { opacity: .7; } 100% { opacity: 0; } }
+  @keyframes reminderRadialFade { 0% { opacity: 0; } 24% { opacity: .55; } 100% { opacity: 0; } }
+}
+.reminder-card:hover { border-color: color-mix(in srgb, var(--accent) 36%, var(--line)); transform: translateY(-1px); }
+.reminder-card.is-complete { border-color: color-mix(in srgb, var(--success) 48%, var(--line)); background: color-mix(in srgb, var(--success) 24%, var(--card-bg)); box-shadow: none; }
+.reminder-card.is-complete:hover { background: color-mix(in srgb, var(--success) 28%, var(--card-bg)); }
+.reminder-card.is-complete::before { background: var(--success); opacity: .8; }
+.reminder-card.is-complete .reminder-title { color: var(--text-light); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--text-light) 65%, transparent); }
+.reminder-check-wrap { position: relative; display: grid; place-items: center; width: 52px; height: 52px; }
+.reminder-burst { position: absolute; inset: -32px; z-index: 0; border-radius: 50%; background: repeating-conic-gradient(from -4.5deg, color-mix(in srgb, var(--success) 80%, white) 0deg 2.2deg, transparent 2.2deg 9deg); mask: radial-gradient(circle, transparent 0 43%, #000 47% 64%, transparent 67%); opacity: 0; pointer-events: none; transform: scale(.72); }
+.reminder-ring { position: absolute; inset: -4px; z-index: 1; border-radius: 50%; background: conic-gradient(from 0deg, color-mix(in srgb, var(--success) 88%, white) 0deg, var(--success) 35deg, transparent 56deg, transparent 360deg); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--success) 64%, transparent)); mask: radial-gradient(circle, transparent 0 44%, #000 47% 50%, transparent 53%); opacity: 0; pointer-events: none; }
+.reminder-check { position: relative; z-index: 2; display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line)); border-radius: 50%; background: color-mix(in srgb, var(--accent-soft) 65%, var(--card-bg)); color: var(--accent); cursor: pointer; font: inherit; transition: background var(--transition), color var(--transition), transform var(--transition); }
+.reminder-plus { position: relative; display: block; width: 24px; height: 24px; }
+.reminder-plus::before,
+.reminder-plus::after { position: absolute; top: 50%; left: 50%; display: block; border-radius: 2px; background: currentColor; content: ''; transform: translate(-50%, -50%); }
+.reminder-plus::before { width: 4px; height: 24px; }
+.reminder-plus::after { width: 24px; height: 4px; }
+.reminder-checkmark { display: block; width: 24px; height: 24px; overflow: visible; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.8; }
+.reminder-check:hover { background: var(--accent); color: #fff; }
+.reminder-check:active { transform: scale(.94); }
+.is-complete .reminder-check { border-color: color-mix(in srgb, var(--success) 50%, var(--line)); background: var(--success); color: #fff; }
+.reminder-content { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.reminder-title { overflow-wrap: anywhere; color: var(--text); font-size: 20px; font-weight: 620; line-height: 1.4; }
+.reminder-progress { display: flex; align-items: center; width: 100%; margin-top: 2px; }
+.reminder-progress-track { width: 100%; height: 5px; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--line) 72%, var(--surface-muted)); }
+.reminder-progress-fill { height: 100%; border-radius: inherit; background: var(--success); transition: width var(--transition); }
+.reminder-actions { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; width: 36px; height: 38px; }
+.reminder-action { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-light); cursor: pointer; font: inherit; font-size: 18px; }
+.reminder-action:hover { border-color: var(--line); background: var(--card-bg); color: var(--text); }
+.reminder-action[hidden] { display: none; }
+.reminder-action:disabled { cursor: default; opacity: .4; }
+.reminder-more { position: relative; z-index: 1; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-light); cursor: pointer; font: inherit; font-size: 29px; font-weight: 700; line-height: 1; }
+.reminder-more:hover,
+.is-menu-open .reminder-more { background: transparent; color: var(--text); }
+.reminder-menu { position: absolute; top: 50%; right: 40px; display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 6px 18px rgba(35,45,41,.16); opacity: 0; pointer-events: none; transform: translate(8px, -50%) scale(.96); transform-origin: right center; transition: opacity var(--transition), transform var(--transition); }
+.reminder-menu:not([hidden]) { opacity: 1; pointer-events: auto; transform: translate(0, -50%) scale(1); }
+.reminder-menu[hidden] { display: none; }
+.reminder-action-danger { color: var(--danger); }
+.reminder-action-danger:hover { border-color: color-mix(in srgb, var(--danger) 35%, var(--line)); color: var(--danger); }
+.reminder-days { display: flex; flex-wrap: wrap; gap: 7px; }
+.reminder-day { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-size: 12px; }
+.reminder-day input { accent-color: var(--accent); }
+.reminder-date-row { display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); align-items: center; gap: 7px; min-width: 0; }
+.reminder-settings-row { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 12px; margin-bottom: 18px; }
+.reminder-row-label { display: block; margin: 0; color: var(--text); font-size: 13px; font-weight: 500; }
+.reminder-settings-row > .form-input { min-width: 0; }
+.reminder-date-row .fitness-date-button { width: 100%; min-width: 0; min-height: 38px; }
+.reminder-date-separator { color: var(--text-light); text-align: center; }
+.reminder-frequency-picker .fitness-select-trigger { min-height: 38px; }
+.reminder-weekday-popover { position: absolute; top: calc(100% + 6px); left: 0; z-index: 24; width: min(290px, calc(100vw - 72px)); padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(35,45,41,.16); }
+.reminder-weekday-popover[hidden] { display: none; }
+.reminder-weekday-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 6px; padding: 12px 0; }
+.reminder-weekday-options .reminder-day { justify-content: center; }
+.reminder-weekday-footer { display: flex; justify-content: flex-end; }
+.reminder-count-input { max-width: 140px; }
+.reminder-calendar-wrap { position: relative; min-width: 0; }
+.reminder-date-picker { left: 0; right: auto; }
+.reminder-frequency-picker { position: relative; display: block; width: 100%; min-width: 0; }
+.reminder-frequency-menu { right: 0; left: 0; }
+.reminder-frequency-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reminder-rule-row { min-width: 0; }
+.reminder-rule-row .form-group { min-width: 0; margin-bottom: 16px; }
+.reminder-clear-date { width: 100%; margin-top: 8px; padding: 7px; border: 0; border-radius: 6px; background: transparent; color: var(--text-light); cursor: pointer; font: inherit; font-size: 11px; }
+.reminder-clear-date:hover { background: var(--surface-muted); color: var(--text); }
+#reminderEditorModal .modal { min-height: min(520px, 84vh); max-height: 92vh; }
+#reminderEditorModal .modal-body { overflow: visible; }
+.reminder-date-picker[hidden] { display: none; }
+.reminder-date-row[hidden],
+.reminder-days[hidden] { display: none; }
+.reminder-check:disabled { cursor: default; }
+.reminder-empty { padding: 64px 18px; }
+@media (max-width: 640px) {
+  .reminder-workspace-body { padding: 12px 16px 20px; }
+  .reminder-card { grid-template-columns: 48px minmax(0, 1fr) 36px; gap: 8px; min-height: 112px; padding: 9px 12px 7px; }
+  .reminder-check-wrap { width: 48px; height: 48px; }
+  .reminder-check { width: 48px; height: 48px; }
+  .reminder-title { font-size: 19px; }
+  .reminder-progress { margin-top: 0; }
+  .reminder-progress-track { height: 5px; }
+  .reminder-actions,
+  .reminder-more { width: 36px; height: 36px; }
+  .reminder-more { font-size: 27px; }
+  .reminder-menu { right: 40px; }
+  .reminder-settings-row { grid-template-columns: 76px minmax(0, 1fr); gap: 8px; margin-bottom: 16px; }
+  .reminder-weekday-popover { width: min(290px, calc(100vw - 48px)); }
+}
+@media (hover: none), (pointer: coarse) {
+  .reminder-actions { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 980px) { .fitness-calendar-layout { grid-template-columns: 1fr; } .fitness-detail-panel { align-self: stretch; } }
+@media (max-width: 640px) {
+  .fitness-workspace-body { padding: 10px 12px 16px; }
+  .fitness-page-header { align-items: flex-start; flex-wrap: wrap; }
+  .fitness-view-actions { margin-left: auto; }
+  .fitness-view-actions .btn { min-width: 68px; min-height: 42px; padding: 8px; font-size: 12px; }
+  .fitness-calendar-panel { padding: 14px 10px; }
+  .fitness-panel-heading h3 { font-size: 18px; }
+  .fitness-day { min-height: 56px; padding: 5px 3px; text-align: center; }
+  .fitness-day-number { width: 28px; height: 28px; font-size: 14px; }
+  .fitness-calendar-legend { align-items: flex-start; margin-top: 10px; }
+  .fitness-calendar-legend-items { flex-wrap: wrap; gap: 8px; }
+  .fitness-analytics-panel { padding: 14px 12px; }
+  .fitness-analytics-toolbar { align-items: stretch; flex-direction: column; }
+  .fitness-analytics-date-controls { margin-left: 0; }
+  .fitness-analytics-date-controls .fitness-date-range { width: 100%; justify-content: space-between; }
+  .fitness-date-range { justify-content: space-between; }
+  .fitness-date-button { flex: 1; min-width: 0; }
+  .fitness-date-picker { top: calc(100% + 8px); left: 0; right: auto; }
+}
+
 /* === Toast === */
 .toast {
   position: fixed; bottom: 24px; right: 24px;
@@ -2493,6 +2752,116 @@ textarea.form-input {
 
 .update-toast-close:hover { background: var(--surface-muted); color: var(--text); }
 
+@media (max-width: 640px) {
+  body { flex-direction: column; }
+
+  .sidebar,
+  body.sidebar-collapsed .sidebar {
+    order: 2;
+    width: 100%;
+    min-width: 0;
+    height: 64px;
+    padding: 0;
+    flex-direction: row;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-header,
+  .sidebar-version { display: none; }
+
+  .sidebar-nav {
+    width: auto;
+    min-width: 0;
+    padding: 4px;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  .nav-item {
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px 2px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.1;
+  }
+
+  .nav-item span:last-child { white-space: nowrap; font-size: 10px; }
+
+  .sidebar-settings {
+    width: 56px;
+    min-width: 56px;
+    margin: 5px;
+    align-self: stretch;
+    font-size: 11px;
+  }
+
+  .workspace {
+    order: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 0;
+  }
+
+  .workspace-header { min-width: 0; gap: 8px; padding: 16px; }
+  .workspace-header h2 { min-width: 0; font-size: 18px; }
+  .workspace-header .btn { padding: 8px 10px; font-size: 13px; white-space: nowrap; }
+  .workspace-body { padding: 12px 16px 20px; }
+  .sidebar-toggle-zone { display: none; }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .note-actions,
+  .info-panel-actions,
+  .project-book-actions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .modal-overlay {
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: none;
+  }
+
+  .project-book-action-btn {
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  body {
+    --line: color-mix(in srgb, var(--text) 42%, var(--card-bg));
+    --text-light: color-mix(in srgb, var(--text) 76%, var(--card-bg));
+  }
+
+  .note-card,
+  .info-panel,
+  .modal {
+    border-color: var(--line);
+  }
+}
+
 /* === 更新通知弹框 === */
 </style>
 </head>
@@ -2512,6 +2881,12 @@ textarea.form-input {
     </div>
     <div class="nav-item" data-page="info" onclick="switchPage('info')">
       <span class="nav-icon">&#9786;</span><span>常用个人信息</span>
+    </div>
+    <div class="nav-item" data-page="fitness" onclick="switchPage('fitness')">
+      <span class="nav-icon">&#9672;</span><span>运动日志</span>
+    </div>
+    <div class="nav-item" data-page="reminders" onclick="switchPage('reminders')">
+      <span class="nav-icon">&#10003;</span><span>每日提醒</span>
     </div>
   </nav>
   <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
@@ -2632,7 +3007,185 @@ textarea.form-input {
       </div>
     </div>
   </div>
+
+  <!-- 运动日志 -->
+  <div class="page" id="page-fitness">
+    <div class="workspace-header fitness-page-header">
+      <h2>运动日志</h2>
+      <div class="fitness-view-actions" role="group" aria-label="运动记录视图">
+      <button class="btn btn-secondary active" id="fitnessCalendarViewBtn" onclick="setFitnessView('calendar')">运动日历</button>
+      <button class="btn btn-secondary" id="fitnessTrainingViewBtn" onclick="setFitnessView('training')">运动天数</button>
+      <button class="btn btn-secondary" id="fitnessGrowthViewBtn" onclick="setFitnessView('growth')">指标趋势</button>
+      </div>
+    </div>
+    <div class="workspace-body fitness-workspace-body">
+      <section class="fitness-calendar-layout" id="fitnessCalendarView">
+        <div class="fitness-calendar-panel">
+          <div class="fitness-panel-heading">
+            <div>
+              <p class="fitness-eyebrow">TRAINING CALENDAR</p>
+              <h3 id="fitnessMonthLabel"></h3>
+            </div>
+            <div class="fitness-calendar-nav">
+              <button class="btn btn-ghost btn-sm" title="上个月" aria-label="上个月" onclick="shiftFitnessMonth(-1)">&#8249;</button>
+              <button class="btn btn-ghost btn-sm" title="回到本月" onclick="goFitnessToday()">今天</button>
+              <button class="btn btn-ghost btn-sm" title="下个月" aria-label="下个月" onclick="shiftFitnessMonth(1)">&#8250;</button>
+            </div>
+          </div>
+          <div class="fitness-weekdays" aria-hidden="true">
+            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="fitness-calendar" id="fitnessCalendar" role="grid" aria-label="运动日历"></div>
+          <div class="fitness-calendar-legend">
+            <div class="fitness-calendar-legend-items">
+              <span><i class="fitness-legend-dot has-workout"></i>有训练</span>
+              <span><i class="fitness-legend-dot"></i>休息日</span>
+            </div>
+            <label class="fitness-show-exercises"><input type="checkbox" id="fitnessShowExercises" onchange="renderFitnessCalendar()">显示运动项目</label>
+          </div>
+        </div>
+        <aside class="fitness-detail-panel" id="fitnessDetailPanel"></aside>
+      </section>
+
+      <section class="fitness-analytics" id="fitnessAnalyticsView" hidden>
+        <div class="fitness-analytics-panel">
+        <div class="fitness-analytics-toolbar">
+          <div>
+            <p class="fitness-eyebrow" id="fitnessAnalyticsEyebrow">TRAINING RECORD</p>
+            <h3 id="fitnessAnalyticsTitle">运动天数</h3>
+          </div>
+          <div class="fitness-analytics-date-controls">
+            <div class="fitness-date-range" id="fitnessTrainingDateRange">
+              <button class="fitness-date-button" id="fitnessTrainingStartButton" onclick="toggleFitnessDatePicker('training-start')"></button>
+              <span>至</span>
+              <button class="fitness-date-button" id="fitnessTrainingEndButton" onclick="toggleFitnessDatePicker('training-end')"></button>
+              <div class="fitness-date-picker" id="fitnessTrainingDatePicker" hidden></div>
+            </div>
+            <div class="fitness-date-range" id="fitnessGrowthDateRange" hidden>
+              <button class="fitness-date-button" id="fitnessGrowthStartButton" onclick="toggleFitnessDatePicker('growth-start')"></button>
+              <span>至</span>
+              <button class="fitness-date-button" id="fitnessGrowthEndButton" onclick="toggleFitnessDatePicker('growth-end')"></button>
+              <div class="fitness-date-picker" id="fitnessGrowthDatePicker" hidden></div>
+            </div>
+          </div>
+        </div>
+        <div class="fitness-chart-card" id="fitnessTrainingChartCard">
+          <div class="fitness-training-chart-toolbar">
+            <label class="fitness-scale-select-label">计算周期
+              <span class="fitness-select-picker fitness-scale-picker" id="fitnessTrainingScalePicker">
+                <button type="button" class="fitness-select-trigger" id="fitnessTrainingScaleTrigger" aria-haspopup="listbox" aria-expanded="false" aria-label="计算周期" onclick="toggleFitnessTrainingScalePicker()">
+                  <span id="fitnessTrainingScaleValue">每月</span>
+                  <span class="fitness-select-chevron" aria-hidden="true">&#9662;</span>
+                </button>
+                <span class="fitness-select-menu" id="fitnessTrainingScaleMenu" role="listbox" hidden></span>
+                <select id="fitnessTrainingScale" hidden aria-hidden="true">
+                  <option value="0">每周</option>
+                  <option value="1" selected>每月</option>
+                  <option value="2">每年</option>
+                </select>
+              </span>
+            </label>
+          </div>
+          <div class="fitness-chart-wrap">
+            <svg class="fitness-chart" id="fitnessTrainingChart" role="img" aria-label="运动天数曲线"></svg>
+            <div class="fitness-chart-empty" id="fitnessTrainingChartEmpty" hidden>选择日期并记录训练后，这里会显示训练节奏。</div>
+          </div>
+        </div>
+
+        <div class="fitness-chart-card" id="fitnessGrowthChartCard" hidden>
+          <label class="fitness-select-label">项目
+            <span class="fitness-select-picker fitness-exercise-picker" id="fitnessExercisePicker">
+              <button type="button" class="fitness-select-trigger" id="fitnessExerciseTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleFitnessExercisePicker()"><span id="fitnessExerciseValue">暂无动作</span><span class="fitness-select-chevron" aria-hidden="true">&#9662;</span></button>
+              <span class="fitness-select-menu" id="fitnessExerciseMenu" role="listbox" hidden></span>
+              <select id="fitnessExerciseSelect" hidden aria-hidden="true"></select>
+            </span>
+          </label>
+          <div class="fitness-chart-wrap">
+            <svg class="fitness-chart" id="fitnessGrowthChart" role="img" aria-label="指标趋势曲线"></svg>
+            <div class="fitness-chart-empty" id="fitnessGrowthChartEmpty" hidden>选择动作并记录重量后，这里会显示变化趋势。</div>
+          </div>
+        </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="page" id="page-reminders">
+    <div class="workspace-header">
+      <h2>每日提醒</h2>
+      <button class="btn btn-primary" onclick="openReminderEditor()"><span>&#43;</span> 新建提醒</button>
+    </div>
+    <div class="workspace-body reminder-workspace-body">
+      <div class="reminder-list" id="reminderList"></div>
+      <div class="empty-state reminder-empty" id="reminderEmptyState" style="display:none;">
+        <div class="empty-state-icon">&#10003;</div>
+        <h3>还没有每日提醒</h3>
+        <p>添加一件希望每天稳定完成的事</p>
+      </div>
+    </div>
+  </div>
 </main>
+
+<div class="modal-overlay" id="reminderEditorModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="reminderModalTitle">新建提醒</h3>
+      <button class="modal-close" onclick="closeReminderEditor()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="reminder-settings-row">
+        <label class="reminder-row-label" for="reminderTitle">提醒内容</label>
+        <input type="text" class="form-input" id="reminderTitle" placeholder="例如：阅读 20 分钟" maxlength="120">
+      </div>
+      <div class="reminder-settings-row">
+        <span class="reminder-row-label">提醒日期</span>
+        <div class="reminder-date-row">
+          <div class="reminder-calendar-wrap">
+            <button type="button" class="fitness-date-button" id="reminderStartButton" onclick="toggleReminderDatePicker('start')"></button>
+            <input type="hidden" id="reminderStartDate">
+            <div class="fitness-date-picker reminder-date-picker" id="reminderStartPicker" hidden></div>
+          </div>
+          <span class="reminder-date-separator" aria-hidden="true">~</span>
+          <div class="reminder-calendar-wrap">
+            <button type="button" class="fitness-date-button" id="reminderEndButton" onclick="toggleReminderDatePicker('end')"></button>
+            <input type="hidden" id="reminderEndDate">
+            <div class="fitness-date-picker reminder-date-picker" id="reminderEndPicker" hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="reminder-settings-row">
+        <label class="reminder-row-label">重复周期</label>
+        <div class="reminder-rule-row">
+          <span class="fitness-select-picker reminder-frequency-picker" id="reminderFrequencyPicker">
+            <button type="button" class="fitness-select-trigger" id="reminderFrequencyTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleReminderFrequencyPicker()"><span class="reminder-frequency-value" id="reminderFrequencyValue">每天</span><span class="fitness-select-chevron" aria-hidden="true">&#9662;</span></button>
+            <span class="fitness-select-menu reminder-frequency-menu" id="reminderFrequencyMenu" role="listbox" hidden></span>
+            <select id="reminderFrequency" hidden aria-hidden="true"><option value="daily">每天</option><option value="weekly">指定星期</option></select>
+            <div class="reminder-weekday-popover" id="reminderWeekdaysPopover" hidden>
+              <div class="reminder-weekday-options">
+                <label class="reminder-day"><input type="checkbox" value="1">周一</label>
+                <label class="reminder-day"><input type="checkbox" value="2">周二</label>
+                <label class="reminder-day"><input type="checkbox" value="3">周三</label>
+                <label class="reminder-day"><input type="checkbox" value="4">周四</label>
+                <label class="reminder-day"><input type="checkbox" value="5">周五</label>
+                <label class="reminder-day"><input type="checkbox" value="6">周六</label>
+                <label class="reminder-day"><input type="checkbox" value="0">周日</label>
+              </div>
+              <div class="reminder-weekday-footer"><button type="button" class="btn btn-secondary btn-sm" onclick="closeReminderWeekdays()">完成</button></div>
+            </div>
+          </span>
+        </div>
+      </div>
+      <div class="reminder-settings-row">
+        <label class="reminder-row-label" for="reminderTargetCount">每日次数</label>
+        <input type="number" class="form-input reminder-count-input" id="reminderTargetCount" min="1" max="20" value="1">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeReminderEditor()">取消</button>
+      <button class="btn btn-primary" onclick="saveReminder()">保存提醒</button>
+    </div>
+  </div>
+</div>
 
 <!-- 信息面板编辑模态框 -->
 <div class="modal-overlay" id="infoEditorModal">
@@ -2900,10 +3453,30 @@ textarea.form-input {
 let notes = [];
 let infoPanels = [];
 let projects = [];
+let fitnessRecords = [];
+let reminders = [];
 let serverOnline = false;
 let selectedNextDataDir = '';
 let updateState = { supported: false, status: 'idle', message: '尚未检查更新', progress: 0 };
 let lastPersistWarningAt = 0;
+
+let fitnessMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let fitnessSelectedDate = formatFitnessDate(new Date());
+let fitnessView = 'calendar';
+let fitnessTrainingRange = getFitnessDefaultRange(84);
+let fitnessGrowthRange = getFitnessDefaultRange(180);
+let fitnessPickerState = null;
+let fitnessPickerMonth = null;
+let fitnessChartResizeObserver = null;
+let editingReminderId = null;
+let reminderDayKey = '';
+let reminderSortDeferred = false;
+let reminderSortTicketId = 0;
+const reminderSortTickets = new Set();
+const reminderSortFallbacks = new Map();
+let reminderRefreshTimer = null;
+let reminderPickerTarget = null;
+let reminderPickerMonth = new Date();
 
 const MARKDOWN_FONT_SIZE_KEY = 'wb_markdown_size';
 const MARKDOWN_SPELLCHECK_KEY = 'wb_markdown_spellcheck';
@@ -3102,6 +3675,8 @@ async function loadData() {
     notes = await apiGet('notes');
     infoPanels = await apiGet('info');
     projects = normalizeProjectList(await apiGet('projects'));
+    fitnessRecords = normalizeFitnessRecords(await apiGet('fitness'));
+    reminders = normalizeReminders(await apiGet('reminders'));
     serverOnline = true;
   } catch {
     serverOnline = false;
@@ -3109,6 +3684,8 @@ async function loadData() {
     try { notes = JSON.parse(localStorage.getItem('wb_notes') || '[]'); } catch { notes = []; }
     try { infoPanels = JSON.parse(localStorage.getItem('wb_info') || '[]'); } catch { infoPanels = []; }
     try { projects = normalizeProjectList(JSON.parse(localStorage.getItem('wb_projects') || '[]')); } catch { projects = []; }
+    try { fitnessRecords = normalizeFitnessRecords(JSON.parse(localStorage.getItem('wb_fitness') || '[]')); } catch { fitnessRecords = []; }
+    try { reminders = normalizeReminders(JSON.parse(localStorage.getItem('wb_reminders') || '[]')); } catch { reminders = []; }
   }
 }
 
@@ -3312,12 +3889,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderNotes();
   renderProjects();
   renderInfoPanels();
+  renderFitnessPage();
+  reminderDayKey = getReminderDayKey();
+  renderDailyReminders();
+  scheduleReminderRefresh();
   applyProjectEditorMode();
   applyAIConfig();
   bindProjectOutlineResizer();
   bindProjectOutlineInteractions();
   updateDateDisplay();
   setInterval(updateDateDisplay, 60000);
+  document.addEventListener('visibilitychange', refreshReminderDayIfNeeded);
 });
 
 function setTheme(theme) {
@@ -3635,6 +4217,974 @@ function updateDateDisplay() {
     `${now.getMonth()+1}月${now.getDate()}日 星期${days[now.getDay()]}`;
 }
 
+/* ==================== 每日提醒 ==================== */
+function formatReminderDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function getReminderDayKey(date = new Date()) {
+  const day = new Date(date);
+  day.setHours(day.getHours() - 5);
+  return formatReminderDate(day);
+}
+
+function normalizeReminders(items) {
+  if (!Array.isArray(items)) return [];
+  return items.filter(item => item && item.id).map(item => ({
+    id: String(item.id),
+    title: String(item.title || ''),
+    startDate: String(item.startDate || ''),
+    endDate: String(item.endDate || ''),
+    weekdays: Array.isArray(item.weekdays) ? [...new Set(item.weekdays.map(Number).filter(day => day >= 0 && day <= 6))] : [],
+    targetCount: Math.min(20, Math.max(1, Number(item.targetCount) || 1)),
+    completions: item.completions && typeof item.completions === 'object' ? item.completions : {},
+    createdAt: Number(item.createdAt) || Date.now()
+  }));
+}
+
+function isReminderActiveOnDay(reminder, dayKey) {
+  if ((reminder.startDate && dayKey < reminder.startDate) || (reminder.endDate && dayKey > reminder.endDate)) return false;
+  if (!reminder.weekdays.length) return true;
+  const [year, month, day] = dayKey.split('-').map(Number);
+  return reminder.weekdays.includes(new Date(year, month - 1, day).getDay());
+}
+
+function getReminderCount(reminder, dayKey = reminderDayKey) {
+  return Math.min(reminder.targetCount, Math.max(0, Number(reminder.completions[dayKey]) || 0));
+}
+
+function deferReminderSort() {
+  const ticket = ++reminderSortTicketId;
+  reminderSortDeferred = true;
+  reminderSortTickets.add(ticket);
+  reminderSortFallbacks.set(ticket, window.setTimeout(() => releaseReminderSort(ticket), 4000));
+  return ticket;
+}
+
+function releaseReminderSort(ticket) {
+  if (!reminderSortTickets.delete(ticket)) return;
+  window.clearTimeout(reminderSortFallbacks.get(ticket));
+  reminderSortFallbacks.delete(ticket);
+  if (!reminderSortTickets.size) {
+    reminderSortDeferred = false;
+    renderDailyReminders(null, null, null, true);
+  }
+}
+
+function renderDailyReminders(sweepReminderId = null, burstReminderId = null, sortTicket = null, animateEntrance = false) {
+  const list = document.getElementById('reminderList');
+  if (!list) return;
+  const dayKey = getReminderDayKey();
+  reminderDayKey = dayKey;
+  const active = reminders.filter(reminder => reminder.title && isReminderActiveOnDay(reminder, dayKey));
+  const previousOrder = reminderSortDeferred
+    ? new Map([...list.querySelectorAll('.reminder-card')].map((card, index) => [card.dataset.id, index]))
+    : null;
+  const sorted = [...active].sort((a, b) => {
+    const aDone = getReminderCount(a, dayKey) >= a.targetCount;
+    const bDone = getReminderCount(b, dayKey) >= b.targetCount;
+    return Number(aDone) - Number(bDone) || a.createdAt - b.createdAt;
+  });
+  if (previousOrder) {
+    sorted.sort((a, b) => {
+      const aIndex = previousOrder.get(a.id);
+      const bIndex = previousOrder.get(b.id);
+      if (aIndex === undefined) return bIndex === undefined ? 0 : 1;
+      if (bIndex === undefined) return -1;
+      return aIndex - bIndex;
+    });
+  }
+  document.getElementById('reminderEmptyState').style.display = active.length ? 'none' : 'block';
+  list.innerHTML = sorted.map(reminder => {
+    const count = getReminderCount(reminder, dayKey);
+    const complete = count >= reminder.targetCount;
+    const celebrating = burstReminderId === reminder.id;
+    const visuallyComplete = complete && !celebrating;
+    const percent = Math.round(count / reminder.targetCount * 100);
+    return `
+      <article class="reminder-card${visuallyComplete ? ' is-complete' : ''}${animateEntrance ? ' note-entrance' : ''}" data-id="${escAttr(reminder.id)}">
+        <div class="reminder-check-wrap">
+          <span class="reminder-burst" aria-hidden="true"></span>
+          <span class="reminder-ring" aria-hidden="true"></span>
+          <button class="reminder-check" type="button" onclick="changeReminderCompletion('${escAttr(reminder.id)}', 1)" ${complete ? 'disabled aria-label="今日已完成"' : 'aria-label="完成一次"'} title="${complete ? '今日已完成' : '完成一次'}">${complete && !celebrating ? '<svg class="reminder-checkmark" viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"></path></svg>' : '<span class="reminder-plus" aria-hidden="true"></span>'}</button>
+        </div>
+        <div class="reminder-content">
+          <div class="reminder-title">${escHtml(reminder.title)}</div>
+          <div class="reminder-progress"><span class="reminder-progress-track" role="progressbar" aria-label="${complete ? '今日已完成' : `今日已完成 ${count} 次，共 ${reminder.targetCount} 次`}" aria-valuemin="0" aria-valuemax="${reminder.targetCount}" aria-valuenow="${count}"><span class="reminder-progress-fill" style="display:block;width:${percent}%"></span></span></div>
+        </div>
+        <div class="reminder-actions">
+          <div class="reminder-menu" role="group" aria-label="提醒操作" hidden>
+            <button class="reminder-action" type="button" onclick="changeReminderCompletion('${escAttr(reminder.id)}', -1)" ${count ? '' : 'disabled'} aria-label="撤销今日完成" title="撤销">&#8630;</button>
+            <button class="reminder-action" type="button" onclick="openReminderEditor('${escAttr(reminder.id)}')" aria-label="编辑提醒" title="编辑">&#9998;</button>
+            <button class="reminder-action reminder-action-danger" type="button" onclick="askDeleteReminder('${escAttr(reminder.id)}')" aria-label="删除提醒" title="删除">&#215;</button>
+          </div>
+          <button class="reminder-more" type="button" onclick="toggleReminderActions(this)" aria-label="更多提醒操作" aria-expanded="false" title="更多操作">···</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+  if (sweepReminderId) {
+    const card = [...list.querySelectorAll('.reminder-card')].find(item => item.dataset.id === sweepReminderId);
+    if (card) {
+      card.classList.add('is-sweeping');
+      const clearSweep = event => {
+        if (event.animationName !== 'reminderLightSweep') return;
+        card.classList.remove('is-sweeping');
+        card.removeEventListener('animationend', clearSweep);
+      };
+      card.addEventListener('animationend', clearSweep);
+    }
+  }
+  if (burstReminderId) {
+    const card = [...list.querySelectorAll('.reminder-card')].find(item => item.dataset.id === burstReminderId);
+    if (card) {
+      const ring = card.querySelector('.reminder-ring');
+      const burst = card.querySelector('.reminder-burst');
+      card.classList.add('is-charging');
+      ring.addEventListener('animationend', () => {
+        card.classList.remove('is-charging');
+        card.classList.add('is-complete');
+        card.querySelector('.reminder-check').innerHTML = '<svg class="reminder-checkmark" viewBox="0 0 24 24" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"></path></svg>';
+        card.classList.add('is-bursting');
+        burst.addEventListener('animationend', () => {
+          card.classList.remove('is-bursting');
+          releaseReminderSort(sortTicket);
+        }, { once: true });
+      }, { once: true });
+    }
+  }
+}
+
+async function persistReminders() {
+  await persistData('reminders', 'wb_reminders', reminders);
+}
+
+async function changeReminderCompletion(id, amount) {
+  const reminder = reminders.find(item => item.id === id);
+  if (!reminder || !isReminderActiveOnDay(reminder, getReminderDayKey())) return;
+  const dayKey = getReminderDayKey();
+  const previousCount = getReminderCount(reminder, dayKey);
+  let nextCount = previousCount;
+  if (amount < 0) {
+    delete reminder.completions[dayKey];
+    nextCount = 0;
+  } else {
+    nextCount = Math.min(reminder.targetCount, previousCount + amount);
+    if (nextCount) reminder.completions[dayKey] = nextCount;
+    else delete reminder.completions[dayKey];
+  }
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const oldestDay = formatReminderDate(cutoff);
+  Object.keys(reminder.completions).forEach(key => { if (key < oldestDay) delete reminder.completions[key]; });
+  const reachedTarget = amount > 0 && previousCount < reminder.targetCount && nextCount >= reminder.targetCount;
+  const sortTicket = reachedTarget ? deferReminderSort() : null;
+  renderDailyReminders(amount > 0 ? id : null, reachedTarget ? id : null, sortTicket);
+  await persistReminders();
+}
+
+function closeReminderActions() {
+  document.querySelectorAll('.reminder-card.is-menu-open').forEach(card => {
+    card.classList.remove('is-menu-open');
+    card.querySelector('.reminder-menu').hidden = true;
+    card.querySelector('.reminder-more').setAttribute('aria-expanded', 'false');
+  });
+}
+
+function toggleReminderActions(button) {
+  const actions = button.closest('.reminder-actions');
+  const menu = actions.querySelector('.reminder-menu');
+  const open = menu.hidden;
+  closeReminderActions();
+  if (!open) return;
+  const card = button.closest('.reminder-card');
+  card.classList.add('is-menu-open');
+  menu.hidden = false;
+  button.setAttribute('aria-expanded', 'true');
+}
+
+function closeReminderWeekdays() {
+  document.getElementById('reminderWeekdaysPopover').hidden = true;
+  const menu = document.getElementById('reminderFrequencyMenu');
+  document.getElementById('reminderFrequencyTrigger').setAttribute('aria-expanded', String(menu && !menu.hidden));
+}
+
+function renderReminderFrequencyPicker() {
+  const select = document.getElementById('reminderFrequency');
+  const value = document.getElementById('reminderFrequencyValue');
+  const menu = document.getElementById('reminderFrequencyMenu');
+  if (!select || !value || !menu) return;
+  const options = [...select.options];
+  value.textContent = options.find(option => option.value === select.value)?.textContent || '每天';
+  menu.innerHTML = options.map(option => `<button type="button" class="fitness-select-option" role="option" aria-selected="${option.value === select.value}" onclick="selectReminderFrequency('${option.value}')">${escHtml(option.textContent)}</button>`).join('');
+}
+
+function toggleReminderFrequencyPicker() {
+  const menu = document.getElementById('reminderFrequencyMenu');
+  const trigger = document.getElementById('reminderFrequencyTrigger');
+  const open = menu.hidden;
+  document.getElementById('reminderWeekdaysPopover').hidden = true;
+  menu.hidden = !open;
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+function selectReminderFrequency(value) {
+  document.getElementById('reminderFrequency').value = value;
+  renderReminderFrequencyPicker();
+  const menu = document.getElementById('reminderFrequencyMenu');
+  menu.hidden = true;
+  const weekly = value === 'weekly';
+  document.getElementById('reminderWeekdaysPopover').hidden = !weekly;
+  document.getElementById('reminderFrequencyTrigger').setAttribute('aria-expanded', String(weekly));
+}
+
+function closeReminderFrequencyPickers() {
+  document.getElementById('reminderFrequencyMenu').hidden = true;
+  document.getElementById('reminderWeekdaysPopover').hidden = true;
+  document.getElementById('reminderFrequencyTrigger').setAttribute('aria-expanded', 'false');
+}
+
+function updateReminderDateButtons() {
+  const format = value => {
+    if (!value) return '不限';
+    const date = parseFitnessDate(value);
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  };
+  document.getElementById('reminderStartButton').textContent = format(document.getElementById('reminderStartDate').value);
+  document.getElementById('reminderEndButton').textContent = format(document.getElementById('reminderEndDate').value);
+}
+
+function toggleReminderDatePicker(target) {
+  if (reminderPickerTarget === target) {
+    hideReminderDatePickers();
+    return;
+  }
+  reminderPickerTarget = target;
+  const value = document.getElementById(target === 'start' ? 'reminderStartDate' : 'reminderEndDate').value || reminderDayKey || getReminderDayKey();
+  reminderPickerMonth = parseFitnessDate(value);
+  renderReminderDatePicker();
+}
+
+function hideReminderDatePickers() {
+  document.getElementById('reminderStartPicker').hidden = true;
+  document.getElementById('reminderEndPicker').hidden = true;
+  reminderPickerTarget = null;
+}
+
+function shiftReminderPickerMonth(amount) {
+  reminderPickerMonth = new Date(reminderPickerMonth.getFullYear(), reminderPickerMonth.getMonth() + amount, 1);
+  renderReminderDatePicker();
+}
+
+function renderReminderDatePicker() {
+  const picker = document.getElementById(reminderPickerTarget === 'start' ? 'reminderStartPicker' : 'reminderEndPicker');
+  const selected = document.getElementById(reminderPickerTarget === 'start' ? 'reminderStartDate' : 'reminderEndDate').value;
+  const year = reminderPickerMonth.getFullYear();
+  const month = reminderPickerMonth.getMonth();
+  const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+  const cells = Array.from({ length: 42 }, (_value, index) => {
+    const date = new Date(year, month, index - offset + 1);
+    const value = formatFitnessDate(date);
+    const outside = date.getMonth() !== month;
+    return `<button type="button" class="fitness-picker-day${outside ? ' is-outside' : ''}${value === selected ? ' is-start' : ''}" onclick="selectReminderDate('${reminderPickerTarget}', '${value}')">${date.getDate()}</button>`;
+  });
+  picker.innerHTML = `
+    <div class="fitness-picker-header"><button type="button" aria-label="上个月" onclick="shiftReminderPickerMonth(-1)">&#8249;</button><strong>${year}年${month + 1}月</strong><button type="button" aria-label="下个月" onclick="shiftReminderPickerMonth(1)">&#8250;</button></div>
+    <div class="fitness-picker-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+    <div class="fitness-picker-grid">${cells.join('')}</div>
+    <button type="button" class="reminder-clear-date" onclick="clearReminderDate('${reminderPickerTarget}')">清除所选日期</button>
+  `;
+  picker.hidden = false;
+  updateReminderDateButtons();
+}
+
+function selectReminderDate(target, value) {
+  const start = document.getElementById('reminderStartDate');
+  const end = document.getElementById('reminderEndDate');
+  if (target === 'start') {
+    start.value = value;
+    if (end.value && end.value < value) end.value = value;
+  } else {
+    end.value = value;
+    if (value < start.value) start.value = value;
+  }
+  hideReminderDatePickers();
+  updateReminderDateButtons();
+}
+
+function clearReminderDate(target) {
+  document.getElementById(target === 'start' ? 'reminderStartDate' : 'reminderEndDate').value = '';
+  hideReminderDatePickers();
+  updateReminderDateButtons();
+}
+
+function openReminderEditor(id = null) {
+  closeReminderActions();
+  editingReminderId = id;
+  const reminder = reminders.find(item => item.id === id);
+  document.getElementById('reminderModalTitle').textContent = reminder ? '编辑提醒' : '新建提醒';
+  document.getElementById('reminderTitle').value = reminder?.title || '';
+  document.getElementById('reminderStartDate').value = reminder?.startDate || '';
+  document.getElementById('reminderEndDate').value = reminder?.endDate || '';
+  document.getElementById('reminderFrequency').value = reminder?.weekdays?.length ? 'weekly' : 'daily';
+  document.querySelectorAll('#reminderWeekdaysPopover input').forEach(input => { input.checked = reminder?.weekdays?.includes(Number(input.value)) || false; });
+  document.getElementById('reminderTargetCount').value = reminder?.targetCount || 1;
+  closeReminderWeekdays();
+  renderReminderFrequencyPicker();
+  updateReminderDateButtons();
+  hideReminderDatePickers();
+  document.getElementById('reminderEditorModal').classList.add('active');
+  setTimeout(() => document.getElementById('reminderTitle').focus(), 100);
+}
+
+function closeReminderEditor() {
+  closeReminderFrequencyPickers();
+  hideReminderDatePickers();
+  document.getElementById('reminderEditorModal').classList.remove('active');
+  editingReminderId = null;
+}
+
+async function saveReminder() {
+  const title = document.getElementById('reminderTitle').value.trim();
+  const startDate = document.getElementById('reminderStartDate').value;
+  const endDate = document.getElementById('reminderEndDate').value;
+  const weekdays = document.getElementById('reminderFrequency').value === 'weekly'
+    ? [...document.querySelectorAll('#reminderWeekdaysPopover input:checked')].map(input => Number(input.value))
+    : [];
+  const targetCount = Math.min(20, Math.max(1, Number.parseInt(document.getElementById('reminderTargetCount').value, 10) || 1));
+  if (!title) {
+    document.getElementById('reminderTitle').focus();
+    showToast('请填写提醒内容');
+    return;
+  }
+  if (startDate && endDate && endDate < startDate) {
+    showToast('请检查生效日期');
+    return;
+  }
+  if (document.getElementById('reminderFrequency').value === 'weekly' && !weekdays.length) {
+    showToast('请至少选择一个星期');
+    return;
+  }
+  const previous = reminders.find(item => item.id === editingReminderId);
+  const reminder = {
+    ...(previous || {}),
+    id: previous?.id || genId('r'),
+    title,
+    startDate,
+    endDate,
+    weekdays,
+    targetCount,
+    completions: previous?.completions || {},
+    createdAt: previous?.createdAt || Date.now()
+  };
+  if (previous) reminders = reminders.map(item => item.id === previous.id ? reminder : item);
+  else reminders.push(reminder);
+  renderDailyReminders();
+  await persistReminders();
+  closeReminderEditor();
+}
+
+function askDeleteReminder(id) {
+  const reminder = reminders.find(item => item.id === id);
+  if (!reminder) return;
+  closeReminderActions();
+  openConfirm(`确定要删除提醒「${reminder.title}」吗？`, async () => {
+    reminders = reminders.filter(item => item.id !== id);
+    renderDailyReminders();
+    await persistReminders();
+  });
+}
+
+function scheduleReminderRefresh() {
+  clearTimeout(reminderRefreshTimer);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(5, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  reminderRefreshTimer = setTimeout(() => {
+    reminderDayKey = getReminderDayKey();
+    renderDailyReminders();
+    scheduleReminderRefresh();
+  }, next.getTime() - now.getTime());
+}
+
+function refreshReminderDayIfNeeded() {
+  if (document.visibilityState !== 'visible') return;
+  if (reminderDayKey !== getReminderDayKey()) renderDailyReminders();
+  scheduleReminderRefresh();
+}
+
+/* ==================== 运动日志 ==================== */
+function padFitnessNumber(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatFitnessDate(date) {
+  const value = date instanceof Date ? date : new Date(date);
+  return `${value.getFullYear()}-${padFitnessNumber(value.getMonth() + 1)}-${padFitnessNumber(value.getDate())}`;
+}
+
+function parseFitnessDate(value) {
+  const [year, month, day] = String(value).split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getFitnessDefaultRange(days) {
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - days);
+  return { start: formatFitnessDate(start), end: formatFitnessDate(end) };
+}
+
+function shiftFitnessDate(value, amount) {
+  const date = parseFitnessDate(value);
+  date.setDate(date.getDate() + amount);
+  return formatFitnessDate(date);
+}
+
+function cloneFitnessRecord(record) {
+  return JSON.parse(JSON.stringify(record));
+}
+
+function normalizeFitnessRecords(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter(item => item && /^\d{4}-\d{2}-\d{2}$/.test(item.date))
+    .map(item => ({
+      date: item.date,
+      exercises: Array.isArray(item.exercises) ? item.exercises.map((exercise, index) => ({
+        id: exercise.id || `exercise-${index}-${item.date}`,
+        name: String(exercise.name || '未命名动作'),
+        metric: exercise.metric != null
+          ? String(exercise.metric)
+          : (() => {
+            const legacyWeights = (exercise.sets || [])
+              .map(set => {
+                const raw = String(set.weight == null ? '' : set.weight).trim();
+                return raw ? Number(raw) : NaN;
+              })
+              .filter(Number.isFinite);
+            return legacyWeights.length ? String(Math.max(...legacyWeights)) : '';
+          })()
+      })).filter(exercise => exercise.name !== '未命名动作' || exercise.metric) : []
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getFitnessRecord(date) {
+  return fitnessRecords.find(record => record.date === date) || null;
+}
+
+function hasFitnessWorkout(date) {
+  return Boolean(getFitnessRecord(date)?.exercises?.length);
+}
+
+async function persistFitnessRecords() {
+  try {
+    if (serverOnline) await apiPost('fitness', fitnessRecords);
+    else saveLocalData('wb_fitness', fitnessRecords);
+  } catch {
+    saveLocalData('wb_fitness', fitnessRecords);
+    if (serverOnline) showPersistFallbackWarning();
+  }
+}
+
+function renderFitnessPage() {
+  if (!document.getElementById('fitnessCalendar')) return;
+  renderFitnessCalendar();
+  renderFitnessDetail();
+  setFitnessView(fitnessView, true);
+  observeFitnessChartSize();
+}
+
+function setFitnessView(view, silent = false) {
+  if (!silent && fitnessDetailDirty) saveFitnessDetail(true);
+  fitnessView = ['training', 'growth'].includes(view) ? view : 'calendar';
+  const calendar = document.getElementById('fitnessCalendarView');
+  const analytics = document.getElementById('fitnessAnalyticsView');
+  const calendarButton = document.getElementById('fitnessCalendarViewBtn');
+  const trainingButton = document.getElementById('fitnessTrainingViewBtn');
+  const growthButton = document.getElementById('fitnessGrowthViewBtn');
+  if (!calendar || !analytics) return;
+  calendar.hidden = fitnessView !== 'calendar';
+  analytics.hidden = fitnessView === 'calendar';
+  document.getElementById('fitnessTrainingDateRange')?.toggleAttribute('hidden', fitnessView !== 'training');
+  document.getElementById('fitnessGrowthDateRange')?.toggleAttribute('hidden', fitnessView !== 'growth');
+  calendarButton?.classList.toggle('active', fitnessView === 'calendar');
+  trainingButton?.classList.toggle('active', fitnessView === 'training');
+  growthButton?.classList.toggle('active', fitnessView === 'growth');
+  if (fitnessView === 'growth') {
+    document.getElementById('fitnessAnalyticsEyebrow').textContent = 'GROWTH RECORD';
+    document.getElementById('fitnessAnalyticsTitle').textContent = '指标趋势';
+    document.getElementById('fitnessTrainingChartCard').hidden = true;
+    document.getElementById('fitnessGrowthChartCard').hidden = false;
+    populateFitnessExerciseSelect();
+    renderFitnessGrowthChart();
+    playNoteEntrance(analytics.querySelector('.fitness-analytics-panel'));
+  } else {
+    document.getElementById('fitnessAnalyticsEyebrow').textContent = 'TRAINING RECORD';
+    document.getElementById('fitnessAnalyticsTitle').textContent = '运动天数';
+    document.getElementById('fitnessTrainingChartCard').hidden = false;
+    document.getElementById('fitnessGrowthChartCard').hidden = true;
+    renderFitnessTrainingChart();
+    playNoteEntrance(analytics.querySelector('.fitness-analytics-panel'));
+  }
+  if (fitnessView === 'calendar') playNoteEntrance(calendar);
+}
+
+function playNoteEntrance(element) {
+  if (!element) return;
+  element.classList.remove('note-entrance');
+  void element.offsetWidth;
+  element.classList.add('note-entrance');
+  const clearEntrance = event => {
+    if (event.target !== element || event.animationName !== 'noteIn') return;
+    element.classList.remove('note-entrance');
+    element.removeEventListener('animationend', clearEntrance);
+  };
+  element.addEventListener('animationend', clearEntrance);
+}
+
+function observeFitnessChartSize() {
+  if (fitnessChartResizeObserver || !window.ResizeObserver) return;
+  fitnessChartResizeObserver = new ResizeObserver(entries => {
+    if (!entries.some(entry => entry.contentRect.width > 0)) return;
+    requestAnimationFrame(() => {
+      if (!document.getElementById('page-fitness')?.classList.contains('active')) return;
+      if (fitnessView === 'growth') renderFitnessGrowthChart();
+      else if (fitnessView === 'training') renderFitnessTrainingChart();
+    });
+  });
+  fitnessChartResizeObserver.observe(document.getElementById('fitnessTrainingChart'));
+  fitnessChartResizeObserver.observe(document.getElementById('fitnessGrowthChart'));
+}
+
+function shiftFitnessMonth(amount) {
+  if (fitnessDetailDirty) saveFitnessDetail(true);
+  fitnessMonthCursor = new Date(fitnessMonthCursor.getFullYear(), fitnessMonthCursor.getMonth() + amount, 1);
+  renderFitnessCalendar();
+}
+
+function goFitnessToday() {
+  if (fitnessDetailDirty) saveFitnessDetail(true);
+  const today = new Date();
+  fitnessMonthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+  fitnessSelectedDate = formatFitnessDate(today);
+  renderFitnessCalendar();
+  renderFitnessDetail();
+}
+
+function selectFitnessDate(date) {
+  if (fitnessDetailDirty) saveFitnessDetail(true);
+  fitnessSelectedDate = date;
+  const selected = parseFitnessDate(date);
+  fitnessMonthCursor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  renderFitnessCalendar();
+  renderFitnessDetail();
+}
+
+function renderFitnessCalendar() {
+  const calendar = document.getElementById('fitnessCalendar');
+  const label = document.getElementById('fitnessMonthLabel');
+  if (!calendar || !label) return;
+  calendar.classList.toggle('show-exercises', Boolean(document.getElementById('fitnessShowExercises')?.checked));
+  const year = fitnessMonthCursor.getFullYear();
+  const month = fitnessMonthCursor.getMonth();
+  label.textContent = `${year}年${month + 1}月`;
+  const firstDay = new Date(year, month, 1);
+  const mondayOffset = (firstDay.getDay() + 6) % 7;
+  const cells = [];
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(year, month, index - mondayOffset + 1);
+    const dateString = formatFitnessDate(date);
+    const record = getFitnessRecord(dateString);
+    const isOutside = date.getMonth() !== month;
+    const exercises = record?.exercises || [];
+    const exerciseNames = exercises.slice(0, 4).map(exercise => `<div class="fitness-day-exercise">${escHtml(exercise.name)}</div>`).join('');
+    const more = exercises.length > 4 ? '<div class="fitness-day-more">···</div>' : '';
+    cells.push(`
+      <button type="button" class="fitness-day${isOutside ? ' is-outside-month' : ''}${exercises.length ? ' has-workout' : ''}${dateString === fitnessSelectedDate ? ' is-selected' : ''}${dateString === formatFitnessDate(new Date()) ? ' is-today' : ''}" role="gridcell" aria-label="${dateString}${exercises.length ? '，有训练记录' : ''}" onclick="selectFitnessDate('${dateString}')">
+        <span class="fitness-day-number">${date.getDate()}</span>
+        <span class="fitness-day-exercises">${exerciseNames}${more}</span>
+      </button>
+    `);
+  }
+  calendar.innerHTML = cells.join('');
+}
+
+let fitnessDetailDraft = null;
+let fitnessDetailDirty = false;
+
+function startFitnessDetail() {
+  fitnessDetailDraft = { date: fitnessSelectedDate, exercises: [{ id: `exercise-${Date.now()}`, name: '', metric: '' }] };
+  fitnessDetailDirty = true;
+  renderFitnessDetail();
+  document.querySelector('.fitness-exercise-title-row input')?.focus();
+}
+
+function addFitnessExercise() {
+  if (!fitnessDetailDraft) startFitnessDetail();
+  fitnessDetailDraft.exercises.push({ id: `exercise-${Date.now()}-${fitnessDetailDraft.exercises.length}`, name: '', metric: '' });
+  fitnessDetailDirty = true;
+  renderFitnessDetail();
+}
+
+function removeFitnessExercise(exerciseIndex) {
+  if (!fitnessDetailDraft) return;
+  fitnessDetailDraft.exercises.splice(exerciseIndex, 1);
+  fitnessDetailDirty = true;
+  renderFitnessDetail();
+}
+
+function renderFitnessDetail() {
+  const panel = document.getElementById('fitnessDetailPanel');
+  if (!panel) return;
+  const record = getFitnessRecord(fitnessSelectedDate);
+  if (!fitnessDetailDirty || fitnessDetailDraft?.date !== fitnessSelectedDate) {
+    fitnessDetailDraft = record ? cloneFitnessRecord(record) : null;
+    fitnessDetailDirty = false;
+  }
+  const draft = fitnessDetailDraft;
+  const date = parseFitnessDate(fitnessSelectedDate);
+  const dateLabel = `${date.getMonth() + 1}月${date.getDate()}日 星期${['日', '一', '二', '三', '四', '五', '六'][date.getDay()]}`;
+  const exercises = draft?.exercises || [];
+  const cards = exercises.map((exercise, exerciseIndex) => `
+    <article class="fitness-exercise-card">
+      <div class="fitness-exercise-title-row">
+        <input data-field="name" value="${escAttr(exercise.name)}" placeholder="动作名称" oninput="fitnessDetailDirty=true">
+        <input data-field="metric" value="${escAttr(exercise.metric)}" placeholder="指标" oninput="fitnessDetailDirty=true">
+        <button type="button" class="fitness-remove-button" title="删除动作" aria-label="删除动作" onclick="removeFitnessExercise(${exerciseIndex})">&#10005;</button>
+      </div>
+    </article>
+  `).join('');
+  panel.innerHTML = `
+    <div class="fitness-detail-heading">
+      <div><p class="fitness-eyebrow">SELECTED DAY</p><h3>${dateLabel}</h3></div>
+    </div>
+    <div class="fitness-detail-body">
+      ${draft && exercises.length ? cards : !draft ? '<div class="fitness-detail-empty"><button class="btn btn-primary" onclick="startFitnessDetail()">开始记录</button></div>' : ''}
+      ${draft ? `<div class="fitness-detail-actions"><button class="btn btn-secondary btn-sm" onclick="addFitnessExercise()">&#43; 添加动作</button><button class="btn btn-primary btn-sm" onclick="saveFitnessDetail()">保存记录</button></div>` : ''}
+    </div>
+  `;
+}
+
+async function saveFitnessDetail(silent = false) {
+  if (!fitnessDetailDraft) return;
+  const cards = [...document.querySelectorAll('#fitnessDetailPanel .fitness-exercise-card')];
+  fitnessDetailDraft.exercises = cards.map((card, exerciseIndex) => ({
+    id: fitnessDetailDraft.exercises[exerciseIndex]?.id || `exercise-${Date.now()}-${exerciseIndex}`,
+    name: card.querySelector('[data-field="name"]')?.value.trim() || '未命名动作',
+    metric: card.querySelector('[data-field="metric"]')?.value.trim() || ''
+  })).filter(exercise => exercise.name !== '未命名动作' || exercise.metric);
+  const nextRecord = { date: fitnessSelectedDate, exercises: fitnessDetailDraft.exercises };
+  const index = fitnessRecords.findIndex(record => record.date === fitnessSelectedDate);
+  if (nextRecord.exercises.length) {
+    if (index >= 0) fitnessRecords[index] = nextRecord;
+    else fitnessRecords.push(nextRecord);
+  } else if (index >= 0) {
+    fitnessRecords.splice(index, 1);
+  }
+  fitnessRecords = normalizeFitnessRecords(fitnessRecords);
+  fitnessDetailDraft = getFitnessRecord(fitnessSelectedDate) ? cloneFitnessRecord(getFitnessRecord(fitnessSelectedDate)) : null;
+  fitnessDetailDirty = false;
+  await persistFitnessRecords();
+  renderFitnessCalendar();
+  renderFitnessDetail();
+  if (!silent) showToast('训练记录已保存');
+}
+
+function getFitnessRange(type) {
+  return type.startsWith('training') ? fitnessTrainingRange : fitnessGrowthRange;
+}
+
+function setFitnessRange(type, key, value) {
+  const range = getFitnessRange(type);
+  range[key] = value;
+  if (range.start > range.end) {
+    if (key === 'start') range.end = value;
+    else range.start = value;
+  }
+}
+
+function toggleFitnessDatePicker(type) {
+  const pickerId = type.startsWith('training') ? 'fitnessTrainingDatePicker' : 'fitnessGrowthDatePicker';
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  if (fitnessPickerState === type && !picker.hidden) {
+    picker.hidden = true;
+    fitnessPickerState = null;
+    return;
+  }
+  fitnessPickerState = type;
+  const range = getFitnessRange(type);
+  fitnessPickerMonth = parseFitnessDate(type.endsWith('start') ? range.start : range.end);
+  renderFitnessDatePicker(type);
+}
+
+function shiftFitnessPickerMonth(type, amount) {
+  fitnessPickerMonth = new Date(fitnessPickerMonth.getFullYear(), fitnessPickerMonth.getMonth() + amount, 1);
+  renderFitnessDatePicker(type);
+}
+
+function renderFitnessDatePicker(type) {
+  const picker = document.getElementById(type.startsWith('training') ? 'fitnessTrainingDatePicker' : 'fitnessGrowthDatePicker');
+  if (!picker) return;
+  const range = getFitnessRange(type);
+  const year = fitnessPickerMonth.getFullYear();
+  const month = fitnessPickerMonth.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const offset = (firstDay.getDay() + 6) % 7;
+  const cells = [];
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(year, month, index - offset + 1);
+    const value = formatFitnessDate(date);
+    const outside = date.getMonth() !== month;
+    const isStart = value === range.start;
+    const isEnd = value === range.end;
+    const isRange = value >= range.start && value <= range.end;
+    cells.push(`<button type="button" class="fitness-picker-day${outside ? ' is-outside' : ''}${isRange ? ' is-range' : ''}${isStart ? ' is-start' : ''}${isEnd ? ' is-end' : ''}" onclick="selectFitnessPickerDate('${type}', '${value}')">${date.getDate()}</button>`);
+  }
+  picker.innerHTML = `
+    <div class="fitness-picker-header"><button type="button" onclick="shiftFitnessPickerMonth('${type}', -1)">&#8249;</button><strong>${year}年${month + 1}月</strong><button type="button" onclick="shiftFitnessPickerMonth('${type}', 1)">&#8250;</button></div>
+    <div class="fitness-picker-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+    <div class="fitness-picker-grid">${cells.join('')}</div>
+  `;
+  picker.hidden = false;
+  updateFitnessDateButtons();
+}
+
+function selectFitnessPickerDate(type, value) {
+  setFitnessRange(type, type.endsWith('start') ? 'start' : 'end', value);
+  document.getElementById(type.startsWith('training') ? 'fitnessTrainingDatePicker' : 'fitnessGrowthDatePicker').hidden = true;
+  fitnessPickerState = null;
+  updateFitnessDateButtons();
+  type.startsWith('training') ? renderFitnessTrainingChart() : renderFitnessGrowthChart();
+}
+
+function updateFitnessDateButtons() {
+  const format = value => {
+    const date = parseFitnessDate(value);
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  };
+  document.getElementById('fitnessTrainingStartButton').textContent = format(fitnessTrainingRange.start);
+  document.getElementById('fitnessTrainingEndButton').textContent = format(fitnessTrainingRange.end);
+  document.getElementById('fitnessGrowthStartButton').textContent = format(fitnessGrowthRange.start);
+  document.getElementById('fitnessGrowthEndButton').textContent = format(fitnessGrowthRange.end);
+}
+
+function getFitnessTrainingBucket(dateValue, scale) {
+  const date = parseFitnessDate(dateValue);
+  if (scale === 2) return `${date.getFullYear()}`;
+  if (scale === 1) return `${date.getFullYear()}-${padFitnessNumber(date.getMonth() + 1)}`;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return formatFitnessDate(monday);
+}
+
+function getFitnessBucketLabel(bucket, scale) {
+  if (scale === 2) return `${bucket}年`;
+  const parts = bucket.split('-').map(Number);
+  if (scale === 1) return `${parts[1]}月`;
+  return `${parts[1]}月${parts[2]}日`;
+}
+
+function getFitnessTrainingSeries() {
+  const scale = Number(document.getElementById('fitnessTrainingScale')?.value || 1);
+  const counts = new Map();
+  let cursor = fitnessTrainingRange.start;
+  while (cursor <= fitnessTrainingRange.end) {
+    const bucket = getFitnessTrainingBucket(cursor, scale);
+    if (!counts.has(bucket)) counts.set(bucket, 0);
+    if (hasFitnessWorkout(cursor)) counts.set(bucket, counts.get(bucket) + 1);
+    cursor = shiftFitnessDate(cursor, 1);
+  }
+  return [...counts.entries()].map(([bucket, value]) => ({ bucket, label: getFitnessBucketLabel(bucket, scale), value }));
+}
+
+function renderFitnessTrainingChart() {
+  renderFitnessTrainingScalePicker();
+  updateFitnessDateButtons();
+  const series = getFitnessTrainingSeries();
+  const hasData = fitnessRecords.some(record => record.date >= fitnessTrainingRange.start && record.date <= fitnessTrainingRange.end && record.exercises.length);
+  document.getElementById('fitnessTrainingChartEmpty').hidden = hasData;
+  drawFitnessChart('fitnessTrainingChart', hasData ? series : [], { valueUnit: '天', area: true, integerAxis: true });
+}
+
+function renderFitnessTrainingScalePicker() {
+  const select = document.getElementById('fitnessTrainingScale');
+  const value = document.getElementById('fitnessTrainingScaleValue');
+  const menu = document.getElementById('fitnessTrainingScaleMenu');
+  if (!select || !value || !menu) return;
+  const options = [...select.options];
+  const selected = options.find(option => option.value === select.value) || options[0];
+  value.textContent = selected?.textContent || '每月';
+  menu.innerHTML = options.map(option => `<button type="button" class="fitness-select-option" role="option" aria-selected="${option.value === select.value}" data-value="${escAttr(option.value)}" onclick="selectFitnessTrainingScale(this.dataset.value)">${escHtml(option.textContent)}</button>`).join('');
+}
+
+function toggleFitnessTrainingScalePicker() {
+  const menu = document.getElementById('fitnessTrainingScaleMenu');
+  const trigger = document.getElementById('fitnessTrainingScaleTrigger');
+  if (!menu || !trigger) return;
+  const open = menu.hidden;
+  menu.hidden = !open;
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+function closeFitnessTrainingScalePicker() {
+  const menu = document.getElementById('fitnessTrainingScaleMenu');
+  const trigger = document.getElementById('fitnessTrainingScaleTrigger');
+  if (!menu || !trigger) return;
+  menu.hidden = true;
+  trigger.setAttribute('aria-expanded', 'false');
+}
+
+function selectFitnessTrainingScale(value) {
+  const select = document.getElementById('fitnessTrainingScale');
+  if (!select) return;
+  select.value = value;
+  renderFitnessTrainingScalePicker();
+  closeFitnessTrainingScalePicker();
+  renderFitnessTrainingChart();
+}
+
+function getFitnessExerciseNames() {
+  return [...new Set(fitnessRecords.flatMap(record => record.exercises.map(exercise => exercise.name.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+}
+
+function populateFitnessExerciseSelect() {
+  const select = document.getElementById('fitnessExerciseSelect');
+  if (!select) return;
+  const names = getFitnessExerciseNames();
+  const previous = select.value;
+  select.innerHTML = names.length ? names.map(name => `<option value="${escAttr(name)}">${escHtml(name)}</option>`).join('') : '<option value="">暂无动作</option>';
+  if (names.includes(previous)) select.value = previous;
+  else {
+    const mostRecorded = names
+      .map(name => ({ name, count: fitnessRecords.reduce((total, record) => total + record.exercises.filter(exercise => exercise.name === name).length, 0) }))
+      .sort((a, b) => b.count - a.count)[0];
+    if (mostRecorded) select.value = mostRecorded.name;
+  }
+  renderFitnessExercisePicker();
+}
+
+function renderFitnessExercisePicker() {
+  const select = document.getElementById('fitnessExerciseSelect');
+  const value = document.getElementById('fitnessExerciseValue');
+  const menu = document.getElementById('fitnessExerciseMenu');
+  if (!select || !value || !menu) return;
+  const options = [...select.options];
+  const selected = options.find(option => option.value === select.value) || options[0];
+  value.textContent = selected?.textContent || '暂无动作';
+  menu.innerHTML = options.map(option => `<button type="button" class="fitness-select-option" role="option" aria-selected="${option.value === select.value}" data-value="${escAttr(option.value)}" onclick="selectFitnessExercise(this.dataset.value)">${escHtml(option.textContent)}</button>`).join('');
+}
+
+function toggleFitnessExercisePicker() {
+  const menu = document.getElementById('fitnessExerciseMenu');
+  const trigger = document.getElementById('fitnessExerciseTrigger');
+  if (!menu || !trigger) return;
+  const open = menu.hidden;
+  menu.hidden = !open;
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+function closeFitnessExercisePicker() {
+  const menu = document.getElementById('fitnessExerciseMenu');
+  const trigger = document.getElementById('fitnessExerciseTrigger');
+  if (!menu || !trigger) return;
+  menu.hidden = true;
+  trigger.setAttribute('aria-expanded', 'false');
+}
+
+function selectFitnessExercise(name) {
+  const select = document.getElementById('fitnessExerciseSelect');
+  if (!select) return;
+  select.value = name;
+  renderFitnessExercisePicker();
+  closeFitnessExercisePicker();
+  renderFitnessGrowthChart();
+}
+
+function getFitnessGrowthSeries() {
+  const exerciseName = document.getElementById('fitnessExerciseSelect')?.value;
+  return fitnessRecords
+    .filter(record => record.date >= fitnessGrowthRange.start && record.date <= fitnessGrowthRange.end)
+    .flatMap(record => record.exercises.filter(exercise => exercise.name === exerciseName).map(exercise => {
+      const value = Number.parseFloat(String(exercise.metric || '').replace(',', '.'));
+      return { date: record.date, value };
+    }))
+    .filter(point => Number.isFinite(point.value))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(point => ({ ...point, label: `${parseFitnessDate(point.date).getMonth() + 1}/${parseFitnessDate(point.date).getDate()}` }));
+}
+
+function getFitnessRegression(points) {
+  if (points.length < 2) return null;
+  const meanX = points.reduce((sum, point) => sum + point.x, 0) / points.length;
+  const meanY = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+  const denominator = points.reduce((sum, point) => sum + ((point.x - meanX) ** 2), 0);
+  if (!denominator) return null;
+  const slope = points.reduce((sum, point) => sum + ((point.x - meanX) * (point.y - meanY)), 0) / denominator;
+  const intercept = meanY - slope * meanX;
+  const residuals = points.map(point => point.y - (slope * point.x + intercept));
+  const deviation = Math.sqrt(residuals.reduce((sum, value) => sum + value ** 2, 0) / points.length) || 0;
+  return { slope, intercept, deviation };
+}
+
+function renderFitnessGrowthChart() {
+  updateFitnessDateButtons();
+  const series = getFitnessGrowthSeries();
+  const fit = getFitnessRegression(series.map((point, index) => ({ x: index, y: point.value })));
+  document.getElementById('fitnessGrowthChartEmpty').hidden = series.length > 0;
+  drawFitnessChart('fitnessGrowthChart', series, { regression: fit, yAxisTitle: '指标' });
+}
+
+function drawFitnessChart(svgId, series, options = {}) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const width = Math.max(1, Math.round(svg.clientWidth || 760));
+  const height = 230;
+  const padding = { left: 48, right: 16, top: 18, bottom: 34 };
+  if (!series.length) {
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.innerHTML = '';
+    return;
+  }
+  const values = series.map(point => point.value);
+  const regression = options.regression;
+  const regressionValues = regression ? [regression.intercept, regression.slope * (series.length - 1) + regression.intercept] : [];
+  const allValues = values.concat(regressionValues).filter(Number.isFinite);
+  const min = options.area ? 0 : Math.min(...allValues);
+  const max = Math.max(...allValues, min + 1);
+  const range = max - min || 1;
+  const x = index => padding.left + (series.length === 1 ? (width - padding.left - padding.right) / 2 : index * (width - padding.left - padding.right) / (series.length - 1));
+  const y = value => padding.top + (max - value) * (height - padding.top - padding.bottom) / range;
+  const pointList = series.map((point, index) => `${x(index).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ');
+  const grid = [0, 0.5, 1].map(fraction => {
+    const value = min + range * (1 - fraction);
+    const yPosition = y(value);
+    const axisLabel = options.integerAxis ? Math.round(value) : Number(value.toFixed(1));
+    return `<line class="fitness-chart-grid-line" x1="${padding.left}" y1="${yPosition}" x2="${width - padding.right}" y2="${yPosition}"></line><text class="fitness-chart-axis-label" x="24" y="${yPosition + 3}">${axisLabel}</text>`;
+  }).join('');
+  const yAxisTitle = options.yAxisTitle ? `<text class="fitness-chart-axis-title" text-anchor="middle" x="10" y="${height / 2}" transform="rotate(-90 10 ${height / 2})">${escHtml(options.yAxisTitle)}</text>` : '';
+  const xLabels = series.map((point, index) => index === 0 || index === series.length - 1 || series.length < 8 || index % Math.ceil(series.length / 6) === 0 ? `<text class="fitness-chart-axis-label" text-anchor="middle" x="${x(index)}" y="${height - 9}">${escHtml(point.label)}</text>` : '').join('');
+  const circles = series.map((point, index) => `<circle class="fitness-chart-point" cx="${x(index)}" cy="${y(point.value)}" r="4" data-label="${escAttr(point.label)}" data-date="${escAttr(point.date || point.label)}" data-value="${point.value}"><title>${escHtml(point.date || point.label)} · ${point.value}${escHtml(options.valueUnit || '')}</title></circle>`).join('');
+  let uncertainty = '';
+  let fitLine = '';
+  if (regression) {
+    const deviation = regression.deviation;
+    const upper = series.map((point, index) => `${x(index).toFixed(1)},${y(regression.slope * index + regression.intercept + deviation).toFixed(1)}`).join(' ');
+    const lower = [...series].reverse().map((point, reverseIndex) => {
+      const index = series.length - 1 - reverseIndex;
+      return `${x(index).toFixed(1)},${y(regression.slope * index + regression.intercept - deviation).toFixed(1)}`;
+    }).join(' ');
+    uncertainty = `<polygon class="fitness-chart-uncertainty" points="${upper} ${lower}"></polygon>`;
+    fitLine = `<line class="fitness-chart-fit-line" x1="${x(0)}" y1="${y(regression.intercept)}" x2="${x(series.length - 1)}" y2="${y(regression.slope * (series.length - 1) + regression.intercept)}"></line>`;
+  }
+  const area = options.area ? `<polygon class="fitness-chart-area" points="${pointList} ${x(series.length - 1)},${height - padding.bottom} ${x(0)},${height - padding.bottom}"></polygon>` : '';
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.innerHTML = `${yAxisTitle}${grid}${area}${uncertainty}<polyline class="fitness-chart-line" points="${pointList}"></polyline>${fitLine}${circles}${xLabels}`;
+}
+
 /* ==================== 页面切换 ==================== */
 function switchPage(page) {
   if (page !== 'progress') flushProjectPersist();
@@ -3643,6 +5193,8 @@ function switchPage(page) {
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
   if (page === 'progress') replayProjectShelfAnimation();
+  if (page === 'fitness') renderFitnessPage();
+  if (page === 'reminders') renderDailyReminders(null, null, null, true);
 }
 
 /* ==================== 通用工具 ==================== */
@@ -3820,6 +5372,7 @@ async function importDataFile() {
     renderNotes();
     renderProjects();
     renderInfoPanels();
+    renderDailyReminders();
     setSettingsMessage(`导入完成，已合并 ${result.importedCount || 0} 项数据`);
     showToast('导入完成');
   } catch (error) {
@@ -3860,6 +5413,7 @@ async function migrateDataDir() {
     renderNotes();
     renderProjects();
     renderInfoPanels();
+    renderDailyReminders();
     selectedNextDataDir = '';
     document.getElementById('nextDataDir').textContent = '未选择';
     document.getElementById('currentDataDir').textContent = result.dataDir || '';
@@ -3923,6 +5477,7 @@ async function restoreTrashItem(file) {
     await loadData();
     renderNotes();
     renderProjects();
+    renderDailyReminders();
     await openTrashRestore();
     showToast('已恢复');
   } catch (error) {
@@ -6485,6 +8040,9 @@ function askDeleteInfo(id) {
 document.getElementById('infoEditorModal').addEventListener('click', e => {
   if (e.target === e.currentTarget && isModalContentEmpty('infoEditorModal')) closeInfoEditor();
 });
+document.getElementById('reminderEditorModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeReminderEditor();
+});
 document.getElementById('projectEditorModal').addEventListener('click', e => {
   if (e.target === e.currentTarget && isModalContentEmpty('projectEditorModal')) closeProjectEditor();
 });
@@ -6499,6 +8057,15 @@ document.getElementById('confirmOverlay').addEventListener('click', e => {
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('.form-group.with-suggestions')) hideInfoTagSuggestions();
+  if (!e.target.closest('.reminder-actions')) closeReminderActions();
+  if (!e.target.closest('.reminder-frequency-picker')) {
+    closeReminderFrequencyPickers();
+  }
+  if (!e.target.closest('.reminder-calendar-wrap')) hideReminderDatePickers();
+  if (!e.target.closest('.fitness-select-picker')) {
+    closeFitnessExercisePicker();
+    closeFitnessTrainingScalePicker();
+  }
 });
 
 window.addEventListener('beforeunload', flushProjectPersist);
@@ -6507,7 +8074,8 @@ window.addEventListener('beforeunload', flushProjectPersist);
 const ALT_PAGE_SHORTCUTS = {
   '1': 'todo',
   '2': 'progress',
-  '3': 'info'
+  '3': 'info',
+  '4': 'reminders'
 };
 
 function hasActiveBlockingOverlay() {
@@ -6534,6 +8102,10 @@ document.addEventListener('keydown', e => {
   }
 
   if (e.key === 'Escape') {
+    if (document.querySelector('.reminder-card.is-menu-open')) {
+      closeReminderActions();
+      return;
+    }
     const findBar = document.getElementById('projectFindBar');
     if (findBar?.classList.contains('active')) {
       e.preventDefault();
@@ -6543,6 +8115,7 @@ document.addEventListener('keydown', e => {
 
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
+    const reminderModal = document.getElementById('reminderEditorModal');
     const settingsModal = document.getElementById('settingsModal');
     const trashModal = document.getElementById('trashRestoreModal');
     const confirmModal = document.getElementById('confirmOverlay');
@@ -6550,6 +8123,7 @@ document.addEventListener('keydown', e => {
     if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
     if (trashModal.classList.contains('active')) { closeTrashRestore(); return; }
     if (settingsModal.classList.contains('active')) { closeSettings(); return; }
+    if (reminderModal.classList.contains('active')) { closeReminderEditor(); return; }
     if (infoModal.classList.contains('active')) { closeInfoEditor(); return; }
     if (projectModal.classList.contains('active')) { closeProjectEditor(); return; }
     if (activeProjectId) { closeProjectBook(); return; }
@@ -6558,8 +8132,10 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     const infoModal = document.getElementById('infoEditorModal');
     const projectModal = document.getElementById('projectEditorModal');
+    const reminderModal = document.getElementById('reminderEditorModal');
     if (infoModal.classList.contains('active')) saveInfoPanel();
     if (projectModal.classList.contains('active')) saveProject();
+    if (reminderModal.classList.contains('active')) saveReminder();
   }
 });
 </script>

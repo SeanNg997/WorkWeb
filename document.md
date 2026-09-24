@@ -2,10 +2,10 @@
 
 本文档用于在新的对话、机器或开发上下文中快速接手 WorkWeb。内容已按当前仓库实际状态更新。
 
-- 当前源码版本：`2.0.3`，见 `package.json`。
+- 当前源码版本：`3.0.0`，见 `package.json`。
 - 当前主要入口：`server.js`、`index.html`、`electron/main.js`、`src/novel-project-editor.jsx`。
 - 当前存储 schema：`2`，由数据目录中的 `storage-meta.json` 标记。
-- 更新日期：2026-06-25。
+- 更新日期：2026-09-24。
 
 ## 1. 项目定位
 

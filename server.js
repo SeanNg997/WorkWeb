@@ -3,12 +3,16 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const { Readable } = require('stream');
+const { pipeline } = require('stream/promises');
 
 const PACKAGE_FILE = path.join(__dirname, 'package.json');
 const DEFAULT_PORT = Number(process.env.WORKWEB_PORT || 3000);
 const DEFAULT_HOST = process.env.WORKWEB_HOST || '127.0.0.1';
 const DEFAULT_DATA_DIR = path.resolve(process.env.WORKWEB_DATA_DIR || path.join(__dirname, 'data'));
 const INFO_FILE = 'info.json';
+const FITNESS_FILE = 'fitness.json';
+const REMINDERS_FILE = 'reminders.json';
 const STORAGE_META_FILE = 'storage-meta.json';
 const STORAGE_SCHEMA_VERSION = 2;
 const EXPORT_MAGIC = 'workweb-data-export';
@@ -577,6 +581,8 @@ function writeCollection(dataDir, key, items) {
 function ensureBaseDataLayout(dataDir) {
   ensureDir(dataDir);
   ensureDataFile(dataDir, INFO_FILE, []);
+  ensureDataFile(dataDir, FITNESS_FILE, []);
+  ensureDataFile(dataDir, REMINDERS_FILE, []);
   ensureCollectionDir(dataDir, 'notes');
   ensureCollectionDir(dataDir, 'projects');
   ensureProjectItemsDir(dataDir);
@@ -887,32 +893,61 @@ function clearTrash(dataDir) {
   ensureTrashDir(dataDir);
 }
 
-function listDataFiles(dataDir) {
+function listTransferFiles(dataDir, excludedFile = '') {
   const root = path.resolve(dataDir);
   const backupRoot = path.join(root, BACKUP_DIR);
   return collectFiles(root, filePath => {
     const resolved = path.resolve(filePath);
-    return resolved !== backupRoot && !resolved.startsWith(`${backupRoot}${path.sep}`);
-  }).map(filePath => ({
-    path: path.relative(root, filePath).replace(/\\/g, '/'),
-    data: fs.readFileSync(filePath).toString('base64')
-  }));
+    const sameAsExcluded = process.platform === 'win32'
+      ? resolved.toLowerCase() === excludedFile.toLowerCase()
+      : resolved === excludedFile;
+    return resolved !== backupRoot &&
+      !resolved.startsWith(`${backupRoot}${path.sep}`) &&
+      (!excludedFile || !sameAsExcluded);
+  });
 }
 
-function createDataExport(dataDir, outputDir) {
+async function* serializeDataExport(dataDir, filePaths) {
+  const root = path.resolve(dataDir);
+  const header = JSON.stringify({
+    magic: EXPORT_MAGIC,
+    version: 1,
+    exportedAt: new Date().toISOString()
+  });
+  yield `${header.slice(0, -1)},"files":[`;
+
+  for (let index = 0; index < filePaths.length; index += 1) {
+    const filePath = filePaths[index];
+    if (index > 0) yield ',';
+    yield `{"path":${JSON.stringify(path.relative(root, filePath).replace(/\\/g, '/'))},"data":"`;
+
+    let carry = Buffer.alloc(0);
+    for await (const chunk of fs.createReadStream(filePath)) {
+      const bytes = carry.length ? Buffer.concat([carry, chunk]) : chunk;
+      const completeLength = bytes.length - (bytes.length % 3);
+      if (completeLength > 0) yield bytes.subarray(0, completeLength).toString('base64');
+      carry = bytes.subarray(completeLength);
+    }
+    if (carry.length > 0) yield carry.toString('base64');
+    yield '"}';
+  }
+
+  yield ']}';
+}
+
+async function createDataExport(dataDir, outputDir) {
   const rawOutputDir = String(outputDir || '').trim();
   if (!rawOutputDir) throw new Error('请选择导出目录');
   const targetDir = path.resolve(rawOutputDir);
   ensureDir(targetDir);
 
-  const archive = {
-    magic: EXPORT_MAGIC,
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    files: listDataFiles(dataDir)
-  };
   const outputFile = path.join(targetDir, EXPORT_FILE_NAME);
-  fs.writeFileSync(outputFile, zlib.gzipSync(JSON.stringify(archive)));
+  const filePaths = listTransferFiles(dataDir, outputFile);
+  await pipeline(
+    Readable.from(serializeDataExport(dataDir, filePaths)),
+    zlib.createGzip(),
+    fs.createWriteStream(outputFile)
+  );
   return outputFile;
 }
 
@@ -971,6 +1006,16 @@ function mergeInfoFile(dataDir, content) {
   return nextItems.length;
 }
 
+function mergeRemindersFile(dataDir, content) {
+  const imported = JSON.parse(content);
+  if (!Array.isArray(imported)) return 0;
+  const current = readJSON(dataDir, REMINDERS_FILE, []);
+  const ids = new Set(current.map(item => item?.id).filter(Boolean));
+  const additions = imported.filter(item => item?.id && !ids.has(item.id));
+  writeJSON(dataDir, REMINDERS_FILE, [...current, ...additions]);
+  return additions.length;
+}
+
 function mergeCollectionItem(dataDir, key, item) {
   if (!item || typeof item !== 'object') return 0;
 
@@ -1003,27 +1048,30 @@ function writeImportedFile(dataDir, file) {
   const relativePath = safeRelativePath(file?.path);
   if (!relativePath) return 0;
 
-  const content = Buffer.from(String(file.data || ''), 'base64').toString('utf-8');
   if (relativePath === STORAGE_META_FILE || relativePath.startsWith(`${BACKUP_DIR}/`)) return 0;
-  if (relativePath === INFO_FILE) return mergeInfoFile(dataDir, content);
-  if (relativePath === 'notes.json') return mergeLegacyCollectionFile(dataDir, 'notes', content);
-  if (relativePath === 'projects.json') return mergeLegacyCollectionFile(dataDir, 'projects', content);
+  const bytes = Buffer.isBuffer(file.data)
+    ? file.data
+    : Buffer.from(String(file.data || ''), 'base64');
+  if (relativePath === INFO_FILE) return mergeInfoFile(dataDir, bytes.toString('utf-8'));
+  if (relativePath === REMINDERS_FILE) return mergeRemindersFile(dataDir, bytes.toString('utf-8'));
+  if (relativePath === 'notes.json') return mergeLegacyCollectionFile(dataDir, 'notes', bytes.toString('utf-8'));
+  if (relativePath === 'projects.json') return mergeLegacyCollectionFile(dataDir, 'projects', bytes.toString('utf-8'));
   if (relativePath.startsWith('notes/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, 'notes', content);
+    return mergeCollectionFile(dataDir, 'notes', bytes.toString('utf-8'));
   }
   if (relativePath.startsWith(`${PROJECT_ITEMS_DIR.replace(/\\/g, '/')}/`) && relativePath.endsWith('.json')) {
     const targetPath = path.join(dataDir, relativePath);
     ensureDir(path.dirname(targetPath));
-    fs.writeFileSync(targetPath, Buffer.from(String(file.data || ''), 'base64'));
+    fs.writeFileSync(targetPath, bytes);
     return 1;
   }
   if (relativePath.startsWith('projects/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, 'projects', content);
+    return mergeCollectionFile(dataDir, bytes.toString('utf-8'));
   }
 
   const targetPath = makeUniqueFilePath(path.join(dataDir, relativePath));
   ensureDir(path.dirname(targetPath));
-  fs.writeFileSync(targetPath, Buffer.from(String(file.data || ''), 'base64'));
+  fs.writeFileSync(targetPath, bytes);
   return 1;
 }
 
@@ -1035,10 +1083,11 @@ function importDataExport(dataDir, filePath) {
 
 function mergeDataDirs(sourceDir, targetDir) {
   ensureDir(targetDir);
-  const archive = {
-    files: listDataFiles(sourceDir)
-  };
-  return archive.files.reduce((count, file) => count + writeImportedFile(targetDir, file), 0);
+  const root = path.resolve(sourceDir);
+  return listTransferFiles(root).reduce((count, filePath) => count + writeImportedFile(targetDir, {
+    path: path.relative(root, filePath).replace(/\\/g, '/'),
+    data: fs.readFileSync(filePath)
+  }), 0);
 }
 
 function createServerContext(options = {}) {
@@ -1234,9 +1283,9 @@ function createServer(options = {}) {
 
     if (pathname === '/api/export-data' && req.method === 'POST') {
       if (!ensureStorageReady(context, res)) return;
-      readRequestBody(req).then(body => {
+      readRequestBody(req).then(async body => {
         try {
-          const filePath = createDataExport(context.dataDir, body?.outputDir);
+          const filePath = await createDataExport(context.dataDir, body?.outputDir);
           sendJSON(res, 200, { ok: true, filePath });
         } catch (error) {
           sendJSON(res, 500, { error: error instanceof Error ? error.message : '导出失败' });
@@ -1313,6 +1362,26 @@ function createServer(options = {}) {
 
     if (pathname === '/api/info' && req.method === 'POST') {
       handleJsonPost(req, res, body => writeJSON(context.dataDir, INFO_FILE, body));
+      return;
+    }
+
+    if (pathname === '/api/fitness' && req.method === 'GET') {
+      sendJSON(res, 200, readJSON(context.dataDir, FITNESS_FILE, []));
+      return;
+    }
+
+    if (pathname === '/api/fitness' && req.method === 'POST') {
+      handleJsonPost(req, res, body => writeJSON(context.dataDir, FITNESS_FILE, Array.isArray(body) ? body : []));
+      return;
+    }
+
+    if (pathname === '/api/reminders' && req.method === 'GET') {
+      sendJSON(res, 200, readJSON(context.dataDir, REMINDERS_FILE, []));
+      return;
+    }
+
+    if (pathname === '/api/reminders' && req.method === 'POST') {
+      handleJsonPost(req, res, body => writeJSON(context.dataDir, REMINDERS_FILE, Array.isArray(body) ? body : []));
       return;
     }
 
