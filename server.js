@@ -1066,7 +1066,7 @@ function writeImportedFile(dataDir, file) {
     return 1;
   }
   if (relativePath.startsWith('projects/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, bytes.toString('utf-8'));
+    return mergeCollectionFile(dataDir, 'projects', bytes.toString('utf-8'));
   }
 
   const targetPath = makeUniqueFilePath(path.join(dataDir, relativePath));
