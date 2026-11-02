@@ -316,7 +316,7 @@ Bot TODO：
 
 - `loadData()` 访问 API 失败时从 `localStorage` 读取 `wb_notes`、`wb_info`、`wb_projects`。
 - 保存失败时也会临时写入这些 `localStorage` key。
-- 主题保存在 `wb_theme`，可选 `sage`、`sand`、`blue`、`stone`、`glass`。`glass` 是毛玻璃：面板半透明并使用 `backdrop-filter`。浏览器只靠这层 CSS；Electron 窗口透明，macOS 在该皮肤下加 `under-window` vibrancy，Windows 使用透明窗口和 acrylic。主题同时写入桌面设置白名单，方便下次启动恢复窗口效果。
+- 主题保存在 `wb_theme`，可选 `sage`、`sand`、`blue`、`stone`、`dark`、`glass`。浅色和深色是平面配色；`glass` 是中性毛玻璃，使用轻微 `backdrop-filter`，浏览器背后是纯色，Electron 窗口透明。主题同时写入桌面设置白名单。
 - 侧边栏折叠状态保存在 `wb_sidebar_collapsed`。
 - Markdown 字号和 AI 设置优先写桌面设置，同时也写 `localStorage`。
 
