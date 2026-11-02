@@ -5,18 +5,19 @@
 - 当前源码版本：`3.0.0`，见 `package.json`。
 - 当前主要入口：`server.js`、`index.html`、`electron/main.js`、`src/novel-project-editor.jsx`。
 - 当前存储 schema：`2`，由数据目录中的 `storage-meta.json` 标记。
-- 更新日期：2026-09-24。
+- 更新日期：2026-11-03。
 
 ## 1. 项目定位
 
 WorkWeb 是一个完全本地化的个人工作面板，可作为本地 Web 服务运行，也可通过 Electron 打包成桌面应用。核心功能包括：
 
 - TODO / 便笺：卡片式便笺，支持标题内联编辑、富文本正文、拖拽排序、卡片宽度调整、保存状态提示。
+- Bot TODO：只读展示数据目录中的 `bot-todo/todos.md` 与 `bot-todo/schedule.md`，并通过设置里的 Grok Bot Webhook 请求更新或发送消息。
 - 项目书架：按标签分组展示项目，支持项目标签和项目卡片排序。
 - 项目书本视图：每个项目包含简介、标题大纲、多页内容、富文本编辑、源码模式、项目内查找、页码排序和页面删除。
 - 项目页图片：支持插入和粘贴图片，图片保存到当前数据目录的 `projects/figures/`。
 - 常用个人信息：按标签分组的信息面板，字段可遮罩显示，支持复制、折叠、拖拽排序。
-- 设置中心：支持 Markdown 字号、AI 写作助手、数据导入导出、数据目录迁移、回收站恢复和自动更新检查。
+- 设置中心：支持 Markdown 字号、AI 写作助手、Grok Bot Webhook、数据导入导出、数据目录迁移、回收站恢复和自动更新检查。
 - 数据升级：旧版数据会在前端启动时触发 schema v2 迁移，迁移前自动备份。
 
 注意：信息字段的“加密”目前只是前端遮罩，不是真正加密。AI API Key 也会保存到桌面设置或浏览器 `localStorage`，属于本机明文配置。
@@ -119,6 +120,9 @@ data/
 ├── trash/
 │   ├── notes/
 │   └── projects/
+├── bot-todo/
+│   ├── todos.md
+│   └── schedule.md
 └── backups/
     └── pre-schema-v2-{timestamp}/
 ```
@@ -200,10 +204,17 @@ POST   /api/project-figures
 GET    /api/trash
 POST   /api/restore-trash
 POST   /api/clear-trash
+GET    /api/bot-todo
+POST   /api/bot-todo/webhook
 POST   /api/ai/complete
 
 GET    /projects/figures/...
 ```
+
+Bot TODO：
+
+- `GET /api/bot-todo` 返回 `{ todos, schedule }`，分别是 `bot-todo/todos.md` 和 `bot-todo/schedule.md` 的原文。文件缺失时返回空字符串，并补齐目录和空文件。
+- `POST /api/bot-todo/webhook` 接收 `{ type, text, webhookUrl }`。`type` 只能是 `update` 或 `message`，URL 必须是 `http` 或 `https`。服务端把 `{ type, text }` 以 JSON 转发到该 URL，避免浏览器直接请求时的 CORS 限制。
 
 并发和冲突：
 
@@ -320,9 +331,10 @@ GET    /projects/figures/...
 页面结构：
 
 - `#page-todo`：TODO / 便笺页面，主体是 `#notesGrid`。
+- `#page-bot-todo`：Grok Bot 待办与日程只读页，停留时约每 4 秒轮询。
 - `#page-progress`：项目书架与书本编辑页面。
 - `#page-info`：常用个人信息页面。
-- `#settingsModal`：Markdown 字号、AI 写作助手、数据文件、数据目录、更新。
+- `#settingsModal`：Markdown 字号、AI 写作助手、数据文件、Grok Bot Webhook、数据目录、更新。
 - `#storageMigrationModal`：schema 迁移进度。
 - `#trashRestoreModal`：回收站恢复列表。
 - `#updateModal` 和 `#updateToast`：自动更新状态。
@@ -334,14 +346,15 @@ GET    /projects/figures/...
 3. `initWindowControls()`
 4. `loadMarkdownFontSize()`
 5. `loadAISettings()`
-6. 绑定 `window.workwebDesktop.onUpdateState`
-7. `loadAppVersion()`
-8. `ensureStorageReady()`
-9. `loadData()`
-10. `renderNotes()` / `renderProjects()` / `renderInfoPanels()`
-11. `applyProjectEditorMode()` / `applyAIConfig()`
-12. 绑定项目大纲 resizer 和交互
-13. `updateDateDisplay()` 并每分钟更新
+6. `loadGrokBotSettings()`
+7. 绑定 `window.workwebDesktop.onUpdateState`
+8. `loadAppVersion()`
+9. `ensureStorageReady()`
+10. `loadData()`
+11. `renderNotes()` / `renderProjects()` / `renderInfoPanels()`
+12. `applyProjectEditorMode()` / `applyAIConfig()`
+13. 绑定项目大纲 resizer 和交互
+14. `updateDateDisplay()` 并每分钟更新
 
 API 封装：
 
@@ -678,6 +691,7 @@ window.workwebDesktop = {
 
 - Markdown 字号：`MARKDOWN_FONT_SIZE_KEY`、`setMarkdownFontSize()`、CSS `body[data-markdown-size=...]`。
 - AI 设置：`loadAISettings()`、`saveAISettings()`、`getAIConfig()`、`testAIConnection()`。
+- Grok Bot：`wb_grok_bot_webhook_url`、`loadGrokBotSettings()`、`saveGrokBotSettings()`。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。
 - 数据导入导出：`exportDataFile()`、`importDataFile()`、`createDataExport()`、`importDataExport()`。
 - 数据目录：`chooseNextDataDir()`、`changeDataDir()`、`migrateDataDir()`、`mergeDataDirs()`。
 - 回收站：`openTrashRestore()`、`restoreTrashItem()`、`askClearTrash()`、`listTrash()`。
@@ -722,7 +736,7 @@ npm run server
 
 然后打开 `http://127.0.0.1:3000`，验证：
 
-- 三个页面可以切换。
+- 各页面可以切换。Bot TODO 打开后能看到待办和日程；未配置 Webhook 时，更新和发送只提示、不发出请求。
 - 便笺新增、编辑、调整宽度、拖拽排序、删除和恢复正常。
 - 项目新增、编辑、打开、切页、排序、删除页面、项目内查找正常。
 - 信息面板新增、编辑、复制、遮罩、拖拽排序正常。
