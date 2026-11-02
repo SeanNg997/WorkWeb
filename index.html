@@ -2008,6 +2008,10 @@ select:focus-visible,
   color: var(--text);
 }
 
+.grok-bot-webhook-row > label:first-child {
+  width: 108px;
+}
+
 .form-row input[type="text"],
 .form-row input[type="password"] {
   flex: 1;
@@ -3352,6 +3356,17 @@ textarea.form-input {
         </section>
 
         <section class="settings-card">
+          <h4>Grok Bot</h4>
+          <p>用于 Bot TODO 的更新和消息。只保存一个 Webhook URL，请求由本地服务转发。</p>
+          <div class="settings-form">
+            <div class="form-row grok-bot-webhook-row">
+              <label for="grokBotWebhookUrl">Webhook URL</label>
+              <input type="text" id="grokBotWebhookUrl" placeholder="https://example.com/webhook" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
           <h4>数据目录</h4>
           <div class="data-dir-box">
             <div>
@@ -3891,6 +3906,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadMarkdownFontSize();
   await loadMarkdownSpellcheck();
   await loadAISettings();
+  await loadGrokBotSettings();
   window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
   try {
@@ -4170,6 +4186,29 @@ function toggleApiKeyVisibility() {
     input.type = 'password';
     btn.textContent = '显示';
   }
+}
+
+/* ==================== Grok Bot ==================== */
+const GROK_BOT_WEBHOOK_KEY = 'wb_grok_bot_webhook_url';
+let grokBotWebhookUrl = '';
+
+function getGrokBotWebhookUrl() {
+  return String(grokBotWebhookUrl || '').trim();
+}
+
+async function loadGrokBotSettings() {
+  const value = await readPreference(GROK_BOT_WEBHOOK_KEY, '');
+  grokBotWebhookUrl = String(value || '').trim();
+  const input = document.getElementById('grokBotWebhookUrl');
+  if (input) input.value = grokBotWebhookUrl;
+  if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
+}
+
+function saveGrokBotSettings() {
+  const input = document.getElementById('grokBotWebhookUrl');
+  grokBotWebhookUrl = String(input?.value || '').trim();
+  writePreference(GROK_BOT_WEBHOOK_KEY, grokBotWebhookUrl);
+  if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
 }
 
 async function testAIConnection() {
