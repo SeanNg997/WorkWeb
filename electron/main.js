@@ -18,7 +18,8 @@ const ALLOWED_DESKTOP_SETTING_KEYS = new Set([
   'wb_ai_base_url',
   'wb_ai_api_key',
   'wb_ai_model',
-  'wb_grok_bot_webhook_url'
+  'wb_grok_bot_webhook_url',
+  'wb_theme'
 ]);
 const UPDATE_PUBLISH_CONFIG = {
   provider: 'github',
@@ -440,12 +441,33 @@ async function ensureServer() {
   return localServer.origin;
 }
 
+function savedThemeIsGlass() {
+  return readDesktopSettings()?.wb_theme === 'glass';
+}
+
+function applyWindowEffect(glass) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const enabled = Boolean(glass);
+  try {
+    if (process.platform === 'darwin' && typeof mainWindow.setVibrancy === 'function') {
+      mainWindow.setVibrancy(enabled ? 'under-window' : null);
+    }
+    if (process.platform === 'win32' && typeof mainWindow.setBackgroundMaterial === 'function') {
+      mainWindow.setBackgroundMaterial(enabled ? 'acrylic' : 'none');
+    }
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+  }
+}
+
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
+  const glass = savedThemeIsGlass();
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
-        trafficLightPosition: { x: 16, y: 18 }
+        trafficLightPosition: { x: 16, y: 18 },
+        ...(glass ? { vibrancy: 'under-window', visualEffectState: 'active' } : {})
       }
     : process.platform === 'win32'
       ? {
@@ -454,7 +476,8 @@ function createWindow() {
             color: '#00000000',
             symbolColor: '#314038',
             height: 42
-          }
+          },
+          ...(glass ? { backgroundMaterial: 'acrylic' } : {})
         }
       : {};
 
@@ -462,7 +485,8 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    backgroundColor: '#f4efe4',
+    transparent: true,
+    backgroundColor: '#00000000',
     autoHideMenuBar: true,
     ...chromeOptions,
     webPreferences: {
@@ -539,6 +563,11 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('workweb:setSetting', (_event, key, value) => saveDesktopSetting(key, value));
+
+  ipcMain.handle('workweb:setWindowEffect', (_event, glass) => {
+    applyWindowEffect(glass);
+    return true;
+  });
 
   ipcMain.handle('workweb:getUpdateState', () => sendUpdateState());
 

@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('workwebDesktop', {
   selectImportFile: () => ipcRenderer.invoke('workweb:selectImportFile'),
   getSetting: key => ipcRenderer.invoke('workweb:getSetting', key),
   setSetting: (key, value) => ipcRenderer.invoke('workweb:setSetting', key, value),
+  setWindowEffect: glass => ipcRenderer.invoke('workweb:setWindowEffect', Boolean(glass)),
   getUpdateState: () => ipcRenderer.invoke('workweb:getUpdateState'),
   checkLatestVersion: () => ipcRenderer.invoke('workweb:checkLatestVersion'),
   checkForUpdates: () => ipcRenderer.invoke('workweb:checkForUpdates'),
