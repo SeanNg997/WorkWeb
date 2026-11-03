@@ -691,7 +691,7 @@ window.workwebDesktop = {
 
 - Markdown 字号：`MARKDOWN_FONT_SIZE_KEY`、`setMarkdownFontSize()`、CSS `body[data-markdown-size=...]`。
 - AI 设置：`loadAISettings()`、`saveAISettings()`、`getAIConfig()`、`testAIConnection()`。
-- Grok Bot：`wb_grok_bot_webhook_url`、`loadGrokBotSettings()`、`saveGrokBotSettings()`。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。
+- Grok Bot：`wb_grok_bot_webhook_url`、`wb_grok_bot_webhook_key`、`wb_grok_bot_webhook_authorization`，由 `loadGrokBotSettings()` / `saveGrokBotSettings()` 分别保存。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。有 key 时上游 JSON 增加 `key`，并带 `X-Webhook-Key`；Authorization 只放在请求头，原文转发。
 - 数据导入导出：`exportDataFile()`、`importDataFile()`、`createDataExport()`、`importDataExport()`。
 - 数据目录：`chooseNextDataDir()`、`changeDataDir()`、`migrateDataDir()`、`mergeDataDirs()`。
 - 回收站：`openTrashRestore()`、`restoreTrashItem()`、`askClearTrash()`、`listTrash()`。

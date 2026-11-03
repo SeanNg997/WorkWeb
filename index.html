@@ -2166,7 +2166,7 @@ select:focus-visible,
 }
 
 .grok-bot-webhook-row > label:first-child {
-  width: 108px;
+  width: 124px;
 }
 
 .form-row input[type="text"],
@@ -3608,11 +3608,25 @@ body .form-input {
 
         <section class="settings-card">
           <h4>Grok Bot</h4>
-          <p>用于 Bot TODO 的更新和消息。只保存一个 Webhook URL，请求由本地服务转发。</p>
+          <p>Webhook URL、Webhook key、Authorization 都可以分别保存。请求由本地服务转发。</p>
           <div class="settings-form">
             <div class="form-row grok-bot-webhook-row">
               <label for="grokBotWebhookUrl">Webhook URL</label>
               <input type="text" id="grokBotWebhookUrl" placeholder="https://example.com/webhook" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
+            </div>
+            <div class="form-row grok-bot-webhook-row">
+              <label for="grokBotWebhookKey">Webhook key</label>
+              <div class="input-with-toggle">
+                <input type="password" id="grokBotWebhookKey" placeholder="密钥" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrokBotSecret('grokBotWebhookKey', this)">显示</button>
+              </div>
+            </div>
+            <div class="form-row grok-bot-webhook-row">
+              <label for="grokBotWebhookAuthorization">Authorization</label>
+              <div class="input-with-toggle">
+                <input type="password" id="grokBotWebhookAuthorization" placeholder="整段粘贴，例如 Bearer …" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrokBotSecret('grokBotWebhookAuthorization', this)">显示</button>
+              </div>
             </div>
           </div>
         </section>
@@ -4488,25 +4502,50 @@ function toggleApiKeyVisibility() {
 }
 
 /* ==================== Grok Bot ==================== */
-const GROK_BOT_WEBHOOK_KEY = 'wb_grok_bot_webhook_url';
+const GROK_BOT_WEBHOOK_URL_KEY = 'wb_grok_bot_webhook_url';
+const GROK_BOT_WEBHOOK_SECRET_KEY = 'wb_grok_bot_webhook_key';
+const GROK_BOT_WEBHOOK_AUTHORIZATION_KEY = 'wb_grok_bot_webhook_authorization';
 let grokBotWebhookUrl = '';
+let grokBotWebhookKey = '';
+let grokBotWebhookAuthorization = '';
 
 function getGrokBotWebhookUrl() {
   return String(grokBotWebhookUrl || '').trim();
 }
 
+function toggleGrokBotSecret(inputId, button) {
+  const input = document.getElementById(inputId);
+  if (!input || !button) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.textContent = show ? '隐藏' : '显示';
+}
+
 async function loadGrokBotSettings() {
-  const value = await readPreference(GROK_BOT_WEBHOOK_KEY, '');
-  grokBotWebhookUrl = String(value || '').trim();
-  const input = document.getElementById('grokBotWebhookUrl');
-  if (input) input.value = grokBotWebhookUrl;
+  const [url, key, authorization] = await Promise.all([
+    readPreference(GROK_BOT_WEBHOOK_URL_KEY, ''),
+    readPreference(GROK_BOT_WEBHOOK_SECRET_KEY, ''),
+    readPreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, '')
+  ]);
+  grokBotWebhookUrl = String(url || '').trim();
+  grokBotWebhookKey = String(key || '');
+  grokBotWebhookAuthorization = String(authorization || '');
+  const urlInput = document.getElementById('grokBotWebhookUrl');
+  const keyInput = document.getElementById('grokBotWebhookKey');
+  const authorizationInput = document.getElementById('grokBotWebhookAuthorization');
+  if (urlInput) urlInput.value = grokBotWebhookUrl;
+  if (keyInput) keyInput.value = grokBotWebhookKey;
+  if (authorizationInput) authorizationInput.value = grokBotWebhookAuthorization;
   if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
 }
 
 function saveGrokBotSettings() {
-  const input = document.getElementById('grokBotWebhookUrl');
-  grokBotWebhookUrl = String(input?.value || '').trim();
-  writePreference(GROK_BOT_WEBHOOK_KEY, grokBotWebhookUrl);
+  grokBotWebhookUrl = String(document.getElementById('grokBotWebhookUrl')?.value || '').trim();
+  grokBotWebhookKey = String(document.getElementById('grokBotWebhookKey')?.value || '');
+  grokBotWebhookAuthorization = String(document.getElementById('grokBotWebhookAuthorization')?.value || '');
+  writePreference(GROK_BOT_WEBHOOK_URL_KEY, grokBotWebhookUrl);
+  writePreference(GROK_BOT_WEBHOOK_SECRET_KEY, grokBotWebhookKey);
+  writePreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, grokBotWebhookAuthorization);
   if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
 }
 
@@ -5652,7 +5691,13 @@ async function postBotTodoWebhook(type, text) {
     const res = await fetch('/api/bot-todo/webhook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, text, webhookUrl })
+      body: JSON.stringify({
+        type,
+        text,
+        webhookUrl,
+        webhookKey: grokBotWebhookKey,
+        authorization: grokBotWebhookAuthorization
+      })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error || '发送失败');

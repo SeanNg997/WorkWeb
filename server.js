@@ -617,7 +617,11 @@ function isHttpWebhookUrl(value) {
   }
 }
 
-function forwardBotTodoWebhook(webhookUrl, payload) {
+function singleLineHeader(value) {
+  return String(value ?? '').replace(/[\r\n]/g, '');
+}
+
+function forwardBotTodoWebhook(webhookUrl, payload, options = {}) {
   return new Promise((resolve, reject) => {
     let url;
     try {
@@ -627,17 +631,23 @@ function forwardBotTodoWebhook(webhookUrl, payload) {
       return;
     }
 
-    const body = JSON.stringify(payload);
+    const webhookKey = singleLineHeader(options.webhookKey);
+    const authorization = singleLineHeader(options.authorization);
+    const outbound = webhookKey.trim() ? { ...payload, key: webhookKey } : payload;
+    const body = JSON.stringify(outbound);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body)
+    };
+    if (webhookKey.trim()) headers['X-Webhook-Key'] = webhookKey;
+    if (authorization.trim()) headers.Authorization = authorization;
     const requester = url.protocol === 'https:' ? https : http;
     const apiReq = requester.request({
       hostname: url.hostname,
       port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: `${url.pathname}${url.search}`,
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      },
+      headers,
       timeout: WEBHOOK_REQUEST_TIMEOUT_MS
     }, apiRes => {
       let data = '';
@@ -1583,6 +1593,8 @@ function createServer(options = {}) {
         const type = body?.type;
         const text = body?.text;
         const webhookUrl = String(body?.webhookUrl || '').trim();
+        const webhookKey = typeof body?.webhookKey === 'string' ? body.webhookKey : '';
+        const authorization = typeof body?.authorization === 'string' ? body.authorization : '';
         if (type !== 'update' && type !== 'message') {
           sendJSON(res, 400, { error: 'type 必须是 update 或 message' });
           return;
@@ -1601,7 +1613,7 @@ function createServer(options = {}) {
         }
 
         try {
-          const upstream = await forwardBotTodoWebhook(webhookUrl, { type, text });
+          const upstream = await forwardBotTodoWebhook(webhookUrl, { type, text }, { webhookKey, authorization });
           const statusCode = Number(upstream.statusCode) || 502;
           if (statusCode < 200 || statusCode >= 300) {
             const snippet = String(upstream.body || '').replace(/\s+/g, ' ').trim().slice(0, 180);
