@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld('workwebDesktop', {
   getSetting: key => ipcRenderer.invoke('workweb:getSetting', key),
   setSetting: (key, value) => ipcRenderer.invoke('workweb:setSetting', key, value),
   setWindowEffect: glass => ipcRenderer.invoke('workweb:setWindowEffect', Boolean(glass)),
+  getNativeGlass: () => ipcRenderer.invoke('workweb:getNativeGlass'),
+  onNativeGlass: callback => {
+    const listener = (_event, active) => callback?.(Boolean(active));
+    ipcRenderer.on('workweb:nativeGlass', listener);
+    return () => ipcRenderer.removeListener('workweb:nativeGlass', listener);
+  },
   getUpdateState: () => ipcRenderer.invoke('workweb:getUpdateState'),
   checkLatestVersion: () => ipcRenderer.invoke('workweb:checkLatestVersion'),
   checkForUpdates: () => ipcRenderer.invoke('workweb:checkForUpdates'),

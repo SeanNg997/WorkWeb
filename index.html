@@ -3094,6 +3094,68 @@ body .form-input {
   color: var(--text);
 }
 
+/* Windows native refraction already frosts the desktop. Keep CSS veils thin so it is not a second milk sheet. */
+html.desktop-window.platform-win32[data-native-glass="1"] {
+  --glass-fill: rgba(255,255,255,0.16);
+  --glass-sidebar: rgba(255,255,255,0.12);
+  --glass-stroke: rgba(255,255,255,0.58);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.72);
+  --glass-filter: blur(12px) saturate(1.2);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] {
+  --glass-fill: rgba(255,255,255,0.07);
+  --glass-sidebar: rgba(0,0,0,0.16);
+  --glass-stroke: rgba(255,255,255,0.26);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.32);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] body .sidebar,
+html.desktop-window.platform-win32[data-native-glass="1"] body .workspace {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--glass-sidebar);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] body .workspace {
+  background: rgba(255,255,255,0.08);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .workspace {
+  background: rgba(0,0,0,0.08);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-island,
+html.desktop-window.platform-win32[data-native-glass="1"] body .note-card,
+html.desktop-window.platform-win32[data-native-glass="1"] body .info-panel,
+html.desktop-window.platform-win32[data-native-glass="1"] body .reminder-card,
+html.desktop-window.platform-win32[data-native-glass="1"] body .modal,
+html.desktop-window.platform-win32[data-native-glass="1"] body .settings-card,
+html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-composer {
+  background: var(--glass-fill);
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  border: 1px solid var(--glass-stroke);
+  box-shadow:
+    var(--glass-highlight),
+    inset 0 0 0 1px rgba(255,255,255,0.16);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] .nav-item {
+  border-radius: 10px;
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] .nav-item.active {
+  background: rgba(255,255,255,0.46);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+  font-weight: 600;
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] .nav-item.active {
+  background: rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
 /* === 更新通知弹框 === */
 </style>
 </head>
@@ -4228,7 +4290,12 @@ function applyTheme(theme) {
   document.body.dataset.appearance = appearance;
   localStorage.setItem('wb_theme', safeTheme);
   window.workwebDesktop?.setSetting?.('wb_theme', safeTheme);
-  window.workwebDesktop?.setWindowEffect?.(true);
+  const effect = window.workwebDesktop?.setWindowEffect?.(true);
+  if (effect && typeof effect.then === 'function') {
+    effect.then(result => {
+      if (result && typeof result.native === 'boolean') applyNativeGlassFlag(result.native);
+    }).catch(() => {});
+  }
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
     radio.checked = radio.value === safeTheme;
   });
@@ -4239,8 +4306,16 @@ function setTheme(theme) {
   applyTheme(theme);
 }
 
+function applyNativeGlassFlag(active) {
+  document.documentElement.dataset.nativeGlass = active ? '1' : '0';
+}
+
 function loadTheme() {
+  window.workwebDesktop?.onNativeGlass?.(applyNativeGlassFlag);
   applyTheme(localStorage.getItem('wb_theme') || 'light');
+  if (window.workwebDesktop?.getNativeGlass) {
+    window.workwebDesktop.getNativeGlass().then(applyNativeGlassFlag).catch(() => {});
+  }
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (document.body.dataset.theme === 'auto') applyTheme('auto');

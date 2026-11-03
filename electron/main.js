@@ -444,6 +444,7 @@ async function ensureServer() {
 }
 
 let nativeEffectWanted = true;
+let nativeGlassActive = false;
 let macGlassApi;
 let macGlassId = null;
 let macGlassPending = false;
@@ -501,6 +502,14 @@ function windowPhysicalBounds(win) {
   };
 }
 
+function publishNativeGlass(active) {
+  nativeGlassActive = Boolean(active);
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    mainWindow.webContents.send('workweb:nativeGlass', nativeGlassActive);
+  } catch { /* page may still be loading */ }
+}
+
 function clearMacVibrancy() {
   if (!mainWindow || mainWindow.isDestroyed() || typeof mainWindow.setVibrancy !== 'function') return;
   try { mainWindow.setVibrancy(null); } catch { /* older Electron builds */ }
@@ -518,6 +527,9 @@ function attachMacLiquidGlass() {
     macGlassId = id;
     if (id === -1) {
       mainWindow.setVibrancy('under-window');
+      publishNativeGlass(false);
+    } else {
+      publishNativeGlass(true);
     }
   } catch (error) {
     console.error(`[glass] macOS liquid glass failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -570,9 +582,15 @@ function enableWinLiquidGlass() {
   const supported = Boolean(api && typeof api.isSupported === 'function' && api.isSupported() && typeof api.createPanel === 'function');
   if (!supported) {
     if (typeof mainWindow.setBackgroundMaterial === 'function') {
-      try { mainWindow.setBackgroundMaterial('acrylic'); } catch (error) {
+      try {
+        mainWindow.setBackgroundMaterial('acrylic');
+        publishNativeGlass(true);
+      } catch (error) {
+        publishNativeGlass(false);
         console.error(error instanceof Error ? error.message : String(error));
       }
+    } else {
+      publishNativeGlass(false);
     }
     return;
   }
@@ -598,13 +616,21 @@ function enableWinLiquidGlass() {
   }
   if (!winGlassPanel) {
     if (typeof mainWindow.setBackgroundMaterial === 'function') {
-      try { mainWindow.setBackgroundMaterial('acrylic'); } catch { /* ignore */ }
+      try {
+        mainWindow.setBackgroundMaterial('acrylic');
+        publishNativeGlass(true);
+      } catch {
+        publishNativeGlass(false);
+      }
+    } else {
+      publishNativeGlass(false);
     }
     return;
   }
   try { winGlassPanel.anchor(mainWindow); } catch { /* anchor is best-effort */ }
   syncWinGlassBounds();
   try { winGlassPanel.show(0); } catch { /* ignore */ }
+  publishNativeGlass(true);
 }
 
 function disableWinLiquidGlass() {
@@ -614,6 +640,7 @@ function disableWinLiquidGlass() {
   if (mainWindow && !mainWindow.isDestroyed() && typeof mainWindow.setBackgroundMaterial === 'function') {
     try { mainWindow.setBackgroundMaterial('none'); } catch { /* ignore */ }
   }
+  publishNativeGlass(false);
 }
 
 function destroyWinLiquidGlass() {
@@ -750,8 +777,10 @@ function registerIpcHandlers() {
 
   ipcMain.handle('workweb:setWindowEffect', (_event, glass) => {
     applyWindowEffect(glass);
-    return true;
+    return { ok: true, native: nativeGlassActive };
   });
+
+  ipcMain.handle('workweb:getNativeGlass', () => nativeGlassActive);
 
   ipcMain.handle('workweb:getUpdateState', () => sendUpdateState());
 
