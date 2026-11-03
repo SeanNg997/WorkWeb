@@ -672,12 +672,9 @@ function createWindow() {
       }
     : process.platform === 'win32'
       ? {
-          titleBarStyle: 'hidden',
-          titleBarOverlay: {
-            color: '#00000000',
-            symbolColor: '#f5f5f7',
-            height: 42
-          }
+          frame: false,
+          thickFrame: true,
+          minimizable: true
         }
       : {};
 
@@ -713,6 +710,21 @@ function createWindow() {
     mainWindow = null;
   });
 
+  mainWindow.on('minimize', () => {
+    if (winGlassPanel) {
+      try { winGlassPanel.hide(0); } catch { /* ignore */ }
+    }
+  });
+
+  mainWindow.on('restore', () => {
+    if (nativeEffectWanted) enableWinLiquidGlass();
+  });
+
+  mainWindow.on('show', () => {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+    if (nativeEffectWanted) enableWinLiquidGlass();
+  });
+
   mainWindow.on('maximize', () => {
     mainWindow?.webContents.send('workweb:windowMaximized', true);
   });
@@ -726,7 +738,17 @@ function createWindow() {
 
 function registerIpcHandlers() {
   ipcMain.handle('workweb:minimizeWindow', () => {
-    mainWindow?.minimize();
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (winGlassPanel) {
+      try { winGlassPanel.hide(0); } catch { /* the glass panel is a separate window */ }
+    }
+    mainWindow.minimize();
+    if (process.platform === 'win32') {
+      setImmediate(() => {
+        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+        mainWindow.hide();
+      });
+    }
   });
 
   ipcMain.handle('workweb:toggleMaximizeWindow', () => {

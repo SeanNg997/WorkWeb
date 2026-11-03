@@ -264,9 +264,13 @@ body.sidebar-collapsed .workspace {
 
 .workspace-header h2 { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.2; letter-spacing: -0.02em; }
 
+html.platform-win32 .desktop-titlebar {
+  display: block;
+}
+
 html.platform-win32 .workspace-header {
   min-height: 86px;
-  padding-right: 32px;
+  padding-right: 168px;
 }
 
 .workspace-body {
@@ -4485,7 +4489,6 @@ function bindDesktopWindowControl(buttonId, handler) {
   button.dataset.bound = '1';
   ['pointerdown', 'mousedown', 'dblclick'].forEach(eventName => {
     button.addEventListener(eventName, event => {
-      event.preventDefault();
       event.stopPropagation();
     });
   });
@@ -4498,7 +4501,6 @@ function bindDesktopWindowControl(buttonId, handler) {
 
 async function initWindowControls() {
   if (workwebDesktopPlatform !== 'win32') return;
-  document.querySelector('.desktop-titlebar')?.remove();
   bindDesktopWindowControl('windowMinimizeBtn', minimizeDesktopWindow);
   bindDesktopWindowControl('windowMaximizeBtn', toggleDesktopMaximize);
   bindDesktopWindowControl('windowCloseBtn', closeDesktopWindow);
