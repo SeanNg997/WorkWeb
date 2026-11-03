@@ -540,6 +540,7 @@ html.platform-win32 .windows-window-controls {
   gap: 16px;
   min-height: 0;
   overflow: hidden;
+  padding-bottom: 8px;
 }
 .bot-todo-islands {
   flex: 1;
@@ -579,10 +580,10 @@ html.platform-win32 .windows-window-controls {
 .bot-todo-markdown ol { margin: 0 0 0.7em; }
 .bot-todo-day {
   margin: 14px 0 6px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   text-align: left;
-  color: var(--text-light);
+  color: var(--text);
 }
 .bot-todo-plain {
   list-style: none;
@@ -591,6 +592,10 @@ html.platform-win32 .windows-window-controls {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.bot-todo-plain.is-bulleted {
+  list-style: disc;
+  padding-left: 1.25em;
 }
 .bot-todo-plain li {
   margin: 0;
@@ -614,16 +619,26 @@ html.platform-win32 .windows-window-controls {
   border-radius: 999px;
   background: var(--card-bg);
 }
+.bot-todo-composer:focus-within {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+  outline-offset: 3px;
+}
 .bot-todo-input {
   flex: 1;
   min-width: 0;
   height: 100%;
   border: none;
+  border-radius: 999px;
   background: transparent;
   color: var(--text);
   font: inherit;
   font-size: 14px;
+}
+.bot-todo-input:focus,
+.bot-todo-input:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 .bot-todo-send {
   width: 36px;
@@ -638,7 +653,16 @@ html.platform-win32 .windows-window-controls {
   background: var(--accent);
   color: #fff;
   cursor: pointer;
+  transition: background var(--transition), transform 0.12s ease;
 }
+.bot-todo-send:hover { background: var(--accent-hover); }
+.bot-todo-send:active { transform: scale(0.94); }
+.bot-todo-send:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+  outline-offset: 3px;
+}
+.bot-todo-send.is-unavailable:hover,
+.bot-todo-send.is-unavailable:active { transform: none; }
 .bot-todo-send svg { width: 16px; height: 16px; display: block; }
 .bot-todo-send.is-unavailable,
 .btn.is-unavailable { opacity: 0.48; }
@@ -5547,9 +5571,10 @@ function botTodoPushScheduleLine(groups, line, headingGroup) {
   botTodoAddSchedule(groups, split.group || headingGroup, split.text);
 }
 
-function botTodoRenderList(items) {
+function botTodoRenderList(items, bulleted) {
   if (!items.length) return '';
-  return `<ul class="bot-todo-plain">${items.map(item => `<li>${escHtml(item)}</li>`).join('')}</ul>`;
+  const cls = bulleted ? 'bot-todo-plain is-bulleted' : 'bot-todo-plain';
+  return `<ul class="${cls}">${items.map(item => `<li>${escHtml(item)}</li>`).join('')}</ul>`;
 }
 
 function botTodoRenderSchedule(groups) {
@@ -5629,7 +5654,7 @@ function botTodoCollect(markdown, mode) {
       });
     }
   });
-  if (mode === 'todo') return botTodoRenderList(todoItems.filter(Boolean));
+  if (mode === 'todo') return botTodoRenderList(todoItems.filter(Boolean), true);
   return botTodoRenderSchedule(schedule);
 }
 
