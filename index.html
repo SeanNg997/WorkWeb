@@ -544,9 +544,9 @@ html.platform-win32 .windows-window-controls {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 2px 10px 10px;
-  font-size: 30px;
-  line-height: 1.55;
+  padding: 2px 4px 8px;
+  font-size: 15px;
+  line-height: 1.45;
   color: var(--text);
   scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.12) transparent;
@@ -569,11 +569,58 @@ html.platform-win32 .windows-window-controls {
 .bot-todo-markdown h1,
 .bot-todo-markdown h2,
 .bot-todo-markdown h3,
-.bot-todo-markdown h4 {
-  margin: 0.7em 0 0.35em;
-  font-size: 1.2em;
+.bot-todo-markdown h4,
+.bot-todo-section {
+  margin: 14px 0 8px;
+  font-size: 17px;
   line-height: 1.3;
   font-weight: 650;
+  color: var(--text);
+}
+
+.bot-todo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.bot-todo-row {
+  display: grid;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.42);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+}
+
+.bot-todo-field {
+  display: grid;
+  grid-template-columns: 4.2em minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+}
+
+.bot-todo-field-label {
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.bot-todo-field-value {
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.bot-todo-field.is-nowrap .bot-todo-field-value {
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .bot-todo-markdown ul,
@@ -616,7 +663,7 @@ html.platform-win32 .windows-window-controls {
   margin: 28px 8px;
   text-align: center;
   color: var(--text-light);
-  font-size: 26px;
+  font-size: 15px;
 }
 
 .bot-todo-status.is-error { color: var(--danger); }
@@ -2985,7 +3032,8 @@ textarea.form-input {
   .bot-todo-islands { grid-template-columns: 1fr; gap: 12px; }
   .bot-todo-island { border-radius: 12px; padding: 16px 14px 12px; }
   .bot-todo-island h3 { font-size: 13px; letter-spacing: 0; margin-bottom: 10px; }
-  .bot-todo-markdown { font-size: 24px; }
+  .bot-todo-markdown { font-size: 15px; }
+  .bot-todo-field { grid-template-columns: 3.6em minmax(0, 1fr); }
   .bot-todo-status { font-size: 22px; }
   .bot-todo-composer { width: 100%; height: 52px; padding-left: 18px; }
   .bot-todo-send { width: 38px; height: 38px; }
@@ -3078,6 +3126,13 @@ body .settings-card {
   border-radius: 20px;
 }
 
+body .bot-todo-island,
+body .bot-todo-composer {
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(26px) saturate(1.7);
+  -webkit-backdrop-filter: blur(26px) saturate(1.7);
+}
+
 body .bot-todo-send {
   background: var(--accent);
   color: #fff;
@@ -3122,24 +3177,42 @@ html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"
   border-color: rgba(255,255,255,0.12);
 }
 
-html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-island,
 html.desktop-window.platform-win32[data-native-glass="1"] body .note-card,
 html.desktop-window.platform-win32[data-native-glass="1"] body .info-panel,
 html.desktop-window.platform-win32[data-native-glass="1"] body .reminder-card,
 html.desktop-window.platform-win32[data-native-glass="1"] body .modal,
 html.desktop-window.platform-win32[data-native-glass="1"] body .settings-card {
-  background: rgba(255,255,255,0.34);
-  backdrop-filter: blur(18px) saturate(1.35);
-  -webkit-backdrop-filter: blur(18px) saturate(1.35);
-  border: 1px solid rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.5);
   border-radius: 22px;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.92),
-    inset 0 0 0 1px rgba(255,255,255,0.28),
-    0 10px 28px rgba(20, 24, 40, 0.08);
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    inset 0 0 0 1px rgba(255,255,255,0.16);
+}
+
+html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-island,
+html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-composer {
+  background: rgba(255,255,255,0.12) !important;
+  backdrop-filter: blur(22px) saturate(1.65) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.65) !important;
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 0 0 1px rgba(255,255,255,0.2);
 }
 
 html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .bot-todo-island,
+html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .bot-todo-composer {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(255,255,255,0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
 html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .note-card,
 html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .info-panel,
 html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"] body .reminder-card,
@@ -3150,16 +3223,6 @@ html.desktop-window.platform-win32[data-native-glass="1"][data-appearance="dark"
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.42),
     inset 0 0 0 1px rgba(255,255,255,0.12);
-}
-
-html.desktop-window.platform-win32[data-native-glass="1"] body .bot-todo-composer {
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  border: 1px solid rgba(255,255,255,0.7);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.9),
-    inset 0 0 0 1px rgba(255,255,255,0.24);
 }
 
 html.desktop-window.platform-win32[data-native-glass="1"] .nav-item {
@@ -5711,6 +5774,62 @@ function syncBotTodoActions() {
   });
 }
 
+function botTodoFieldNowrap(label) {
+  return /日期|周期|时间/.test(String(label || ''));
+}
+
+function renderBotTodoTable(token) {
+  const headers = (token.header || []).map(cell => String(cell?.text || '').trim());
+  const rows = Array.isArray(token.rows) ? token.rows : [];
+  if (!headers.length || !rows.length) return '';
+  const cards = rows.map(row => {
+    const fields = headers.map((label, index) => {
+      const value = String(row?.[index]?.text || '').trim();
+      const nowrap = botTodoFieldNowrap(label) ? ' is-nowrap' : '';
+      return `<div class="bot-todo-field${nowrap}"><span class="bot-todo-field-label">${escHtml(label)}</span><span class="bot-todo-field-value">${escHtml(value)}</span></div>`;
+    }).join('');
+    return `<article class="bot-todo-row">${fields}</article>`;
+  }).join('');
+  return `<div class="bot-todo-rows">${cards}</div>`;
+}
+
+function renderBotTodoProse(tokens) {
+  if (!tokens.length || !window.marked?.parser) return '';
+  return `<div class="bot-todo-prose">${marked.parser(tokens)}</div>`;
+}
+
+function renderBotTodoDocument(markdown) {
+  const source = String(markdown || '');
+  if (!window.marked?.lexer || !window.marked?.parser) {
+    return window.marked?.parse ? marked.parse(source, { breaks: true }) : escHtml(source);
+  }
+  const tokens = marked.lexer(source, { gfm: true, breaks: true });
+  const html = [];
+  let prose = [];
+  const flush = () => {
+    if (!prose.length) return;
+    prose.links = tokens.links || {};
+    html.push(renderBotTodoProse(prose));
+    prose = [];
+  };
+  tokens.forEach(token => {
+    if (token.type === 'table') {
+      flush();
+      html.push(renderBotTodoTable(token));
+      return;
+    }
+    if (token.type === 'heading') {
+      flush();
+      const level = Math.min(4, Math.max(2, Number(token.depth) || 2));
+      html.push(`<h${level} class="bot-todo-section">${escHtml(token.text || '')}</h${level}>`);
+      return;
+    }
+    prose.push(token);
+  });
+  flush();
+  return html.filter(Boolean).join('');
+}
+
 function renderBotTodoIsland(id, markdown, emptyLabel, errorMessage) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -5721,10 +5840,7 @@ function renderBotTodoIsland(id, markdown, emptyLabel, errorMessage) {
     el.innerHTML = `<p class="bot-todo-status">${escHtml(emptyLabel)}</p>`;
   } else {
     try {
-      const html = window.marked?.parse
-        ? marked.parse(String(markdown), { breaks: true })
-        : escHtml(markdown);
-      el.innerHTML = typeof html === 'string' ? html : escHtml(markdown);
+      el.innerHTML = renderBotTodoDocument(markdown);
       el.querySelectorAll('input, textarea, button').forEach(node => {
         node.disabled = true;
       });
