@@ -119,6 +119,39 @@ body[data-theme="blue"] {
   --project-left-end: #c3d5de;
 }
 
+body[data-theme="dark"] {
+  --sidebar-bg: #121211;
+  --sidebar-hover: rgba(255,255,255,0.06);
+  --sidebar-active: #2e2e2a;
+  --sidebar-text: #b7b2a8;
+  --sidebar-text-active: #e6e1d8;
+  --bg: #0c0c0b;
+  --bg-glow: rgba(46,44,40,0.55);
+  --bg-start: #141413;
+  --bg-end: #0c0c0b;
+  --card-bg: #1b1b19;
+  --surface-muted: #242421;
+  --secondary-hover: #2c2c28;
+  --line: #34342f;
+  --card-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  --card-shadow-hover: 0 10px 24px rgba(0,0,0,0.35);
+  --text: #d9d3c8;
+  --text-light: #9a948a;
+  --accent: #8fa396;
+  --accent-hover: #a4b5aa;
+  --accent-soft: #2a332e;
+  --danger: #c9857c;
+  --danger-hover: #d7a099;
+  --success: #8aaa90;
+  --book-start: #3d4a42;
+  --book-mid: #2f3b34;
+  --book-end: #24302a;
+  --book-text: #e7e2d8;
+  --project-left-start: #242421;
+  --project-left-end: #1b1b19;
+}
+body[data-theme="dark"] .sidebar-header h1 { color: #e6e1d8; }
+
 body[data-theme="stone"] {
   --sidebar-bg: #2f3030;
   --sidebar-hover: rgba(255,255,255,0.08);
@@ -540,7 +573,7 @@ html.platform-win32 .windows-window-controls {
   gap: 16px;
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 8px;
+  padding-bottom: 36px;
 }
 .bot-todo-islands {
   flex: 1;
@@ -620,9 +653,12 @@ html.platform-win32 .windows-window-controls {
   background: var(--card-bg);
 }
 .bot-todo-composer:focus-within {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
-  outline-offset: 3px;
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  outline: none;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 0 0 7px color-mix(in srgb, var(--accent) 10%, transparent),
+    0 10px 22px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .bot-todo-input {
   flex: 1;
@@ -3464,6 +3500,7 @@ textarea.form-input {
                 <label><input type="radio" name="appTheme" value="sand" onchange="setTheme(this.value)"> 暖沙</label>
                 <label><input type="radio" name="appTheme" value="blue" onchange="setTheme(this.value)"> 静谧蓝</label>
                 <label><input type="radio" name="appTheme" value="stone" onchange="setTheme(this.value)"> 岩灰</label>
+                <label><input type="radio" name="appTheme" value="dark" onchange="setTheme(this.value)"> 深色</label>
               </div>
             </div>
           </div>
@@ -4112,7 +4149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function setTheme(theme) {
-  const safeTheme = ['sage', 'sand', 'blue', 'stone'].includes(theme) ? theme : 'sage';
+  const safeTheme = ['sage', 'sand', 'blue', 'stone', 'dark'].includes(theme) ? theme : 'sage';
   document.body.dataset.theme = safeTheme;
   localStorage.setItem('wb_theme', safeTheme);
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
