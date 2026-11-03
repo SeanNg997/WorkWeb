@@ -316,7 +316,7 @@ Bot TODO：
 
 - `loadData()` 访问 API 失败时从 `localStorage` 读取 `wb_notes`、`wb_info`、`wb_projects`。
 - 保存失败时也会临时写入这些 `localStorage` key。
-- 主题保存在 `wb_theme`，可选 `sage`、`sand`、`blue`、`stone`、`dark`、`glass`。浅色和深色是平面配色；`glass` 是中性毛玻璃，使用轻微 `backdrop-filter`，浏览器背后是纯色，Electron 窗口透明。主题同时写入桌面设置白名单。
+- 主题保存在 `wb_theme`，只保留 Liquid Glass 的 `light`、`dark`、`auto`。旧的 `sage`、`sand`、`blue`、`stone`、`glass` 会迁到 `light`。界面统一用半透明 token 和 `backdrop-filter`。Electron 窗口保持透明：macOS 26+ 用 `electron-liquid-glass` 的 `addView`（不和 vibrancy 同时开），更早的 macOS 用 `under-window` vibrancy；Windows 用 `@hicccc77/electron-liquid-glass` 的折射面板，不支持时退回 acrylic。原生模块加载失败时应用仍能启动，浏览器只显示 CSS 玻璃。
 - 侧边栏折叠状态保存在 `wb_sidebar_collapsed`。
 - Markdown 字号和 AI 设置优先写桌面设置，同时也写 `localStorage`。
 

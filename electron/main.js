@@ -441,43 +441,214 @@ async function ensureServer() {
   return localServer.origin;
 }
 
-function savedThemeIsGlass() {
-  return readDesktopSettings()?.wb_theme === 'glass';
+let nativeEffectWanted = true;
+let macGlassApi;
+let macGlassId = null;
+let macGlassPending = false;
+let winGlassApi;
+let winGlassPanel = null;
+
+function loadOptionalGlass(name) {
+  try {
+    const loaded = require(name);
+    if (loaded && (typeof loaded.addView === 'function' || typeof loaded.isSupported === 'function' || typeof loaded.createPanel === 'function')) {
+      return loaded;
+    }
+    return loaded && loaded.default ? loaded.default : null;
+  } catch (error) {
+    console.error(`[glass] ${name} unavailable: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
+
+function macLiquidGlassApi() {
+  if (macGlassApi !== undefined) return macGlassApi;
+  if (process.platform !== 'darwin') {
+    macGlassApi = null;
+    return macGlassApi;
+  }
+  macGlassApi = loadOptionalGlass('electron-liquid-glass');
+  return macGlassApi;
+}
+
+function macLiquidGlassSupported() {
+  const api = macLiquidGlassApi();
+  return Boolean(api && typeof api.isGlassSupported === 'function' && api.isGlassSupported() && typeof api.addView === 'function');
+}
+
+function winLiquidGlassApi() {
+  if (winGlassApi !== undefined) return winGlassApi;
+  if (process.platform !== 'win32') {
+    winGlassApi = null;
+    return winGlassApi;
+  }
+  winGlassApi = loadOptionalGlass('@hicccc77/electron-liquid-glass');
+  return winGlassApi;
+}
+
+function windowPhysicalBounds(win) {
+  const bounds = win.getBounds();
+  const display = screen.getDisplayMatching(bounds);
+  const dpr = display && display.scaleFactor ? display.scaleFactor : 1;
+  return {
+    x: Math.round(bounds.x * dpr),
+    y: Math.round(bounds.y * dpr),
+    width: Math.max(1, Math.round(bounds.width * dpr)),
+    height: Math.max(1, Math.round(bounds.height * dpr)),
+    dpr
+  };
+}
+
+function clearMacVibrancy() {
+  if (!mainWindow || mainWindow.isDestroyed() || typeof mainWindow.setVibrancy !== 'function') return;
+  try { mainWindow.setVibrancy(null); } catch { /* older Electron builds */ }
+}
+
+function attachMacLiquidGlass() {
+  if (!mainWindow || mainWindow.isDestroyed() || !nativeEffectWanted || !macLiquidGlassSupported()) return;
+  if (macGlassId != null && macGlassId !== -1) return;
+  clearMacVibrancy();
+  try {
+    const id = macLiquidGlassApi().addView(mainWindow.getNativeWindowHandle(), {
+      cornerRadius: 16,
+      opaque: false
+    });
+    macGlassId = id;
+    if (id === -1) {
+      mainWindow.setVibrancy('under-window');
+    }
+  } catch (error) {
+    console.error(`[glass] macOS liquid glass failed: ${error instanceof Error ? error.message : String(error)}`);
+    try { mainWindow.setVibrancy('under-window'); } catch { /* ignore */ }
+  }
+}
+
+function scheduleMacLiquidGlass() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const run = () => {
+    macGlassPending = false;
+    attachMacLiquidGlass();
+  };
+  if (mainWindow.webContents.isLoading() || !mainWindow.webContents.getURL()) {
+    if (macGlassPending) return;
+    macGlassPending = true;
+    mainWindow.webContents.once('did-finish-load', run);
+    return;
+  }
+  run();
+}
+
+function applyMacBackdrop(enabled) {
+  if (!mainWindow || mainWindow.isDestroyed() || process.platform !== 'darwin') return;
+  if (enabled && macLiquidGlassSupported()) {
+    scheduleMacLiquidGlass();
+    return;
+  }
+  if (enabled && typeof mainWindow.setVibrancy === 'function') {
+    try { mainWindow.setVibrancy('under-window'); } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+    }
+    return;
+  }
+  clearMacVibrancy();
+}
+
+function syncWinGlassBounds() {
+  if (!winGlassPanel || !mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    winGlassPanel.setBounds(windowPhysicalBounds(mainWindow));
+  } catch (error) {
+    console.error(`[glass] setBounds failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function enableWinLiquidGlass() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const api = winLiquidGlassApi();
+  const supported = Boolean(api && typeof api.isSupported === 'function' && api.isSupported() && typeof api.createPanel === 'function');
+  if (!supported) {
+    if (typeof mainWindow.setBackgroundMaterial === 'function') {
+      try { mainWindow.setBackgroundMaterial('acrylic'); } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+      }
+    }
+    return;
+  }
+  if (typeof mainWindow.setBackgroundMaterial === 'function') {
+    try { mainWindow.setBackgroundMaterial('none'); } catch { /* acrylic and the panel should not stack */ }
+  }
+  if (!winGlassPanel) {
+    const bounds = windowPhysicalBounds(mainWindow);
+    try {
+      winGlassPanel = api.createPanel({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        cornerRadius: Math.round(16 * bounds.dpr),
+        dpr: bounds.dpr,
+        anchorWindow: mainWindow
+      });
+    } catch (error) {
+      winGlassPanel = null;
+      console.error(`[glass] Windows panel failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  if (!winGlassPanel) {
+    if (typeof mainWindow.setBackgroundMaterial === 'function') {
+      try { mainWindow.setBackgroundMaterial('acrylic'); } catch { /* ignore */ }
+    }
+    return;
+  }
+  try { winGlassPanel.anchor(mainWindow); } catch { /* anchor is best-effort */ }
+  syncWinGlassBounds();
+  try { winGlassPanel.show(0); } catch { /* ignore */ }
+}
+
+function disableWinLiquidGlass() {
+  if (winGlassPanel) {
+    try { winGlassPanel.hide(0); } catch { /* ignore */ }
+  }
+  if (mainWindow && !mainWindow.isDestroyed() && typeof mainWindow.setBackgroundMaterial === 'function') {
+    try { mainWindow.setBackgroundMaterial('none'); } catch { /* ignore */ }
+  }
+}
+
+function destroyWinLiquidGlass() {
+  if (!winGlassPanel) return;
+  try { winGlassPanel.destroy(); } catch { /* ignore */ }
+  winGlassPanel = null;
 }
 
 function applyWindowEffect(glass) {
+  nativeEffectWanted = glass !== false;
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const enabled = Boolean(glass);
   try {
-    if (process.platform === 'darwin' && typeof mainWindow.setVibrancy === 'function') {
-      mainWindow.setVibrancy(enabled ? 'under-window' : null);
-    }
-    if (process.platform === 'win32' && typeof mainWindow.setBackgroundMaterial === 'function') {
-      mainWindow.setBackgroundMaterial(enabled ? 'acrylic' : 'none');
+    if (process.platform === 'darwin') applyMacBackdrop(nativeEffectWanted);
+    else if (process.platform === 'win32') {
+      if (nativeEffectWanted) enableWinLiquidGlass();
+      else disableWinLiquidGlass();
     }
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
+    console.error(`[glass] ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
-  const glass = savedThemeIsGlass();
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
-        trafficLightPosition: { x: 16, y: 18 },
-        ...(glass ? { vibrancy: 'under-window', visualEffectState: 'active' } : {})
+        trafficLightPosition: { x: 16, y: 18 }
       }
     : process.platform === 'win32'
       ? {
           titleBarStyle: 'hidden',
           titleBarOverlay: {
             color: '#00000000',
-            symbolColor: '#314038',
+            symbolColor: '#f5f5f7',
             height: 42
-          },
-          ...(glass ? { backgroundMaterial: 'acrylic' } : {})
+          }
         }
       : {};
 
@@ -500,7 +671,16 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.setAutoHideMenuBar(true);
 
+  const syncNativeGlass = () => {
+    if (nativeEffectWanted) syncWinGlassBounds();
+  };
+  ['move', 'resize', 'resized', 'show', 'restore', 'maximize', 'unmaximize'].forEach(eventName => {
+    mainWindow.on(eventName, syncNativeGlass);
+  });
+
   mainWindow.on('closed', () => {
+    destroyWinLiquidGlass();
+    macGlassId = null;
     mainWindow = null;
   });
 
@@ -511,6 +691,8 @@ function createWindow() {
   mainWindow.on('unmaximize', () => {
     mainWindow?.webContents.send('workweb:windowMaximized', false);
   });
+
+  applyWindowEffect(true);
 }
 
 function registerIpcHandlers() {

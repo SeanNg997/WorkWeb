@@ -20,264 +20,108 @@ if (workwebDesktopPlatform) {
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --sidebar-bg: #e8e8e4;
-  --sidebar-hover: rgba(0,0,0,0.045);
-  --sidebar-active: #ffffff;
-  --sidebar-text: #3a3a3c;
+  --sidebar-bg: rgba(255,255,255,0.32);
+  --sidebar-hover: rgba(255,255,255,0.28);
+  --sidebar-active: rgba(255,255,255,0.55);
+  --sidebar-text: rgba(28,28,30,0.72);
   --sidebar-text-active: #1d1d1f;
   --sidebar-heading: #1d1d1f;
-  --bg: #f5f5f3;
+  --bg: rgba(255,255,255,0.16);
   --bg-glow: transparent;
-  --bg-start: #f5f5f3;
-  --bg-end: #f5f5f3;
-  --card-bg: #ffffff;
-  --surface-muted: #efefec;
-  --secondary-hover: #e6e6e3;
-  --line: rgba(0,0,0,0.08);
+  --bg-start: transparent;
+  --bg-end: transparent;
+  --card-bg: rgba(255,255,255,0.2);
+  --surface-muted: rgba(255,255,255,0.16);
+  --secondary-hover: rgba(255,255,255,0.3);
+  --line: rgba(255,255,255,0.45);
   --card-shadow: none;
   --card-shadow-hover: none;
   --text: #1d1d1f;
-  --text-light: #6e6e73;
-  --accent: #4e6a5c;
-  --accent-hover: #3f574b;
-  --accent-soft: #e6eeea;
-  --danger: #b42318;
-  --danger-hover: #912018;
-  --success: #3f7a52;
-  --book-start: #6d7f74;
-  --book-mid: #5d6e64;
-  --book-end: #4c5b53;
-  --book-text: #f5f5f3;
-  --project-left-start: #efefec;
-  --project-left-end: #efefec;
-  --radius: 10px;
+  --text-light: rgba(60,60,67,0.72);
+  --accent: #007aff;
+  --accent-hover: #0066d6;
+  --accent-soft: rgba(0,122,255,0.16);
+  --danger: #ff3b30;
+  --danger-hover: #ff3b30;
+  --success: #34c759;
+  --book-start: rgba(78, 104, 140, 0.55);
+  --book-mid: rgba(64, 90, 128, 0.48);
+  --book-end: rgba(48, 70, 104, 0.55);
+  --book-text: #f5f5f7;
+  --project-left-start: rgba(255,255,255,0.18);
+  --project-left-end: rgba(255,255,255,0.18);
+  --glass-fill: rgba(255,255,255,0.2);
+  --glass-sidebar: rgba(255,255,255,0.3);
+  --glass-stroke: rgba(255,255,255,0.5);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.7);
+  --glass-filter: blur(28px) saturate(1.45);
+  --radius: 12px;
   --transition: 0.16s ease;
   --col-unit: 270px;
   --sidebar-width: 232px;
 }
 
-body[data-theme="sand"] {
-  --sidebar-bg: #efe8dc;
-  --sidebar-hover: rgba(0,0,0,0.045);
-  --sidebar-active: #fffdf8;
-  --sidebar-text: #3f3a34;
-  --sidebar-text-active: #1d1d1f;
-  --sidebar-heading: #1d1d1f;
-  --bg: #f7f4ee;
-  --bg-glow: transparent;
-  --bg-start: #f7f4ee;
-  --bg-end: #f7f4ee;
-  --card-bg: #fffdf8;
-  --surface-muted: #f3eee6;
-  --secondary-hover: #e9e2d6;
-  --line: rgba(60,48,32,0.1);
-  --text: #1d1d1f;
-  --text-light: #6e6e73;
-  --accent: #7a6853;
-  --accent-hover: #645443;
-  --accent-soft: #efe6da;
-  --book-start: #8d7d68;
-  --book-mid: #756656;
-  --book-end: #5e5246;
-  --book-text: #f7f4ee;
-  --project-left-start: #f3eee6;
-  --project-left-end: #f3eee6;
-}
-
-body[data-theme="blue"] {
-  --sidebar-bg: #e6ebef;
-  --sidebar-hover: rgba(0,0,0,0.045);
-  --sidebar-active: #ffffff;
-  --sidebar-text: #3a3a3c;
-  --sidebar-text-active: #1d1d1f;
-  --sidebar-heading: #1d1d1f;
-  --bg: #f3f6f8;
-  --bg-glow: transparent;
-  --bg-start: #f3f6f8;
-  --bg-end: #f3f6f8;
-  --card-bg: #ffffff;
-  --surface-muted: #eaf0f3;
-  --secondary-hover: #e1e8ec;
-  --line: rgba(20,40,55,0.1);
-  --text: #1d1d1f;
-  --text-light: #6e6e73;
-  --accent: #3d6278;
-  --accent-hover: #314f61;
-  --accent-soft: #e3eef3;
-  --book-start: #6d8694;
-  --book-mid: #587282;
-  --book-end: #465c6a;
-  --book-text: #f3f6f8;
-  --project-left-start: #eaf0f3;
-  --project-left-end: #eaf0f3;
-}
-
-body[data-theme="glass"] {
-  --sidebar-bg: rgba(255,255,255,0.5);
-  --sidebar-hover: rgba(0,0,0,0.05);
-  --sidebar-active: rgba(255,255,255,0.72);
-  --sidebar-text: #1d1d1f;
-  --sidebar-text-active: #1d1d1f;
-  --sidebar-heading: #1d1d1f;
-  --bg: rgba(255,255,255,0.36);
-  --bg-glow: transparent;
-  --bg-start: rgba(255,255,255,0.36);
-  --bg-end: rgba(255,255,255,0.36);
-  --card-bg: rgba(255,255,255,0.62);
-  --surface-muted: rgba(255,255,255,0.4);
-  --secondary-hover: rgba(255,255,255,0.7);
-  --line: rgba(0,0,0,0.08);
-  --card-shadow: none;
-  --card-shadow-hover: none;
-  --text: #1d1d1f;
-  --text-light: #6e6e73;
-  --accent: #4e6a5c;
-  --accent-hover: #3f574b;
-  --accent-soft: rgba(255,255,255,0.45);
-  --danger: #b42318;
-  --danger-hover: #912018;
-  --success: #3f7a52;
-  --book-start: rgba(93, 110, 100, 0.88);
-  --book-mid: rgba(93, 110, 100, 0.88);
-  --book-end: rgba(76, 91, 83, 0.9);
-  --book-text: #f5f5f3;
-  --project-left-start: rgba(255,255,255,0.4);
-  --project-left-end: rgba(255,255,255,0.4);
-  --glass-filter: blur(28px) saturate(1.12);
-  background: transparent;
-}
-
-body[data-theme="dark"] {
-  --sidebar-bg: #1c1c1e;
-  --sidebar-hover: rgba(255,255,255,0.06);
-  --sidebar-active: #3a3a3c;
-  --sidebar-text: #d1d1d6;
+html[data-appearance="dark"] {
+  --sidebar-bg: rgba(10,12,20,0.4);
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active: rgba(255,255,255,0.16);
+  --sidebar-text: rgba(245,245,247,0.74);
   --sidebar-text-active: #f5f5f7;
   --sidebar-heading: #f5f5f7;
-  --bg: #000000;
-  --bg-glow: transparent;
-  --bg-start: #000000;
-  --bg-end: #000000;
-  --card-bg: #1c1c1e;
-  --surface-muted: #2c2c2e;
-  --secondary-hover: #3a3a3c;
-  --line: rgba(255,255,255,0.1);
-  --card-shadow: none;
-  --card-shadow-hover: none;
+  --bg: rgba(0,0,0,0.2);
+  --card-bg: rgba(255,255,255,0.1);
+  --surface-muted: rgba(255,255,255,0.08);
+  --secondary-hover: rgba(255,255,255,0.14);
+  --line: rgba(255,255,255,0.2);
   --text: #f5f5f7;
-  --text-light: #98989d;
-  --accent: #8eaea0;
-  --accent-hover: #a4c0b4;
-  --accent-soft: #24302b;
-  --danger: #ff6961;
-  --danger-hover: #ff8a84;
-  --success: #6fbf89;
-  --book-start: #3a3a3c;
-  --book-mid: #2c2c2e;
-  --book-end: #2c2c2e;
+  --text-light: rgba(235,235,245,0.62);
+  --accent: #0a84ff;
+  --accent-hover: #409cff;
+  --accent-soft: rgba(10,132,255,0.24);
+  --danger: #ff453a;
+  --danger-hover: #ff6961;
+  --success: #30d158;
+  --book-mid: rgba(36, 48, 84, 0.46);
   --book-text: #f5f5f7;
-  --project-left-start: #1c1c1e;
-  --project-left-end: #1c1c1e;
+  --project-left-start: rgba(255,255,255,0.08);
+  --project-left-end: rgba(255,255,255,0.08);
+  --glass-fill: rgba(255,255,255,0.1);
+  --glass-sidebar: rgba(8,10,18,0.42);
+  --glass-stroke: rgba(255,255,255,0.22);
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.28);
 }
 
-body[data-theme="stone"] {
-  --sidebar-bg: #e6e6e6;
-  --sidebar-hover: rgba(0,0,0,0.045);
-  --sidebar-active: #ffffff;
-  --sidebar-text: #3a3a3c;
-  --sidebar-text-active: #1d1d1f;
-  --sidebar-heading: #1d1d1f;
-  --bg: #f2f2f2;
-  --bg-glow: transparent;
-  --bg-start: #f2f2f2;
-  --bg-end: #f2f2f2;
-  --card-bg: #ffffff;
-  --surface-muted: #ececec;
-  --secondary-hover: #e2e2e2;
-  --line: rgba(0,0,0,0.08);
-  --text: #1d1d1f;
-  --text-light: #6e6e73;
-  --accent: #545456;
-  --accent-hover: #3a3a3c;
-  --accent-soft: #e8e8e8;
-  --book-start: #6e6e70;
-  --book-mid: #545456;
-  --book-end: #3a3a3c;
-  --book-text: #f5f5f7;
-  --project-left-start: #ececec;
-  --project-left-end: #ececec;
+html {
+  background:
+    radial-gradient(720px 520px at 12% 16%, #8eafff 0%, transparent 62%),
+    radial-gradient(640px 480px at 88% 0%, #f3b4df 0%, transparent 56%),
+    radial-gradient(820px 640px at 58% 100%, #73dcc4 0%, transparent 60%),
+    #d5dcea;
+  min-height: 100%;
+}
+
+html[data-appearance="dark"] {
+  background:
+    radial-gradient(760px 560px at 16% 8%, #3b4dff 0%, transparent 56%),
+    radial-gradient(680px 520px at 90% 0%, #d946ef 0%, transparent 52%),
+    radial-gradient(860px 700px at 52% 100%, #14b8a6 0%, transparent 58%),
+    #171c3d;
+}
+
+html.desktop-window {
+  background: transparent;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Segoe UI", sans-serif;
-  background: var(--sidebar-bg);
+  background: transparent;
   color: var(--text);
   height: 100vh;
   display: flex;
+  gap: 12px;
+  padding: 12px;
   overflow: hidden;
   letter-spacing: -0.011em;
-}
-
-html[data-theme="glass"] {
-  background: #d8d8dc;
-}
-
-html.desktop-window[data-theme="glass"] {
-  background: transparent;
-}
-
-body[data-theme="glass"] .sidebar,
-body[data-theme="glass"] .workspace,
-body[data-theme="glass"] .note-card,
-body[data-theme="glass"] .info-panel,
-body[data-theme="glass"] .reminder-card,
-body[data-theme="glass"] .bot-todo-island,
-body[data-theme="glass"] .bot-todo-composer,
-body[data-theme="glass"] .modal,
-body[data-theme="glass"] .settings-card,
-body[data-theme="glass"] .toast,
-body[data-theme="glass"] .update-toast,
-body[data-theme="glass"] .fitness-analytics-panel {
-  backdrop-filter: var(--glass-filter);
-  -webkit-backdrop-filter: var(--glass-filter);
-}
-
-body[data-theme="glass"] .sidebar {
-  background: var(--sidebar-bg);
-  box-shadow: none;
-}
-
-body[data-theme="glass"] .workspace {
-  background: rgba(255,255,255,0.42);
-  border-color: rgba(255,255,255,0.35);
-  box-shadow: none;
-}
-
-body[data-theme="glass"] .bot-todo-island,
-body[data-theme="glass"] .note-card,
-body[data-theme="glass"] .info-panel,
-body[data-theme="glass"] .reminder-card,
-body[data-theme="glass"] .modal,
-body[data-theme="glass"] .settings-card,
-body[data-theme="glass"] .toast,
-body[data-theme="glass"] .update-toast {
-  background: rgba(255,255,255,0.58);
-  border-color: rgba(255,255,255,0.46);
-  box-shadow: none;
-}
-
-body[data-theme="glass"] .bot-todo-composer {
-  background: rgba(255,255,255,0.55);
-  border-color: rgba(0,0,0,0.08);
-  box-shadow: none;
-}
-
-body[data-theme="glass"] .bot-todo-send {
-  background: rgba(255,255,255,0.72);
-}
-
-body[data-theme="glass"] .bot-todo-send:hover {
-  background: rgba(255,255,255,0.9);
 }
 
 body[data-markdown-size="small"] { --markdown-font-scale: 0.9; }
@@ -465,7 +309,7 @@ html.desktop-window .novel-toolbar {
 
 .sidebar-toggle-zone {
   position: fixed;
-  left: calc(var(--sidebar-width) - 36px);
+  left: calc(12px + var(--sidebar-width) - 16px);
   top: 0;
   bottom: 0;
   width: 36px;
@@ -483,7 +327,7 @@ html.desktop-window .novel-toolbar {
 }
 
 body.sidebar-collapsed .sidebar-toggle-zone {
-  left: 0;
+  left: 12px;
 }
 
 .sidebar-toggle-zone[data-visual-state="collapsed"] {
@@ -860,12 +704,22 @@ html.platform-win32 .windows-window-controls {
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-primary:active { background: var(--accent-hover); }
 
-.btn-danger-solid { background: var(--danger); color: #fff; }
-.btn-danger-solid:hover { background: var(--danger-hover); }
+.btn-danger-solid {
+  background: transparent;
+  color: var(--danger);
+  border-color: transparent;
+}
+.btn-danger-solid:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
 
 .btn-danger { background: transparent; color: var(--danger); padding: 4px 8px; }
-.btn-danger:hover { background: rgba(184,109,98,0.1); }
-.settings-actions .btn-danger-solid:hover { background: var(--danger-hover); color: #fff; }
+.btn-danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.settings-actions .btn-danger-solid:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
 
 .btn-ghost { background: transparent; color: var(--text-light); padding: 4px 8px; }
 .btn-ghost:hover { background: rgba(47,56,52,0.06); color: var(--text); }
@@ -3185,6 +3039,61 @@ textarea.form-input {
   }
 }
 
+/* === Liquid Glass surfaces === */
+body .sidebar,
+body .workspace,
+body .note-card,
+body .info-panel,
+body .reminder-card,
+body .bot-todo-island,
+body .bot-todo-composer,
+body .modal,
+body .settings-card,
+body .toast,
+body .update-toast,
+body .fitness-analytics-panel,
+body .project-left-page {
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border-color: var(--glass-stroke);
+  box-shadow: var(--glass-highlight);
+}
+
+body .sidebar { background: var(--glass-sidebar); }
+
+@media (min-width: 641px) {
+  body .sidebar,
+  body .workspace {
+    border: 1px solid var(--glass-stroke);
+    border-radius: 22px;
+  }
+}
+
+body .bot-todo-island,
+body .modal,
+body .note-card,
+body .info-panel,
+body .settings-card {
+  border-radius: 20px;
+}
+
+body .bot-todo-send {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+body .bot-todo-send:hover { background: var(--accent-hover); }
+
+body .form-row input[type="text"],
+body .form-row input[type="password"],
+body .form-input {
+  background: var(--glass-fill);
+  border-color: var(--glass-stroke);
+  color: var(--text);
+}
+
 /* === 更新通知弹框 === */
 </style>
 </head>
@@ -3642,14 +3551,11 @@ textarea.form-input {
               </div>
             </div>
             <div class="form-row">
-              <label>软件皮肤</label>
+              <label>外观</label>
               <div class="radio-group display-theme-options">
-                <label><input type="radio" name="appTheme" value="sage" onchange="setTheme(this.value)"> 雾灰绿</label>
-                <label><input type="radio" name="appTheme" value="sand" onchange="setTheme(this.value)"> 暖沙</label>
-                <label><input type="radio" name="appTheme" value="blue" onchange="setTheme(this.value)"> 静谧蓝</label>
-                <label><input type="radio" name="appTheme" value="stone" onchange="setTheme(this.value)"> 岩灰</label>
+                <label><input type="radio" name="appTheme" value="light" onchange="setTheme(this.value)"> 浅色</label>
                 <label><input type="radio" name="appTheme" value="dark" onchange="setTheme(this.value)"> 深色</label>
-                <label><input type="radio" name="appTheme" value="glass" onchange="setTheme(this.value)"> 毛玻璃</label>
+                <label><input type="radio" name="appTheme" value="auto" onchange="setTheme(this.value)"> 自动</label>
               </div>
             </div>
           </div>
@@ -4283,15 +4189,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-const APP_THEMES = ['sage', 'sand', 'blue', 'stone', 'dark', 'glass'];
+const APP_THEMES = ['light', 'dark', 'auto'];
+
+function migrateTheme(theme) {
+  if (theme === 'dark') return 'dark';
+  if (theme === 'auto') return 'auto';
+  if (theme === 'light') return 'light';
+  return 'light';
+}
+
+function resolvedAppearance(theme) {
+  if (theme === 'dark') return 'dark';
+  if (theme === 'light') return 'light';
+  const query = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  return query && query.matches ? 'dark' : 'light';
+}
 
 function applyTheme(theme) {
-  const safeTheme = APP_THEMES.includes(theme) ? theme : 'sage';
+  const safeTheme = migrateTheme(theme);
+  const appearance = resolvedAppearance(safeTheme);
   document.documentElement.dataset.theme = safeTheme;
+  document.documentElement.dataset.appearance = appearance;
   document.body.dataset.theme = safeTheme;
+  document.body.dataset.appearance = appearance;
   localStorage.setItem('wb_theme', safeTheme);
   window.workwebDesktop?.setSetting?.('wb_theme', safeTheme);
-  window.workwebDesktop?.setWindowEffect?.(safeTheme === 'glass');
+  window.workwebDesktop?.setWindowEffect?.(true);
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
     radio.checked = radio.value === safeTheme;
   });
@@ -4303,15 +4226,22 @@ function setTheme(theme) {
 }
 
 function loadTheme() {
-  applyTheme(localStorage.getItem('wb_theme') || 'sage');
+  applyTheme(localStorage.getItem('wb_theme') || 'light');
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (document.body.dataset.theme === 'auto') applyTheme('auto');
+    });
+  }
   if (!window.workwebDesktop?.getSetting) return;
   window.workwebDesktop.getSetting('wb_theme').then(stored => {
-    if (typeof stored === 'string' && APP_THEMES.includes(stored) && stored !== document.body.dataset.theme) {
-      applyTheme(stored);
+    if (typeof stored === 'string' && stored) {
+      const migrated = migrateTheme(stored);
+      if (migrated !== document.body.dataset.theme || migrated !== stored) applyTheme(migrated);
+      else window.workwebDesktop.setWindowEffect?.(true);
       return;
     }
-    if (!stored) window.workwebDesktop.setSetting?.('wb_theme', document.body.dataset.theme);
-    window.workwebDesktop.setWindowEffect?.(document.body.dataset.theme === 'glass');
+    window.workwebDesktop.setSetting?.('wb_theme', document.body.dataset.theme || 'light');
+    window.workwebDesktop.setWindowEffect?.(true);
   }).catch(() => {});
 }
 

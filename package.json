@@ -31,6 +31,10 @@
     "appId": "com.xiaoran.workweb",
     "productName": "WorkWeb",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/electron-liquid-glass/**/*.node",
+      "node_modules/@hicccc77/electron-liquid-glass/**/*.node"
+    ],
     "directories": {
       "output": "release"
     },
@@ -93,5 +97,9 @@
   },
   "dependencies": {
     "electron-updater": "^6.8.3"
+  },
+  "optionalDependencies": {
+    "@hicccc77/electron-liquid-glass": "^0.4.0",
+    "electron-liquid-glass": "^1.1.1"
   }
 }
