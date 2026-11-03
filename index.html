@@ -292,6 +292,7 @@ body.sidebar-collapsed .sidebar {
   transition: all var(--transition); font-size: 14px; margin-bottom: 4px;
 }
 
+.nav-item[hidden] { display: none !important; }
 .nav-item:hover { background: var(--sidebar-hover); color: #f3f6f2; }
 .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 500; }
 
@@ -3556,6 +3557,10 @@ textarea.form-input {
           <p>Webhook URL、Webhook key、Authorization 都可以分别保存。请求由本地服务转发。</p>
           <div class="settings-form">
             <div class="form-row grok-bot-webhook-row">
+              <label for="botTodoEnabled">Bot TODO</label>
+              <label><input type="checkbox" id="botTodoEnabled" checked onchange="saveGrokBotSettings()"> 开启</label>
+            </div>
+            <div class="form-row grok-bot-webhook-row">
               <label for="grokBotWebhookUrl">Webhook URL</label>
               <input type="text" id="grokBotWebhookUrl" placeholder="https://example.com/webhook" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
             </div>
@@ -4407,9 +4412,11 @@ function toggleApiKeyVisibility() {
 const GROK_BOT_WEBHOOK_URL_KEY = 'wb_grok_bot_webhook_url';
 const GROK_BOT_WEBHOOK_SECRET_KEY = 'wb_grok_bot_webhook_key';
 const GROK_BOT_WEBHOOK_AUTHORIZATION_KEY = 'wb_grok_bot_webhook_authorization';
+const BOT_TODO_ENABLED_KEY = 'wb_bot_todo_enabled';
 let grokBotWebhookUrl = '';
 let grokBotWebhookKey = '';
 let grokBotWebhookAuthorization = '';
+let botTodoEnabled = true;
 
 function getGrokBotWebhookUrl() {
   return String(grokBotWebhookUrl || '').trim();
@@ -4423,21 +4430,37 @@ function toggleGrokBotSecret(inputId, button) {
   button.textContent = show ? '隐藏' : '显示';
 }
 
+function applyBotTodoModule() {
+  const nav = document.querySelector('.nav-item[data-page="bot-todo"]');
+  if (nav) nav.hidden = !botTodoEnabled;
+  const toggle = document.getElementById('botTodoEnabled');
+  if (toggle) toggle.checked = botTodoEnabled;
+  if (!botTodoEnabled) {
+    if (typeof stopBotTodoPolling === 'function') stopBotTodoPolling();
+    if (typeof botTodoPageActive === 'function' && botTodoPageActive() && typeof switchPage === 'function') {
+      switchPage('todo');
+    }
+  }
+}
+
 async function loadGrokBotSettings() {
-  const [url, key, authorization] = await Promise.all([
+  const [url, key, authorization, enabled] = await Promise.all([
     readPreference(GROK_BOT_WEBHOOK_URL_KEY, ''),
     readPreference(GROK_BOT_WEBHOOK_SECRET_KEY, ''),
-    readPreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, '')
+    readPreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, ''),
+    readPreference(BOT_TODO_ENABLED_KEY, 'true')
   ]);
   grokBotWebhookUrl = String(url || '').trim();
   grokBotWebhookKey = String(key || '');
   grokBotWebhookAuthorization = String(authorization || '');
+  botTodoEnabled = String(enabled ?? 'true') !== 'false';
   const urlInput = document.getElementById('grokBotWebhookUrl');
   const keyInput = document.getElementById('grokBotWebhookKey');
   const authorizationInput = document.getElementById('grokBotWebhookAuthorization');
   if (urlInput) urlInput.value = grokBotWebhookUrl;
   if (keyInput) keyInput.value = grokBotWebhookKey;
   if (authorizationInput) authorizationInput.value = grokBotWebhookAuthorization;
+  applyBotTodoModule();
   if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
 }
 
@@ -4445,10 +4468,29 @@ function saveGrokBotSettings() {
   grokBotWebhookUrl = String(document.getElementById('grokBotWebhookUrl')?.value || '').trim();
   grokBotWebhookKey = String(document.getElementById('grokBotWebhookKey')?.value || '');
   grokBotWebhookAuthorization = String(document.getElementById('grokBotWebhookAuthorization')?.value || '');
+  botTodoEnabled = Boolean(document.getElementById('botTodoEnabled')?.checked);
   writePreference(GROK_BOT_WEBHOOK_URL_KEY, grokBotWebhookUrl);
   writePreference(GROK_BOT_WEBHOOK_SECRET_KEY, grokBotWebhookKey);
   writePreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, grokBotWebhookAuthorization);
+  writePreference(BOT_TODO_ENABLED_KEY, botTodoEnabled ? 'true' : 'false');
+  applyBotTodoModule();
   if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
+}
+
+function joinBotTodoPath(dataDir) {
+  const root = String(dataDir || '').trim().replace(/[\\/]+$/, '');
+  if (!root) return '';
+  const sep = root.includes('\\') ? '\\' : '/';
+  return `${root}${sep}bot-todo`;
+}
+
+async function getBotTodoPath() {
+  try {
+    const meta = await apiGet('data-dir');
+    return joinBotTodoPath(meta?.dataDir || '');
+  } catch {
+    return '';
+  }
 }
 
 async function testAIConnection() {
@@ -5481,6 +5523,7 @@ function drawFitnessChart(svgId, series, options = {}) {
 
 /* ==================== 页面切换 ==================== */
 function switchPage(page) {
+  if (page === 'bot-todo' && !botTodoEnabled) page = 'todo';
   if (page !== 'progress') flushProjectPersist();
   document.querySelectorAll('.nav-item').forEach(el =>
     el.classList.toggle('active', el.dataset.page === page));
@@ -5748,6 +5791,10 @@ function stopBotTodoPolling() {
 }
 
 function startBotTodoPolling() {
+  if (!botTodoEnabled) {
+    stopBotTodoPolling();
+    return;
+  }
   stopBotTodoPolling();
   refreshBotTodo();
   if (document.hidden) return;
@@ -5760,10 +5807,12 @@ async function postBotTodoWebhook(type, text) {
     showToast('请先在设置中配置 Grok Bot Webhook URL');
     return false;
   }
-  if (botTodoWebhookBusy) return false;
+  if (!botTodoEnabled || botTodoWebhookBusy) return false;
   botTodoWebhookBusy = true;
   syncBotTodoActions();
   try {
+    const botTodoPath = await getBotTodoPath();
+    const platform = window.workwebDesktop?.platform || '';
     const res = await fetch('/api/bot-todo/webhook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -5772,7 +5821,9 @@ async function postBotTodoWebhook(type, text) {
         text,
         webhookUrl,
         webhookKey: grokBotWebhookKey,
-        authorization: grokBotWebhookAuthorization
+        authorization: grokBotWebhookAuthorization,
+        botTodoPath,
+        ...(platform ? { platform } : {})
       })
     });
     const data = await res.json().catch(() => ({}));

@@ -20,7 +20,8 @@ const ALLOWED_DESKTOP_SETTING_KEYS = new Set([
   'wb_ai_model',
   'wb_grok_bot_webhook_url',
   'wb_grok_bot_webhook_key',
-  'wb_grok_bot_webhook_authorization'
+  'wb_grok_bot_webhook_authorization',
+  'wb_bot_todo_enabled'
 ]);
 const UPDATE_PUBLISH_CONFIG = {
   provider: 'github',

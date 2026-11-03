@@ -608,6 +608,10 @@ function readBotTodo(dataDir) {
   };
 }
 
+function botTodoDirectoryPath(dataDir) {
+  return path.join(path.resolve(String(dataDir || '')), BOT_TODO_DIR);
+}
+
 function isHttpWebhookUrl(value) {
   try {
     const url = new URL(String(value || '').trim());
@@ -1595,6 +1599,8 @@ function createServer(options = {}) {
         const webhookUrl = String(body?.webhookUrl || '').trim();
         const webhookKey = typeof body?.webhookKey === 'string' ? body.webhookKey : '';
         const authorization = typeof body?.authorization === 'string' ? body.authorization : '';
+        const botTodoPath = String(body?.botTodoPath || '').trim() || botTodoDirectoryPath(context.dataDir);
+        const platform = typeof body?.platform === 'string' ? body.platform.trim() : '';
         if (type !== 'update' && type !== 'message') {
           sendJSON(res, 400, { error: 'type 必须是 update 或 message' });
           return;
@@ -1613,7 +1619,9 @@ function createServer(options = {}) {
         }
 
         try {
-          const upstream = await forwardBotTodoWebhook(webhookUrl, { type, text }, { webhookKey, authorization });
+          const upstreamPayload = { type, text, botTodoPath };
+          if (platform) upstreamPayload.platform = platform;
+          const upstream = await forwardBotTodoWebhook(webhookUrl, upstreamPayload, { webhookKey, authorization });
           const statusCode = Number(upstream.statusCode) || 502;
           if (statusCode < 200 || statusCode >= 300) {
             const snippet = String(upstream.body || '').replace(/\s+/g, ' ').trim().slice(0, 180);

@@ -214,7 +214,7 @@ GET    /projects/figures/...
 Bot TODO：
 
 - `GET /api/bot-todo` 返回 `{ todos, schedule }`，分别是 `bot-todo/todos.md` 和 `bot-todo/schedule.md` 的原文。文件缺失时返回空字符串，并补齐目录和空文件。页面按列表渲染：待办只显示事项；日程按日期或周期分组，条目为「时间 事项」。
-- `POST /api/bot-todo/webhook` 接收 `{ type, text, webhookUrl }`。`type` 只能是 `update` 或 `message`，URL 必须是 `http` 或 `https`。服务端把 `{ type, text }` 以 JSON 转发到该 URL，避免浏览器直接请求时的 CORS 限制。
+- `POST /api/bot-todo/webhook` 接收 `{ type, text, webhookUrl, botTodoPath, platform }`。`type` 只能是 `update` 或 `message`，URL 必须是 `http` 或 `https`。`botTodoPath` 是数据目录下 `bot-todo` 的绝对路径；前端会传入，缺省时服务端用当前数据目录拼接。转发到上游的 JSON 包含 `type`、`text`、`botTodoPath`，有平台时再加 `platform`。设置里「Bot TODO」开关默认开启，关闭后侧栏不显示该入口。
 
 并发和冲突：
 
@@ -691,7 +691,7 @@ window.workwebDesktop = {
 
 - Markdown 字号：`MARKDOWN_FONT_SIZE_KEY`、`setMarkdownFontSize()`、CSS `body[data-markdown-size=...]`。
 - AI 设置：`loadAISettings()`、`saveAISettings()`、`getAIConfig()`、`testAIConnection()`。
-- Grok Bot：`wb_grok_bot_webhook_url`、`wb_grok_bot_webhook_key`、`wb_grok_bot_webhook_authorization`，由 `loadGrokBotSettings()` / `saveGrokBotSettings()` 分别保存。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。有 key 时上游 JSON 增加 `key`，并带 `X-Webhook-Key`；Authorization 只放在请求头，原文转发。
+- Grok Bot：`wb_grok_bot_webhook_url`、`wb_grok_bot_webhook_key`、`wb_grok_bot_webhook_authorization`、`wb_bot_todo_enabled`，由 `loadGrokBotSettings()` / `saveGrokBotSettings()` 分别保存。`wb_bot_todo_enabled` 默认开启，关闭后侧栏隐藏 Bot TODO 并停止轮询。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。有 key 时上游 JSON 增加 `key`，并带 `X-Webhook-Key`；Authorization 只放在请求头，原文转发。上游 JSON 另含 `botTodoPath`（数据目录与 `bot-todo` 拼成的绝对路径），桌面端再附 `platform`。
 - 数据导入导出：`exportDataFile()`、`importDataFile()`、`createDataExport()`、`importDataExport()`。
 - 数据目录：`chooseNextDataDir()`、`changeDataDir()`、`migrateDataDir()`、`mergeDataDirs()`。
 - 回收站：`openTrashRestore()`、`restoreTrashItem()`、`askClearTrash()`、`listTrash()`。
