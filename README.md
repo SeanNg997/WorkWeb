@@ -34,8 +34,6 @@ WorkWeb 是一个**开源**、**轻量**、**完全本地化**的个人工作面
 
 前往 GitHub Release 页面下载最新安装包并安装（[Releases](https://github.com/SeanNg997/WorkWeb/releases)），安装后直接运行即可。
 
-桌面版窗口背景优先用系统原生玻璃：macOS 26 及以上使用 `electron-liquid-glass`，更早的 macOS 使用 vibrancy；Windows 10 2004 及以上使用 `@hicccc77/electron-liquid-glass`，否则退回 acrylic。这两个包是可选依赖，缺失时界面仍用 CSS 半透明玻璃。
-
 ### 2.2 源码运行
 
 1. 首先安装 [Node.js](https://nodejs.org/)；

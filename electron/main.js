@@ -20,8 +20,7 @@ const ALLOWED_DESKTOP_SETTING_KEYS = new Set([
   'wb_ai_model',
   'wb_grok_bot_webhook_url',
   'wb_grok_bot_webhook_key',
-  'wb_grok_bot_webhook_authorization',
-  'wb_theme'
+  'wb_grok_bot_webhook_authorization'
 ]);
 const UPDATE_PUBLISH_CONFIG = {
   provider: 'github',
@@ -443,226 +442,6 @@ async function ensureServer() {
   return localServer.origin;
 }
 
-let nativeEffectWanted = true;
-let nativeGlassActive = false;
-let macGlassApi;
-let macGlassId = null;
-let macGlassPending = false;
-let winGlassApi;
-let winGlassPanel = null;
-
-function loadOptionalGlass(name) {
-  try {
-    const loaded = require(name);
-    if (loaded && (typeof loaded.addView === 'function' || typeof loaded.isSupported === 'function' || typeof loaded.createPanel === 'function')) {
-      return loaded;
-    }
-    return loaded && loaded.default ? loaded.default : null;
-  } catch (error) {
-    console.error(`[glass] ${name} unavailable: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
-  }
-}
-
-function macLiquidGlassApi() {
-  if (macGlassApi !== undefined) return macGlassApi;
-  if (process.platform !== 'darwin') {
-    macGlassApi = null;
-    return macGlassApi;
-  }
-  macGlassApi = loadOptionalGlass('electron-liquid-glass');
-  return macGlassApi;
-}
-
-function macLiquidGlassSupported() {
-  const api = macLiquidGlassApi();
-  return Boolean(api && typeof api.isGlassSupported === 'function' && api.isGlassSupported() && typeof api.addView === 'function');
-}
-
-function winLiquidGlassApi() {
-  if (winGlassApi !== undefined) return winGlassApi;
-  if (process.platform !== 'win32') {
-    winGlassApi = null;
-    return winGlassApi;
-  }
-  winGlassApi = loadOptionalGlass('@hicccc77/electron-liquid-glass');
-  return winGlassApi;
-}
-
-function windowPhysicalBounds(win) {
-  const bounds = win.getBounds();
-  const display = screen.getDisplayMatching(bounds);
-  const dpr = display && display.scaleFactor ? display.scaleFactor : 1;
-  return {
-    x: Math.round(bounds.x * dpr),
-    y: Math.round(bounds.y * dpr),
-    width: Math.max(1, Math.round(bounds.width * dpr)),
-    height: Math.max(1, Math.round(bounds.height * dpr)),
-    dpr
-  };
-}
-
-function publishNativeGlass(active) {
-  nativeGlassActive = Boolean(active);
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  try {
-    mainWindow.webContents.send('workweb:nativeGlass', nativeGlassActive);
-  } catch { /* page may still be loading */ }
-}
-
-function clearMacVibrancy() {
-  if (!mainWindow || mainWindow.isDestroyed() || typeof mainWindow.setVibrancy !== 'function') return;
-  try { mainWindow.setVibrancy(null); } catch { /* older Electron builds */ }
-}
-
-function attachMacLiquidGlass() {
-  if (!mainWindow || mainWindow.isDestroyed() || !nativeEffectWanted || !macLiquidGlassSupported()) return;
-  if (macGlassId != null && macGlassId !== -1) return;
-  clearMacVibrancy();
-  try {
-    const id = macLiquidGlassApi().addView(mainWindow.getNativeWindowHandle(), {
-      cornerRadius: 16,
-      opaque: false
-    });
-    macGlassId = id;
-    if (id === -1) {
-      mainWindow.setVibrancy('under-window');
-      publishNativeGlass(false);
-    } else {
-      publishNativeGlass(true);
-    }
-  } catch (error) {
-    console.error(`[glass] macOS liquid glass failed: ${error instanceof Error ? error.message : String(error)}`);
-    try { mainWindow.setVibrancy('under-window'); } catch { /* ignore */ }
-  }
-}
-
-function scheduleMacLiquidGlass() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const run = () => {
-    macGlassPending = false;
-    attachMacLiquidGlass();
-  };
-  if (mainWindow.webContents.isLoading() || !mainWindow.webContents.getURL()) {
-    if (macGlassPending) return;
-    macGlassPending = true;
-    mainWindow.webContents.once('did-finish-load', run);
-    return;
-  }
-  run();
-}
-
-function applyMacBackdrop(enabled) {
-  if (!mainWindow || mainWindow.isDestroyed() || process.platform !== 'darwin') return;
-  if (enabled && macLiquidGlassSupported()) {
-    scheduleMacLiquidGlass();
-    return;
-  }
-  if (enabled && typeof mainWindow.setVibrancy === 'function') {
-    try { mainWindow.setVibrancy('under-window'); } catch (error) {
-      console.error(error instanceof Error ? error.message : String(error));
-    }
-    return;
-  }
-  clearMacVibrancy();
-}
-
-function syncWinGlassBounds() {
-  if (!winGlassPanel || !mainWindow || mainWindow.isDestroyed()) return;
-  try {
-    winGlassPanel.setBounds(windowPhysicalBounds(mainWindow));
-  } catch (error) {
-    console.error(`[glass] setBounds failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-function enableWinLiquidGlass() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const api = winLiquidGlassApi();
-  const supported = Boolean(api && typeof api.isSupported === 'function' && api.isSupported() && typeof api.createPanel === 'function');
-  if (!supported) {
-    if (typeof mainWindow.setBackgroundMaterial === 'function') {
-      try {
-        mainWindow.setBackgroundMaterial('acrylic');
-        publishNativeGlass(true);
-      } catch (error) {
-        publishNativeGlass(false);
-        console.error(error instanceof Error ? error.message : String(error));
-      }
-    } else {
-      publishNativeGlass(false);
-    }
-    return;
-  }
-  if (typeof mainWindow.setBackgroundMaterial === 'function') {
-    try { mainWindow.setBackgroundMaterial('none'); } catch { /* acrylic and the panel should not stack */ }
-  }
-  if (!winGlassPanel) {
-    const bounds = windowPhysicalBounds(mainWindow);
-    try {
-      winGlassPanel = api.createPanel({
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-        cornerRadius: Math.round(16 * bounds.dpr),
-        dpr: bounds.dpr,
-        anchorWindow: mainWindow
-      });
-    } catch (error) {
-      winGlassPanel = null;
-      console.error(`[glass] Windows panel failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-  if (!winGlassPanel) {
-    if (typeof mainWindow.setBackgroundMaterial === 'function') {
-      try {
-        mainWindow.setBackgroundMaterial('acrylic');
-        publishNativeGlass(true);
-      } catch {
-        publishNativeGlass(false);
-      }
-    } else {
-      publishNativeGlass(false);
-    }
-    return;
-  }
-  try { winGlassPanel.anchor(mainWindow); } catch { /* anchor is best-effort */ }
-  syncWinGlassBounds();
-  try { winGlassPanel.show(0); } catch { /* ignore */ }
-  publishNativeGlass(true);
-}
-
-function disableWinLiquidGlass() {
-  if (winGlassPanel) {
-    try { winGlassPanel.hide(0); } catch { /* ignore */ }
-  }
-  if (mainWindow && !mainWindow.isDestroyed() && typeof mainWindow.setBackgroundMaterial === 'function') {
-    try { mainWindow.setBackgroundMaterial('none'); } catch { /* ignore */ }
-  }
-  publishNativeGlass(false);
-}
-
-function destroyWinLiquidGlass() {
-  if (!winGlassPanel) return;
-  try { winGlassPanel.destroy(); } catch { /* ignore */ }
-  winGlassPanel = null;
-}
-
-function applyWindowEffect(glass) {
-  nativeEffectWanted = glass !== false;
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  try {
-    if (process.platform === 'darwin') applyMacBackdrop(nativeEffectWanted);
-    else if (process.platform === 'win32') {
-      if (nativeEffectWanted) enableWinLiquidGlass();
-      else disableWinLiquidGlass();
-    }
-  } catch (error) {
-    console.error(`[glass] ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
   const chromeOptions = process.platform === 'darwin'
@@ -672,9 +451,12 @@ function createWindow() {
       }
     : process.platform === 'win32'
       ? {
-          frame: false,
-          thickFrame: true,
-          minimizable: true
+          titleBarStyle: 'hidden',
+          titleBarOverlay: {
+            color: '#00000000',
+            symbolColor: '#314038',
+            height: 42
+          }
         }
       : {};
 
@@ -682,8 +464,7 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    transparent: true,
-    backgroundColor: '#00000000',
+    backgroundColor: '#f4efe4',
     autoHideMenuBar: true,
     ...chromeOptions,
     webPreferences: {
@@ -697,32 +478,8 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.setAutoHideMenuBar(true);
 
-  const syncNativeGlass = () => {
-    if (nativeEffectWanted) syncWinGlassBounds();
-  };
-  ['move', 'resize', 'resized', 'show', 'restore', 'maximize', 'unmaximize'].forEach(eventName => {
-    mainWindow.on(eventName, syncNativeGlass);
-  });
-
   mainWindow.on('closed', () => {
-    destroyWinLiquidGlass();
-    macGlassId = null;
     mainWindow = null;
-  });
-
-  mainWindow.on('minimize', () => {
-    if (winGlassPanel) {
-      try { winGlassPanel.hide(0); } catch { /* ignore */ }
-    }
-  });
-
-  mainWindow.on('restore', () => {
-    if (nativeEffectWanted) enableWinLiquidGlass();
-  });
-
-  mainWindow.on('show', () => {
-    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
-    if (nativeEffectWanted) enableWinLiquidGlass();
   });
 
   mainWindow.on('maximize', () => {
@@ -732,23 +489,11 @@ function createWindow() {
   mainWindow.on('unmaximize', () => {
     mainWindow?.webContents.send('workweb:windowMaximized', false);
   });
-
-  applyWindowEffect(true);
 }
 
 function registerIpcHandlers() {
   ipcMain.handle('workweb:minimizeWindow', () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (winGlassPanel) {
-      try { winGlassPanel.hide(0); } catch { /* the glass panel is a separate window */ }
-    }
-    mainWindow.minimize();
-    if (process.platform === 'win32') {
-      setImmediate(() => {
-        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
-        mainWindow.hide();
-      });
-    }
+    mainWindow?.minimize();
   });
 
   ipcMain.handle('workweb:toggleMaximizeWindow', () => {
@@ -796,13 +541,6 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('workweb:setSetting', (_event, key, value) => saveDesktopSetting(key, value));
-
-  ipcMain.handle('workweb:setWindowEffect', (_event, glass) => {
-    applyWindowEffect(glass);
-    return { ok: true, native: nativeGlassActive };
-  });
-
-  ipcMain.handle('workweb:getNativeGlass', () => nativeGlassActive);
 
   ipcMain.handle('workweb:getUpdateState', () => sendUpdateState());
 
