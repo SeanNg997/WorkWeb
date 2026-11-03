@@ -316,7 +316,7 @@ Bot TODO：
 
 - `loadData()` 访问 API 失败时从 `localStorage` 读取 `wb_notes`、`wb_info`、`wb_projects`。
 - 保存失败时也会临时写入这些 `localStorage` key。
-- 主题保存在 `wb_theme`。
+- 主题保存在 `wb_theme`。深色 `body[data-theme="dark"]` 用 Typora night 的 `#26292c` / `#b8bfc6` / `#2E3033` / `#333` / `#DEDEDE` / `#6dc1e7`，书架书脊为石墨灰蓝。浅色主题不改。界面字号在原 `font-size` 上统一加 1px。
 - 侧边栏折叠状态保存在 `wb_sidebar_collapsed`。
 - Markdown 字号和 AI 设置优先写桌面设置，同时也写 `localStorage`。
 
