@@ -213,7 +213,7 @@ GET    /projects/figures/...
 
 Bot TODO：
 
-- `GET /api/bot-todo` 返回 `{ todos, schedule }`，分别是 `bot-todo/todos.md` 和 `bot-todo/schedule.md` 的原文。文件缺失时返回空字符串，并补齐目录和空文件。
+- `GET /api/bot-todo` 返回 `{ todos, schedule }`，分别是 `bot-todo/todos.md` 和 `bot-todo/schedule.md` 的原文。文件缺失时返回空字符串，并补齐目录和空文件。页面按列表渲染：待办只显示事项；日程按日期或周期分组，条目为「时间 事项」。
 - `POST /api/bot-todo/webhook` 接收 `{ type, text, webhookUrl }`。`type` 只能是 `update` 或 `message`，URL 必须是 `http` 或 `https`。服务端把 `{ type, text }` 以 JSON 转发到该 URL，避免浏览器直接请求时的 CORS 限制。
 
 并发和冲突：
