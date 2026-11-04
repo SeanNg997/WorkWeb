@@ -23,6 +23,13 @@ const PROJECT_ITEMS_DIR = path.join('projects', 'items');
 const BACKUP_DIR = 'backups';
 const DEFAULT_AI_MAX_TOKENS = 150;
 const AI_REQUEST_TIMEOUT_MS = 15000;
+const BOT_TODO_DIR = 'bot-todo';
+const BOT_TODO_FILES = {
+  todos: 'todos.md',
+  schedule: 'schedule.md'
+};
+const WEBHOOK_REQUEST_TIMEOUT_MS = 15000;
+const WEBHOOK_RESPONSE_LIMIT = 32768;
 const MIME_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -578,6 +585,94 @@ function writeCollection(dataDir, key, items) {
   });
 }
 
+function ensureBotTodoFiles(dataDir) {
+  const dir = ensureDir(path.join(dataDir, BOT_TODO_DIR));
+  Object.values(BOT_TODO_FILES).forEach(fileName => {
+    const filePath = path.join(dir, fileName);
+    if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, '', 'utf-8');
+  });
+  return dir;
+}
+
+function readBotTodoFile(dataDir, fileName) {
+  const filePath = path.join(dataDir, BOT_TODO_DIR, fileName);
+  if (!fs.existsSync(filePath)) return '';
+  return fs.readFileSync(filePath, 'utf-8');
+}
+
+function readBotTodo(dataDir) {
+  ensureBotTodoFiles(dataDir);
+  return {
+    todos: readBotTodoFile(dataDir, BOT_TODO_FILES.todos),
+    schedule: readBotTodoFile(dataDir, BOT_TODO_FILES.schedule)
+  };
+}
+
+function botTodoDirectoryPath(dataDir) {
+  return path.join(path.resolve(String(dataDir || '')), BOT_TODO_DIR);
+}
+
+function isHttpWebhookUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function singleLineHeader(value) {
+  return String(value ?? '').replace(/[\r\n]/g, '');
+}
+
+function forwardBotTodoWebhook(webhookUrl, payload, options = {}) {
+  return new Promise((resolve, reject) => {
+    let url;
+    try {
+      url = new URL(webhookUrl);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
+    const webhookKey = singleLineHeader(options.webhookKey);
+    const authorization = singleLineHeader(options.authorization);
+    const outbound = webhookKey.trim() ? { ...payload, key: webhookKey } : payload;
+    const body = JSON.stringify(outbound);
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body)
+    };
+    if (webhookKey.trim()) headers['X-Webhook-Key'] = webhookKey;
+    if (authorization.trim()) headers.Authorization = authorization;
+    const requester = url.protocol === 'https:' ? https : http;
+    const apiReq = requester.request({
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: `${url.pathname}${url.search}`,
+      method: 'POST',
+      headers,
+      timeout: WEBHOOK_REQUEST_TIMEOUT_MS
+    }, apiRes => {
+      let data = '';
+      apiRes.setEncoding('utf-8');
+      apiRes.on('data', chunk => {
+        if (data.length < WEBHOOK_RESPONSE_LIMIT) data += chunk;
+      });
+      apiRes.on('end', () => {
+        resolve({ statusCode: apiRes.statusCode || 502, body: data });
+      });
+    });
+
+    apiReq.on('error', error => reject(error));
+    apiReq.on('timeout', () => {
+      apiReq.destroy(new Error('Webhook 请求超时'));
+    });
+    apiReq.write(body);
+    apiReq.end();
+  });
+}
+
 function ensureBaseDataLayout(dataDir) {
   ensureDir(dataDir);
   ensureDataFile(dataDir, INFO_FILE, []);
@@ -589,6 +684,7 @@ function ensureBaseDataLayout(dataDir) {
   ensureTrashDir(dataDir);
   ensureDir(path.join(dataDir, FIGURES_DIR));
   ensureDir(path.join(dataDir, BACKUP_DIR));
+  ensureBotTodoFiles(dataDir);
 }
 
 function inspectStorage(dataDir) {
@@ -1484,6 +1580,64 @@ function createServer(options = {}) {
     if (pathname === '/api/clear-trash' && req.method === 'POST') {
       clearTrash(context.dataDir);
       sendJSON(res, 200, { ok: true });
+      return;
+    }
+
+    if (pathname === '/api/bot-todo' && req.method === 'GET') {
+      try {
+        sendJSON(res, 200, readBotTodo(context.dataDir));
+      } catch (error) {
+        sendJSON(res, 500, { error: error instanceof Error ? error.message : '读取 Bot TODO 失败' });
+      }
+      return;
+    }
+
+    if (pathname === '/api/bot-todo/webhook' && req.method === 'POST') {
+      readRequestBody(req).then(async body => {
+        const type = body?.type;
+        const text = body?.text;
+        const webhookUrl = String(body?.webhookUrl || '').trim();
+        const webhookKey = typeof body?.webhookKey === 'string' ? body.webhookKey : '';
+        const authorization = typeof body?.authorization === 'string' ? body.authorization : '';
+        const botTodoPath = String(body?.botTodoPath || '').trim() || botTodoDirectoryPath(context.dataDir);
+        const platform = typeof body?.platform === 'string' ? body.platform.trim() : '';
+        if (type !== 'update' && type !== 'message') {
+          sendJSON(res, 400, { error: 'type 必须是 update 或 message' });
+          return;
+        }
+        if (typeof text !== 'string') {
+          sendJSON(res, 400, { error: 'text 必须是字符串' });
+          return;
+        }
+        if (!webhookUrl) {
+          sendJSON(res, 400, { error: '未配置 Grok Bot Webhook URL' });
+          return;
+        }
+        if (!isHttpWebhookUrl(webhookUrl)) {
+          sendJSON(res, 400, { error: 'Webhook URL 必须是 http 或 https' });
+          return;
+        }
+
+        try {
+          const upstreamPayload = { type, text, botTodoPath };
+          if (platform) upstreamPayload.platform = platform;
+          const upstream = await forwardBotTodoWebhook(webhookUrl, upstreamPayload, { webhookKey, authorization });
+          const statusCode = Number(upstream.statusCode) || 502;
+          if (statusCode < 200 || statusCode >= 300) {
+            const snippet = String(upstream.body || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+            sendJSON(res, statusCode >= 400 && statusCode <= 599 ? statusCode : 502, {
+              error: snippet ? `Webhook 请求失败（${statusCode}）：${snippet}` : `Webhook 请求失败（${statusCode}）`,
+              status: statusCode
+            });
+            return;
+          }
+          sendJSON(res, 200, { ok: true, status: statusCode });
+        } catch (error) {
+          if (!res.headersSent) {
+            sendJSON(res, 502, { error: error instanceof Error ? error.message : 'Webhook 请求失败' });
+          }
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
       return;
     }
 
