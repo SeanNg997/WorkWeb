@@ -43,8 +43,8 @@ if (workwebDesktopPlatform) {
   --danger: #bd6e68;
   --danger-hover: #a95e58;
   --success: #4b9e78;
-  --project-left-start: #f4f7f5;
-  --project-left-end: #edf2ef;
+  --project-left-start: #eef5f0;
+  --project-left-end: #e3eee6;
   --radius: 18px;
   --transition: 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
   --col-unit: 270px;
@@ -134,7 +134,7 @@ body.sidebar-collapsed .sidebar {
   text-align: left;
 }
 
-.sidebar-header h1 { font-size: 21px; font-weight: 700; color: var(--text); }
+.sidebar-header h1 { font-size: 24px; font-weight: 700; color: var(--text); }
 .sidebar-header p { margin: 7px 0 0; font-size: 13px; color: var(--text-light); }
 
 .sidebar-nav { padding: 16px 14px; flex: 1; }
@@ -283,7 +283,9 @@ html.desktop-window .sidebar-expand-toggle {
 }
 
 .sidebar-toggle:hover,
-.sidebar-toggle:focus-visible {
+.sidebar-toggle:focus-visible,
+.sidebar-expand-toggle:hover,
+.sidebar-expand-toggle:focus-visible {
   background: var(--sidebar-hover);
   color: var(--text);
 }
@@ -307,23 +309,20 @@ html.desktop-window .sidebar-expand-toggle {
   z-index: 10;
   display: none;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--card-bg);
-  color: var(--text-light);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--sidebar-text);
+  box-shadow: none;
   cursor: pointer;
   -webkit-app-region: no-drag;
   transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 html.desktop-window .sidebar-expand-toggle { top: 52px; }
-
-.sidebar-expand-toggle:hover {
-  background: var(--surface-muted);
-  color: var(--text);
-}
 
 .sidebar-expand-toggle .sidebar-toggle-icon {
   display: block;
@@ -471,12 +470,8 @@ html.platform-win32 .windows-window-controls {
   overflow: hidden;
   padding: 10px 32px 28px;
 }
-.page#page-bot-todo > .workspace-header { padding: 44px 32px 10px; }
-html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px; }
-.bot-todo-title-group h2 { font-size: 30px; }
-.bot-todo-title-group p { margin-top: 6px; color: var(--text-light); font-size: 15px; }
-.bot-todo-header-actions { display: flex; align-items: center; gap: 16px; }
-.page#page-bot-todo .btn-primary { min-height: 50px; padding: 0 24px; border-radius: 999px; box-shadow: 0 9px 22px color-mix(in srgb, var(--accent) 23%, transparent); font-size: 16px; }
+.workspace-header .btn-primary { border-radius: 999px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 16%, transparent); }
+.bot-todo-header-actions { display: flex; align-items: center; }
 .bot-todo-update-icon { width: 19px; height: 19px; display: block; }
 .bot-todo-islands {
   flex: 1;
@@ -604,8 +599,8 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
   box-shadow: none;
 }
 .bot-todo-send {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -626,7 +621,7 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
 }
 .bot-todo-send.is-unavailable:hover,
 .bot-todo-send.is-unavailable:active { transform: none; }
-.bot-todo-send svg { width: 21px; height: 21px; display: block; }
+.bot-todo-send svg { width: 18px; height: 18px; display: block; }
 .bot-todo-send.is-unavailable,
 .btn.is-unavailable { opacity: 0.48; }
 .grok-bot-webhook-row > label:first-child { width: 118px; }
@@ -2398,6 +2393,9 @@ textarea.form-input {
   border-top: 1px solid var(--line);
 }
 
+.modal-footer .project-editor-delete-btn { display: none; margin-right: auto; }
+.modal-footer .project-editor-delete-btn.is-visible { display: inline-flex; }
+
 .settings-app-version {
   margin-right: auto;
   color: var(--text-light);
@@ -2651,8 +2649,8 @@ textarea.form-input {
 /* === 运动日志 === */
 .fitness-workspace-body { padding-top: 18px; }
 .fitness-page-header { align-items: center; }
-.fitness-view-actions { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: color-mix(in srgb, var(--surface-muted) 84%, transparent); }
-.fitness-view-actions .btn { min-width: 76px; min-height: 42px; justify-content: center; padding: 8px 12px; border-color: transparent; font-size: 14px; text-align: center; }
+.fitness-view-actions { display: flex; align-items: center; gap: 2px; height: 37.6px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--surface-muted) 84%, transparent); }
+.fitness-view-actions .btn { height: 100%; min-width: 76px; min-height: 0; justify-content: center; padding: 0 12px; border-color: transparent; border-radius: 999px; background: transparent; color: var(--text-light); font-size: 13px; text-align: center; }
 .fitness-view-actions .btn.active { background: var(--card-bg); border-color: var(--line); color: var(--text); box-shadow: var(--card-shadow); }
 .fitness-calendar-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.95fr); gap: 18px; min-height: 0; container-type: inline-size; }
 .fitness-calendar-panel,
@@ -2873,7 +2871,7 @@ textarea.form-input {
   .fitness-workspace-body { padding: 10px 12px 16px; }
   .fitness-page-header { align-items: flex-start; flex-wrap: wrap; }
   .fitness-view-actions { margin-left: auto; }
-  .fitness-view-actions .btn { min-width: 68px; min-height: 42px; padding: 8px; font-size: 13px; }
+  .fitness-view-actions .btn { min-width: 68px; min-height: 0; padding: 0 8px; }
   .fitness-calendar-panel { padding: 14px 16px; }
   .fitness-panel-heading h3 { font-size: 16px; }
   .fitness-day { min-height: 56px; padding: 5px 3px; text-align: center; }
@@ -3002,8 +3000,6 @@ textarea.form-input {
   .workspace-header h2 { min-width: 0; font-size: 19px; }
   .workspace-header .btn { padding: 8px 10px; font-size: 14px; white-space: nowrap; }
   .workspace-body { padding: 12px 16px 20px; }
-  .bot-todo-title-group h2 { font-size: 25px; }
-  .bot-todo-title-group p { font-size: 14px; }
   .bot-todo-header-actions { gap: 8px; }
   .bot-todo-body { gap: 14px; padding: 6px 16px 20px; overflow-y: auto; }
   .bot-todo-islands { flex: none; grid-template-columns: 1fr; gap: 12px; }
@@ -3378,7 +3374,6 @@ body[data-theme="dark"] .project-book-card.drag-over {
     <div class="workspace-header">
       <div class="bot-todo-title-group">
         <h2>TODO in Grok Bot</h2>
-        <p>规划任务与日程，高效推进每一天</p>
       </div>
       <div class="bot-todo-header-actions">
         <button class="btn btn-primary" id="botTodoUpdateBtn" type="button" onclick="updateBotTodo()"><svg class="bot-todo-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>更新</button>
@@ -3540,6 +3535,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger-solid project-editor-delete-btn" id="projectDeleteBtn" type="button" onclick="deleteEditedProject()">删除</button>
       <button class="btn btn-secondary" onclick="closeProjectEditor()">取消</button>
       <button class="btn btn-primary" onclick="saveProject()">保存</button>
     </div>
@@ -4155,8 +4151,10 @@ async function deleteProjectRemote(projectId) {
   try {
     if (serverOnline) await apiDelete(`projects/${encodeURIComponent(projectId)}`);
     else saveLocalData('wb_projects', projects);
+    return true;
   } catch (error) {
     handlePersistError(error, 'wb_projects', projects);
+    return false;
   }
 }
 
@@ -7030,7 +7028,6 @@ function renderProjects() {
         </div>
         <div class="project-book-actions">
           <button class="btn btn-ghost btn-sm project-book-action-btn" type="button" title="编辑" aria-label="编辑项目" onclick="event.stopPropagation();openProjectEditor(this.closest('.project-book-card').dataset.id)">&#9998;</button>
-          <button class="btn btn-danger btn-sm project-book-action-btn project-book-action-danger" type="button" title="删除" aria-label="删除项目" onclick="event.stopPropagation();askDeleteProject(this.closest('.project-book-card').dataset.id)">&#10005;</button>
         </div>
       </article>
     `).join('');
@@ -7878,6 +7875,7 @@ function openProjectEditor(id) {
   const title = document.getElementById('projectTitle');
   const summary = document.getElementById('projectSummary');
   const modalTitle = document.getElementById('projectModalTitle');
+  const deleteButton = document.getElementById('projectDeleteBtn');
 
   if (id) {
     const project = getProjectById(id);
@@ -7885,10 +7883,12 @@ function openProjectEditor(id) {
     title.value = project.title;
     summary.value = project.summary;
     modalTitle.textContent = '编辑项目';
+    deleteButton?.classList.add('is-visible');
   } else {
     title.value = '';
     summary.value = '';
     modalTitle.textContent = '添加项目';
+    deleteButton?.classList.remove('is-visible');
   }
 
   document.getElementById('projectEditorModal').classList.add('active');
@@ -7897,7 +7897,12 @@ function openProjectEditor(id) {
 
 function closeProjectEditor() {
   document.getElementById('projectEditorModal').classList.remove('active');
+  document.getElementById('projectDeleteBtn')?.classList.remove('is-visible');
   editingProjectId = null;
+}
+
+function deleteEditedProject() {
+  if (editingProjectId) askDeleteProject(editingProjectId);
 }
 
 async function saveProject() {
@@ -7955,7 +7960,8 @@ function askDeleteProject(id) {
         projectCloseTimer = null;
       }
 
-      await deleteProjectRemote(id);
+      const deleted = await deleteProjectRemote(id);
+      if (!deleted) return;
       projects = projects.filter(p => p.id !== id);
 
       if (activeProjectId === id) {
@@ -7964,6 +7970,7 @@ function askDeleteProject(id) {
         document.getElementById('projectBookView').classList.remove('active', 'opening', 'closing');
       }
 
+      if (editingProjectId === id) closeProjectEditor();
       renderProjects();
     }
   );
