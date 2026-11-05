@@ -36,6 +36,10 @@ const DEFAULT_WINDOW_BOUNDS = {
   minWidth: 1080,
   minHeight: 620
 };
+const WINDOW_THEME_STYLES = Object.freeze({
+  light: Object.freeze({ backgroundColor: '#f6f8f7', symbolColor: '#314038' }),
+  dark: Object.freeze({ backgroundColor: '#171719', symbolColor: '#f1f1f2' })
+});
 const WINDOW_WORK_AREA_MARGIN = 32;
 
 let mainWindow = null;
@@ -443,6 +447,21 @@ async function ensureServer() {
   return localServer.origin;
 }
 
+function applyWindowTheme(theme) {
+  if (typeof theme !== 'string' || !Object.hasOwn(WINDOW_THEME_STYLES, theme) || !mainWindow) return false;
+
+  const style = WINDOW_THEME_STYLES[theme];
+  mainWindow.setBackgroundColor(style.backgroundColor);
+  if (process.platform === 'win32') {
+    mainWindow.setTitleBarOverlay({
+      color: '#00000000',
+      symbolColor: style.symbolColor,
+      height: 42
+    });
+  }
+  return true;
+}
+
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
   const chromeOptions = process.platform === 'darwin'
@@ -455,7 +474,7 @@ function createWindow() {
           titleBarStyle: 'hidden',
           titleBarOverlay: {
             color: '#00000000',
-            symbolColor: '#314038',
+            symbolColor: '#f1f1f2',
             height: 42
           }
         }
@@ -465,7 +484,7 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    backgroundColor: '#f4efe4',
+    backgroundColor: '#171719',
     autoHideMenuBar: true,
     ...chromeOptions,
     webPreferences: {
@@ -493,6 +512,8 @@ function createWindow() {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('workweb:setWindowTheme', (_event, theme) => applyWindowTheme(theme));
+
   ipcMain.handle('workweb:minimizeWindow', () => {
     mainWindow?.minimize();
   });

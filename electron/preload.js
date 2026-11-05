@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('workwebDesktop', {
   platform: process.platform,
+  setWindowTheme: theme => (theme === 'light' || theme === 'dark')
+    ? ipcRenderer.invoke('workweb:setWindowTheme', theme)
+    : Promise.resolve(false),
   minimizeWindow: () => ipcRenderer.invoke('workweb:minimizeWindow'),
   toggleMaximizeWindow: () => ipcRenderer.invoke('workweb:toggleMaximizeWindow'),
   closeWindow: () => ipcRenderer.invoke('workweb:closeWindow'),
