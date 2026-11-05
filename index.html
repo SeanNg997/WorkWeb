@@ -116,8 +116,7 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 .sidebar > * { flex-shrink: 0; }
 
 .sidebar-header,
-.sidebar-nav,
-.sidebar-version {
+.sidebar-nav {
   width: var(--sidebar-width);
 }
 
@@ -139,31 +138,6 @@ body.sidebar-collapsed .sidebar {
 .sidebar-header p { margin: 7px 0 0; font-size: 13px; color: var(--text-light); }
 
 .sidebar-nav { padding: 16px 14px; flex: 1; }
-
-.sidebar-version {
-  position: static;
-  order: 1;
-  padding: 4px 22px 8px;
-  color: var(--sidebar-text);
-  font-size: 14px;
-  line-height: 1.35;
-  letter-spacing: 0.04em;
-  user-select: text;
-  text-align: center;
-}
-
-.sidebar-version-update {
-  margin-left: 6px;
-  color: var(--sidebar-text);
-  text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--sidebar-text) 45%, transparent);
-  transition: color var(--transition), border-color var(--transition), opacity var(--transition);
-}
-
-.sidebar-version-update:hover {
-  color: var(--sidebar-text-active);
-  border-color: var(--sidebar-text-active);
-}
 
 .sidebar-footer {
   display: flex;
@@ -269,7 +243,8 @@ html.platform-win32 .workspace-header {
 .workspace-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
 
 html.desktop-window .sidebar-header,
-html.desktop-window .workspace-header {
+html.desktop-window .workspace-header > h2,
+html.desktop-window .bot-todo-title-group {
   -webkit-app-region: drag;
 }
 
@@ -315,9 +290,8 @@ html.desktop-window .sidebar-expand-toggle {
 
 .sidebar-toggle .sidebar-toggle-icon {
   display: block;
-  font-size: 23px;
-  line-height: 1;
-  transform: translateY(-1px);
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar-toggle:focus-visible,
@@ -344,6 +318,8 @@ html.desktop-window .sidebar-expand-toggle {
   transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
+html.desktop-window .sidebar-expand-toggle { top: 52px; }
+
 .sidebar-expand-toggle:hover {
   background: var(--surface-muted);
   color: var(--text);
@@ -351,9 +327,8 @@ html.desktop-window .sidebar-expand-toggle {
 
 .sidebar-expand-toggle .sidebar-toggle-icon {
   display: block;
-  font-size: 23px;
-  line-height: 1;
-  transform: translateY(-1px);
+  width: 20px;
+  height: 20px;
 }
 
 body.sidebar-collapsed .sidebar-expand-toggle { display: grid; }
@@ -501,8 +476,6 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
 .bot-todo-title-group h2 { font-size: 30px; }
 .bot-todo-title-group p { margin-top: 6px; color: var(--text-light); font-size: 15px; }
 .bot-todo-header-actions { display: flex; align-items: center; gap: 16px; }
-.bot-todo-search-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--card-bg) 88%, transparent); color: var(--text); box-shadow: var(--card-shadow); }
-.bot-todo-search-icon svg { width: 22px; height: 22px; }
 .page#page-bot-todo .btn-primary { min-height: 50px; padding: 0 24px; border-radius: 999px; box-shadow: 0 9px 22px color-mix(in srgb, var(--accent) 23%, transparent); font-size: 16px; }
 .bot-todo-update-icon { width: 19px; height: 19px; display: block; }
 .bot-todo-islands {
@@ -517,7 +490,7 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 26px 28px;
+  padding: 20px;
   border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--card-bg) 91%, transparent);
@@ -528,18 +501,15 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 0 0 14px;
-  padding-bottom: 16px;
+  margin: 0 0 12px;
+  padding-bottom: 12px;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
 }
 .bot-todo-island-heading h3 {
-  font-size: 26px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
-.bot-todo-count { color: var(--text-light); font-size: 15px; white-space: nowrap; }
-.bot-todo-island-heading .bot-todo-count span { font-variant-numeric: tabular-nums; }
-.bot-todo-day-count { display: none; }
 .bot-todo-markdown {
   flex: 1;
   min-height: 0;
@@ -612,9 +582,8 @@ html.desktop-window .page#page-bot-todo > .workspace-header { padding-top: 72px;
   border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
   outline: none;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
-    0 0 0 7px color-mix(in srgb, var(--accent) 10%, transparent),
-    0 10px 22px color-mix(in srgb, var(--accent) 12%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .bot-todo-input {
   flex: 1;
@@ -756,6 +725,9 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 
 .note-entrance { animation: noteIn 0.3s ease both; }
+
+.bot-todo-island.note-entrance { animation-duration: 0.48s; }
+.bot-todo-island:nth-child(2).note-entrance { animation-delay: 0.08s; }
 
 @keyframes projectShelfIn {
   from { opacity: 0; transform: translateY(8px) scale(0.99); }
@@ -1064,7 +1036,7 @@ input[type="radio"] { accent-color: var(--accent); }
 .project-book-card {
   position: relative;
   min-height: 76px;
-  padding: 12px 14px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -1164,7 +1136,7 @@ input[type="radio"] { accent-color: var(--accent); }
   min-width: 0;
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
   word-break: break-word;
 }
@@ -2105,7 +2077,7 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 }
 
 .settings-card {
-  padding: 16px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--card-bg) 82%, var(--surface-muted));
@@ -2114,7 +2086,8 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 
 .settings-card h4 {
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .settings-card p {
@@ -2425,6 +2398,12 @@ textarea.form-input {
   border-top: 1px solid var(--line);
 }
 
+.settings-app-version {
+  margin-right: auto;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
 /* === 确认框 === */
 .confirm-overlay {
   position: fixed; inset: 0;
@@ -2490,7 +2469,7 @@ textarea.form-input {
 
 .info-tag-group.collapsed .info-tag-arrow { transform: rotate(-90deg); }
 
-.info-tag-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.info-tag-name { font-size: 16px; font-weight: 600; color: var(--text); }
 
 .info-tag-count {
   font-size: 12px; color: var(--text-light);
@@ -2530,7 +2509,7 @@ textarea.form-input {
 
 .info-panel.expanded .info-panel-arrow { transform: rotate(90deg); }
 
-.info-panel-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+.info-panel-title { flex: 1; font-size: 16px; font-weight: 600; color: var(--text); }
 
 .info-panel-tag {
   font-size: 12px; color: var(--accent); background: var(--accent-soft);
@@ -2679,19 +2658,19 @@ textarea.form-input {
 .fitness-calendar-panel,
 .fitness-detail-panel,
 .fitness-chart-card { background: color-mix(in srgb, var(--card-bg) 88%, transparent); border: 1px solid color-mix(in srgb, var(--line) 86%, transparent); border-radius: var(--radius); box-shadow: var(--card-shadow); }
-.fitness-calendar-panel { min-width: 0; padding: 22px; }
+.fitness-calendar-panel { min-width: 0; padding: 20px; }
 .fitness-panel-heading,
 .fitness-analytics-toolbar,
 .fitness-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .fitness-eyebrow,
 .fitness-calendar-panel .fitness-eyebrow,
-.fitness-detail-panel .fitness-eyebrow { color: var(--text-light); font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; }
+.fitness-detail-panel .fitness-eyebrow { margin-top: 4px; color: var(--text-light); font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; }
 .fitness-calendar-layout[hidden],
 .fitness-analytics[hidden],
 #fitnessTrainingChartCard[hidden],
 #fitnessGrowthChartCard[hidden] { display: none !important; }
 .fitness-panel-heading h3,
-.fitness-analytics-toolbar h3 { margin-top: 5px; color: var(--text); font-size: 21px; font-weight: 650; line-height: 1.25; }
+.fitness-analytics-toolbar h3 { margin-top: 0; color: var(--text); font-size: 16px; font-weight: 600; line-height: 1.25; }
 .fitness-calendar-nav { display: flex; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0; }
 .fitness-calendar-nav .btn { min-width: 32px; justify-content: center; padding: 7px 8px; text-align: center; }
 .fitness-weekdays,
@@ -2719,7 +2698,7 @@ textarea.form-input {
 .fitness-show-exercises input { accent-color: var(--accent); }
 .fitness-detail-panel { min-width: 0; align-self: start; overflow: hidden; }
 .fitness-detail-heading { padding: 20px 20px 15px; border-bottom: 1px solid var(--line); }
-.fitness-detail-heading h3 { margin-top: 4px; color: var(--text); font-size: 18px; font-weight: 650; }
+.fitness-detail-heading h3 { margin-top: 0; color: var(--text); font-size: 16px; font-weight: 600; }
 .fitness-detail-heading p { margin-top: 4px; color: var(--text-light); font-size: 13px; }
 .fitness-detail-body { padding: 14px 16px 18px; }
 .fitness-detail-empty { padding: 26px 12px; color: var(--text-light); font-size: 14px; line-height: 1.7; text-align: center; }
@@ -2895,13 +2874,13 @@ textarea.form-input {
   .fitness-page-header { align-items: flex-start; flex-wrap: wrap; }
   .fitness-view-actions { margin-left: auto; }
   .fitness-view-actions .btn { min-width: 68px; min-height: 42px; padding: 8px; font-size: 13px; }
-  .fitness-calendar-panel { padding: 14px 10px; }
-  .fitness-panel-heading h3 { font-size: 19px; }
+  .fitness-calendar-panel { padding: 14px 16px; }
+  .fitness-panel-heading h3 { font-size: 16px; }
   .fitness-day { min-height: 56px; padding: 5px 3px; text-align: center; }
   .fitness-day-number { width: 28px; height: 28px; font-size: 15px; }
   .fitness-calendar-legend { align-items: flex-start; margin-top: 10px; }
   .fitness-calendar-legend-items { flex-wrap: wrap; gap: 8px; }
-  .fitness-analytics-panel { padding: 14px 12px; }
+  .fitness-analytics-panel { padding: 14px 16px; }
   .fitness-analytics-toolbar { align-items: stretch; flex-direction: column; }
   .fitness-analytics-date-controls { margin-left: 0; }
   .fitness-analytics-date-controls .fitness-date-range { width: 100%; justify-content: space-between; }
@@ -2965,8 +2944,7 @@ textarea.form-input {
     box-shadow: 0 -5px 18px rgba(0,0,0,0.06);
   }
 
-  .sidebar-header,
-  .sidebar-version { display: none; }
+  .sidebar-header { display: none; }
 
   .sidebar-nav {
     width: auto;
@@ -3027,11 +3005,10 @@ textarea.form-input {
   .bot-todo-title-group h2 { font-size: 25px; }
   .bot-todo-title-group p { font-size: 14px; }
   .bot-todo-header-actions { gap: 8px; }
-  .bot-todo-search-icon { display: none; }
   .bot-todo-body { gap: 14px; padding: 6px 16px 20px; overflow-y: auto; }
   .bot-todo-islands { flex: none; grid-template-columns: 1fr; gap: 12px; }
   .bot-todo-island { min-height: 250px; padding: 20px; }
-  .bot-todo-island-heading h3 { font-size: 20px; }
+  .bot-todo-island-heading h3 { font-size: 16px; }
   .bot-todo-composer { flex: 0 0 58px; height: 58px; }
   .sidebar-expand-toggle { display: none !important; }
   body.sidebar-collapsed .workspace-header,
@@ -3149,7 +3126,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
 </head>
 <body data-theme="dark">
 
-<aside class="sidebar">
+<aside class="sidebar" id="primarySidebar">
   <div class="sidebar-header">
     <h1>工作面板</h1>
     <p id="dateDisplay"></p>
@@ -3176,11 +3153,10 @@ body[data-theme="dark"] .project-book-card.drag-over {
   </nav>
   <div class="sidebar-footer">
     <button class="sidebar-settings" id="sidebarSettingsBtn" type="button" onclick="openSettings()"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 2.8h3.8l.5 2a5.8 5.8 0 0 1 1.2.7l1.9-.7 1.9 3.3-1.5 1.4v1.4l1.5 1.4-1.9 3.3-1.9-.7a5.8 5.8 0 0 1-1.2.7l-.5 2H8.1l-.5-2a5.8 5.8 0 0 1-1.2-.7l-1.9.7-1.9-3.3 1.5-1.4v-1.4L2.6 8l1.9-3.3 1.9.7a5.8 5.8 0 0 1 1.2-.7l.5-1.9Z"/><circle cx="10" cy="10.2" r="2.2"/></svg></span><span>设置</span></button>
-    <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" onclick="toggleSidebar()" aria-label="收起导航栏" title="收起导航栏">
-      <span class="sidebar-toggle-icon" aria-hidden="true">&#8249;</span>
+    <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="true" aria-label="收起导航栏" title="收起导航栏">
+      <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m16 9-3 3 3 3"/></svg>
     </button>
   </div>
-  <div class="sidebar-version" id="sidebarVersion">v3.1.0</div>
 </aside>
 
 <div class="desktop-titlebar">
@@ -3199,8 +3175,8 @@ body[data-theme="dark"] .project-book-card.drag-over {
 
 <!-- 工作区 -->
 <main class="workspace">
-  <button class="sidebar-expand-toggle" id="sidebarExpandBtn" type="button" onclick="toggleSidebar()" aria-label="展开导航栏" title="展开导航栏">
-    <span class="sidebar-toggle-icon" aria-hidden="true">&#8250;</span>
+  <button class="sidebar-expand-toggle" id="sidebarExpandBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="false" aria-label="展开导航栏" title="展开导航栏">
+    <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>
   </button>
   <!-- TODO -->
   <div class="page active" id="page-todo">
@@ -3311,8 +3287,8 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <div class="fitness-calendar-panel">
           <div class="fitness-panel-heading">
             <div>
-              <p class="fitness-eyebrow">TRAINING CALENDAR</p>
               <h3 id="fitnessMonthLabel"></h3>
+              <p class="fitness-eyebrow">TRAINING CALENDAR</p>
             </div>
             <div class="fitness-calendar-nav">
               <button class="btn btn-ghost btn-sm" title="上个月" aria-label="上个月" onclick="shiftFitnessMonth(-1)">&#8249;</button>
@@ -3339,8 +3315,8 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <div class="fitness-analytics-panel">
         <div class="fitness-analytics-toolbar">
           <div>
-            <p class="fitness-eyebrow" id="fitnessAnalyticsEyebrow">TRAINING RECORD</p>
             <h3 id="fitnessAnalyticsTitle">运动天数</h3>
+            <p class="fitness-eyebrow" id="fitnessAnalyticsEyebrow">TRAINING RECORD</p>
           </div>
           <div class="fitness-analytics-date-controls">
             <div class="fitness-date-range" id="fitnessTrainingDateRange">
@@ -3405,18 +3381,17 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <p>规划任务与日程，高效推进每一天</p>
       </div>
       <div class="bot-todo-header-actions">
-        <span class="bot-todo-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg></span>
         <button class="btn btn-primary" id="botTodoUpdateBtn" type="button" onclick="updateBotTodo()"><svg class="bot-todo-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>更新</button>
       </div>
     </div>
     <div class="workspace-body bot-todo-body">
       <div class="bot-todo-islands">
-        <section class="bot-todo-island" aria-label="待办事项">
-          <div class="bot-todo-island-heading"><h3>待办事项</h3><span class="bot-todo-count">全部 <span>0</span> &#8250;</span></div>
+        <section class="bot-todo-island" aria-label="待办">
+          <div class="bot-todo-island-heading"><h3>待办</h3></div>
           <div class="bot-todo-markdown" id="botTodoTodos"></div>
         </section>
-        <section class="bot-todo-island" aria-label="即将到来">
-          <div class="bot-todo-island-heading"><h3>即将到来</h3><span class="bot-todo-count">全部 <span>0</span> &#8250;</span></div>
+        <section class="bot-todo-island" aria-label="日程">
+          <div class="bot-todo-island-heading"><h3>日程</h3></div>
           <div class="bot-todo-markdown" id="botTodoSchedule"></div>
         </section>
       </div>
@@ -3710,6 +3685,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
       <p class="settings-message" id="settingsMessage"></p>
     </div>
     <div class="modal-footer">
+      <span class="settings-app-version" id="settingsAppVersion">版本 v3.1.0</span>
       <button class="btn btn-secondary" onclick="checkUpdateFromSettings()" id="settingsCheckUpdateBtn">检查更新</button>
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
     </div>
@@ -3963,18 +3939,17 @@ async function loadAppVersion() {
   try {
     const meta = await apiGet('version');
     const version = normalizeVersionText(meta?.version);
-    if (!version) return;
-
-    const versionEl = document.getElementById('sidebarVersion');
-    if (versionEl) versionEl.textContent = `v${version}`;
-    if (window.workwebDesktop?.checkLatestVersion) {
+    const versionEl = document.getElementById('settingsAppVersion');
+    if (version && versionEl) versionEl.textContent = `版本 v${version}`;
+    if (version && window.workwebDesktop?.checkLatestVersion) {
       window.workwebDesktop.checkLatestVersion().then(result => {
         if (result?.hasUpdate && versionEl) {
-          versionEl.textContent = `v${version}（有新版可用）`;
+          versionEl.textContent = `版本 v${version}（有新版可用）`;
         }
       }).catch(() => {});
     }
-
+  } catch {}
+  try {
     await loadUpdateState();
   } catch {}
 }
@@ -4283,15 +4258,15 @@ function loadTheme() {
 }
 
 function applySidebarToggleVisual(collapsed) {
-  const label = collapsed ? '展开导航栏' : '收起导航栏';
-  [document.getElementById('sidebarToggleBtn'), document.getElementById('sidebarExpandBtn')]
-    .filter(Boolean)
-    .forEach(button => {
-      const icon = button.querySelector('.sidebar-toggle-icon');
-      button.setAttribute('aria-label', label);
-      button.title = label;
-      if (icon) icon.textContent = collapsed ? '›' : '‹';
-    });
+  [
+    [document.getElementById('sidebarToggleBtn'), '收起导航栏'],
+    [document.getElementById('sidebarExpandBtn'), '展开导航栏']
+  ].forEach(([button, label]) => {
+    if (!button) return;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    button.title = label;
+  });
 }
 
 function clearSidebarTransitionTimer() {
@@ -5330,7 +5305,7 @@ function renderFitnessDetail() {
   `).join('');
   panel.innerHTML = `
     <div class="fitness-detail-heading">
-      <div><p class="fitness-eyebrow">SELECTED DAY</p><h3>${dateLabel}</h3></div>
+      <div><h3>${dateLabel}</h3><p class="fitness-eyebrow">SELECTED DAY</p></div>
     </div>
     <div class="fitness-detail-body">
       ${draft && exercises.length ? cards : !draft ? '<div class="fitness-detail-empty"><button class="btn btn-primary" onclick="startFitnessDetail()">开始记录</button></div>' : ''}
@@ -5664,8 +5639,10 @@ function switchPage(page) {
     el.classList.toggle('active', el.dataset.page === page));
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
-  if (page === 'bot-todo') startBotTodoPolling();
-  else stopBotTodoPolling();
+  if (page === 'bot-todo') {
+    document.querySelectorAll('#page-bot-todo .bot-todo-island').forEach(playNoteEntrance);
+    startBotTodoPolling();
+  } else stopBotTodoPolling();
   if (page === 'progress') replayProjectShelfAnimation();
   if (page === 'fitness') renderFitnessPage();
   if (page === 'reminders') renderDailyReminders(null, null, null, true);
@@ -5911,8 +5888,6 @@ function renderBotTodoIsland(id, markdown, emptyLabel, errorMessage) {
     }
   }
   el.innerHTML = `<div class="bot-todo-markdown-inner">${inner}</div>`;
-  const count = el.closest('.bot-todo-island')?.querySelector('.bot-todo-count span');
-  if (count) count.textContent = String(el.querySelectorAll('li').length);
   el.scrollTop = scrollTop;
 }
 
