@@ -129,13 +129,16 @@ body.sidebar-collapsed .sidebar {
 }
 
 .sidebar-header {
-  padding: 26px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 16px;
   border-bottom: 1px solid var(--line);
-  text-align: left;
+  text-align: center;
 }
 
-.sidebar-header h1 { font-size: 24px; font-weight: 700; color: var(--text); }
-.sidebar-header p { margin: 7px 0 0; font-size: 13px; color: var(--text-light); }
+.sidebar-header h1 { margin: 0; font-size: 30px; font-weight: 700; color: var(--text); }
+.sidebar-header p { margin: 6px 0 0; font-size: 14px; color: var(--text-light); }
 
 .sidebar-nav { padding: 16px 14px; flex: 1; }
 
@@ -248,7 +251,6 @@ html.desktop-window .bot-todo-title-group {
   -webkit-app-region: drag;
 }
 
-html.desktop-window .sidebar-header { padding-top: 52px; }
 html.desktop-window .workspace-header { padding-top: 52px; }
 
 html.desktop-window button,
@@ -3124,7 +3126,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
 
 <aside class="sidebar" id="primarySidebar">
   <div class="sidebar-header">
-    <h1>工作面板</h1>
+    <h1>Workweb</h1>
     <p id="dateDisplay"></p>
   </div>
   <nav class="sidebar-nav">
