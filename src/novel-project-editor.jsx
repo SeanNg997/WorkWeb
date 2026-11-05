@@ -3,7 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
 import { Extension } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
 import Underline from '@tiptap/extension-underline';
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
 import { NodeSelection, TextSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
@@ -358,6 +363,55 @@ function ToolbarDropdown({ active, items, label, title }) {
   );
 }
 
+function ToolbarTablePicker({ editor }) {
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState('3');
+  const [columns, setColumns] = useState('3');
+  const rowCount = Number(rows);
+  const columnCount = Number(columns);
+  const valid = Number.isSafeInteger(rowCount) && rowCount > 0 && rowCount <= 50
+    && Number.isSafeInteger(columnCount) && columnCount > 0 && columnCount <= 50;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = event => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      editor.commands.focus();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [open, editor]);
+
+  function createTable(event) {
+    event.preventDefault();
+    if (!valid) return;
+    editor.chain().focus().insertTable({ rows: rowCount, cols: columnCount, withHeaderRow: true }).run();
+    setOpen(false);
+  }
+
+  return (
+    <div className={`novel-toolbar-group${open ? ' open' : ''}`}>
+      <button
+        type="button"
+        className={`novel-toolbar-button novel-toolbar-trigger${open ? ' open' : ''}`}
+        title="插入表格"
+        aria-expanded={open}
+        onMouseDown={event => event.preventDefault()}
+        onClick={() => setOpen(value => !value)}
+      >
+        <span>表格</span>
+        <span className="novel-toolbar-caret" aria-hidden="true">▾</span>
+      </button>
+      <form className={`novel-toolbar-menu novel-table-menu${open ? ' open' : ''}`} onSubmit={createTable}>
+        <label>行 (1-50)<input aria-label="行数" className="novel-table-input" type="number" min="1" max="50" step="1" value={rows} onChange={event => setRows(event.target.value)} /></label>
+        <label>列 (1-50)<input aria-label="列数" className="novel-table-input" type="number" min="1" max="50" step="1" value={columns} onChange={event => setColumns(event.target.value)} /></label>
+        <button type="submit" className="novel-toolbar-button" disabled={!valid}>创建</button>
+      </form>
+    </div>
+  );
+}
+
 function imageAttrsToHtml(attrs = {}) {
   const safeSrc = String(attrs.src || '').replace(/"/g, '&quot;');
   const safeAlt = String(attrs.alt || '').replace(/"/g, '&quot;');
@@ -456,11 +510,9 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
           }
         ]}
       />
-      <ToolbarButton title="正文" active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>正文</ToolbarButton>
       <ToolbarButton title="加粗" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></ToolbarButton>
       <ToolbarButton title="斜体" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></ToolbarButton>
       <ToolbarButton title="下划线" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><u>U</u></ToolbarButton>
-      <ToolbarButton title="删除线" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></ToolbarButton>
       <ToolbarDropdown
         title="列表"
         label="列表"
@@ -482,15 +534,19 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
           }
         ]}
       />
-      <ToolbarButton title="引用" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>引用</ToolbarButton>
-      <ToolbarButton title="代码块" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'{ }'}</ToolbarButton>
-      <ToolbarButton title={aiEnabled ? '关闭自动补全' : '开启自动补全'} active={aiEnabled} onClick={toggleAI}>自动补全</ToolbarButton>
-      {onImageUpload ? (
-        <ToolbarButton title="插入图片" active={false} onClick={() => fileInputRef.current?.click()}>图片</ToolbarButton>
-      ) : null}
-      {showSourceToggle ? (
-        <ToolbarButton title={sourceMode ? '返回可视编辑' : '切换源码模式'} active={sourceMode} onClick={() => onToggleSourceMode?.()}>源代码</ToolbarButton>
-      ) : null}
+      <ToolbarTablePicker editor={editor} />
+      <ToolbarDropdown
+        title="更多编辑操作"
+        label="更多"
+        active={editor.isActive('blockquote') || editor.isActive('codeBlock') || aiEnabled || sourceMode}
+        items={[
+          ...(onImageUpload ? [{ key: 'image', title: '插入图片', label: '图片', active: false, onClick: () => fileInputRef.current?.click() }] : []),
+          { key: 'blockquote', title: '引用', label: '引用', active: editor.isActive('blockquote'), onClick: () => editor.chain().focus().toggleBlockquote().run() },
+          { key: 'code-block', title: '代码块', label: '代码块', active: editor.isActive('codeBlock'), onClick: () => editor.chain().focus().toggleCodeBlock().run() },
+          ...(showSourceToggle ? [{ key: 'source', title: sourceMode ? '返回可视编辑' : '切换源代码模式', label: '源代码模式', active: sourceMode, onClick: () => onToggleSourceMode?.() }] : []),
+          { key: 'ai-completion', title: aiEnabled ? '关闭自动补全' : '开启自动补全', label: '自动补全', active: aiEnabled, onClick: toggleAI }
+        ]}
+      />
       <div className="novel-toolbar-spacer" />
       <span
         className={`novel-save-status${saveStatus?.visible ? ' visible' : ''}${saveStatus?.tone ? ` ${saveStatus.tone}` : ''}`}
@@ -539,6 +595,10 @@ function NovelProjectEditor({
   const extensions = useMemo(() => [
     StarterKit,
     Underline,
+    Table,
+    TableRow,
+    TableHeader,
+    TableCell,
     Image.extend({
       addAttributes() {
         return {
@@ -601,7 +661,21 @@ function NovelProjectEditor({
             .replace(/\n{2,}/g, '\n'),
           handleClick: (view, _pos, event) => focusEndWhenClickingBlankSpace(view, event),
           handlePaste: (view, event) => {
-            const files = Array.from(event.clipboardData?.files || []).filter(file => file.type.startsWith('image/'));
+            const clipboard = event.clipboardData;
+            const plainText = clipboard?.getData('text/plain') || '';
+            const clipboardHtml = clipboard?.getData('text/html') || '';
+            if (!/<table\b/i.test(clipboardHtml)) {
+              const pastedHtml = markdownToHtml(plainText);
+              if (/<table\b/i.test(pastedHtml)) {
+                event.preventDefault();
+                const container = document.createElement('div');
+                container.innerHTML = pastedHtml;
+                const slice = ProseMirrorDOMParser.fromSchema(view.state.schema).parseSlice(container);
+                view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
+                return true;
+              }
+            }
+            const files = Array.from(clipboard?.files || []).filter(file => file.type.startsWith('image/'));
             if (!files.length || !onImageUpload) return false;
             event.preventDefault();
             files.forEach(file => insertUploadedImage(view, file));

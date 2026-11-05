@@ -1773,6 +1773,41 @@ select:focus-visible,
   padding: 0 12px;
 }
 
+.project-page-editor .novel-toolbar-menu.novel-table-menu {
+  grid-template-columns: 1fr 1fr;
+  min-width: 210px;
+}
+
+.project-page-editor .novel-table-menu label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.project-page-editor .novel-table-input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.project-page-editor .novel-table-menu .novel-toolbar-button {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.project-page-editor .novel-table-menu .novel-toolbar-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .project-page-editor .novel-project-editor-content > div:not(.novel-toolbar) {
   display: flex;
   flex: 1 1 auto;
@@ -1801,6 +1836,115 @@ select:focus-visible,
 
 .project-page-editor .novel-project-editor-prose p {
   margin: 0.5em 0;
+}
+
+.project-page-editor .novel-project-editor-prose table {
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+}
+
+.project-page-editor .novel-project-editor-prose th,
+.project-page-editor .novel-project-editor-prose td {
+  min-width: 72px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.project-page-editor .novel-project-editor-prose th {
+  background: var(--surface-muted);
+  font-weight: 700;
+}
+
+.project-page-editor .novel-project-editor-prose td > p,
+.project-page-editor .novel-project-editor-prose th > p {
+  margin: 0;
+}
+
+body[data-markdown-table-width="fixed"] .note-content table,
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose table,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  min-width: 0;
+}
+
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose .tableWrapper,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose .tableWrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose .tableWrapper table,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose .tableWrapper table {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose .tableWrapper col,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose .tableWrapper col {
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+body[data-markdown-table-width="fixed"] .note-content th,
+body[data-markdown-table-width="fixed"] .note-content td,
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose th,
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose td,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose th,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose td {
+  min-width: 0;
+  padding-right: 0;
+  padding-left: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+body[data-markdown-table-width="fixed"] .note-content .tableWrapper,
+body[data-markdown-table-width="fixed"] .note-content-editor-host .novel-project-editor-prose .tableWrapper,
+body[data-markdown-table-width="fixed"] .project-page-editor .novel-project-editor-prose .tableWrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body[data-markdown-table-width="auto"] .note-content table,
+body[data-markdown-table-width="auto"] .note-content-editor-host .novel-project-editor-prose table,
+body[data-markdown-table-width="auto"] .project-page-editor .novel-project-editor-prose table {
+  width: max-content;
+  max-width: none;
+  table-layout: auto;
+}
+
+body[data-markdown-table-width="auto"] .note-content {
+  overflow-x: auto;
+}
+
+body[data-markdown-table-width="auto"] .note-content th,
+body[data-markdown-table-width="auto"] .note-content td,
+body[data-markdown-table-width="auto"] .note-content-editor-host .novel-project-editor-prose th,
+body[data-markdown-table-width="auto"] .note-content-editor-host .novel-project-editor-prose td,
+body[data-markdown-table-width="auto"] .project-page-editor .novel-project-editor-prose th,
+body[data-markdown-table-width="auto"] .project-page-editor .novel-project-editor-prose td {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+body[data-markdown-table-width="auto"] .note-content .tableWrapper,
+body[data-markdown-table-width="auto"] .note-content-editor-host .novel-project-editor-prose .tableWrapper,
+body[data-markdown-table-width="auto"] .project-page-editor .novel-project-editor-prose .tableWrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.project-page-editor .novel-project-editor-prose .selectedCell {
+  background: var(--accent-soft);
 }
 
 .project-page-editor .novel-project-editor-prose img {
@@ -3125,7 +3269,7 @@ body[data-theme="dark"] .project-book-card:hover {
     </div>
   </nav>
   <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
-  <div class="sidebar-version" id="sidebarVersion">v3.0.0</div>
+  <div class="sidebar-version" id="sidebarVersion">v3.1.0</div>
 </aside>
 
 <div class="sidebar-toggle-zone" aria-hidden="false">
@@ -3544,6 +3688,13 @@ body[data-theme="dark"] .project-book-card:hover {
               </div>
             </div>
             <div class="form-row">
+              <label>表格宽度</label>
+              <div class="radio-group">
+                <label><input type="radio" name="markdownTableWidth" value="fixed" checked onchange="setMarkdownTableWidth(this.value)"> 固定宽度</label>
+                <label><input type="radio" name="markdownTableWidth" value="auto" onchange="setMarkdownTableWidth(this.value)"> 自适应宽度</label>
+              </div>
+            </div>
+            <div class="form-row">
               <label>拼写检查</label>
               <div class="radio-group">
                 <label><input type="radio" name="markdownSpellcheck" value="true" onchange="setMarkdownSpellcheck(this.value)"> 开启</label>
@@ -3771,6 +3922,7 @@ let reminderPickerMonth = new Date();
 
 const MARKDOWN_FONT_SIZE_KEY = 'wb_markdown_size';
 const MARKDOWN_SPELLCHECK_KEY = 'wb_markdown_spellcheck';
+const MARKDOWN_TABLE_WIDTH_KEY = 'wb_markdown_table_width';
 let markdownSpellcheckEnabled = true;
 
 async function apiGet(key) {
@@ -4175,6 +4327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadSidebarState();
   initWindowControls();
   await loadMarkdownFontSize();
+  await loadMarkdownTableWidth();
   await loadMarkdownSpellcheck();
   await loadAISettings();
   await loadGrokBotSettings();
@@ -4362,6 +4515,28 @@ function setMarkdownFontSize(size) {
 async function loadMarkdownFontSize() {
   const size = await readPreference(MARKDOWN_FONT_SIZE_KEY, localStorage.getItem(MARKDOWN_FONT_SIZE_KEY) || 'normal');
   applyMarkdownFontSize(size);
+}
+
+function applyMarkdownTableWidth(width) {
+  const safeWidth = ['fixed', 'auto'].includes(width) ? width : 'fixed';
+  document.body.dataset.markdownTableWidth = safeWidth;
+  document.querySelectorAll('input[name="markdownTableWidth"]').forEach(radio => {
+    radio.checked = radio.value === safeWidth;
+  });
+  return safeWidth;
+}
+
+function setMarkdownTableWidth(width) {
+  const safeWidth = applyMarkdownTableWidth(width);
+  writePreference(MARKDOWN_TABLE_WIDTH_KEY, safeWidth);
+}
+
+async function loadMarkdownTableWidth() {
+  const width = await readPreference(
+    MARKDOWN_TABLE_WIDTH_KEY,
+    localStorage.getItem(MARKDOWN_TABLE_WIDTH_KEY) || 'fixed'
+  );
+  applyMarkdownTableWidth(width);
 }
 
 function applyMarkdownSpellcheck(enabled) {
@@ -7398,13 +7573,39 @@ function projectHtmlToMarkdown(value) {
       return quoted.split('\n').map(line => line ? `> ${line}` : '>').join('\n');
     }
     if (tag === 'table') {
-      const rows = Array.from(node.querySelectorAll('tr')).map(row =>
+      const cells = Array.from(node.querySelectorAll('th, td'));
+      const firstRowCells = Array.from(node.querySelector('tr')?.children || [])
+        .filter(cell => ['th', 'td'].includes(cell.tagName.toLowerCase()));
+      if (!firstRowCells.length || firstRowCells.some(cell => cell.tagName.toLowerCase() !== 'th')) {
+        return node.outerHTML || '';
+      }
+      const tableRows = Array.from(node.querySelectorAll('tr'));
+      if (tableRows.slice(1).some(row => Array.from(row.children).some(cell => cell.tagName.toLowerCase() === 'th'))) {
+        return node.outerHTML || '';
+      }
+      if (cells.some(cell => {
+        const spansRows = Number(cell.getAttribute('rowspan') || 1) !== 1;
+        const spansColumns = Number(cell.getAttribute('colspan') || 1) !== 1;
+        const hasPipeAttribute = [cell, ...cell.querySelectorAll('*')].some(element =>
+          Array.from(element.attributes).some(attribute => attribute.value.includes('|'))
+        );
+        const hasMultipleBlocks = Array.from(cell.children).filter(child =>
+          ['p', 'ul', 'ol', 'blockquote', 'pre', 'table'].includes(child.tagName.toLowerCase())
+        ).length > 1;
+        return spansRows || spansColumns || hasPipeAttribute || hasMultipleBlocks
+          || cell.querySelector('br, h1, h2, h3, h4, h5, h6, hr, ul, ol, blockquote, pre, table')
+          || Array.from(cell.children).some(child => child.tagName.toLowerCase() === 'img')
+          || /[\r\n]/.test(cell.textContent || '')
+          || Array.from(cell.querySelectorAll('code')).some(code => code.textContent.includes('|'));
+      })) return node.outerHTML || '';
+
+      const rows = tableRows.map(row =>
         Array.from(row.children)
           .filter(cell => ['th', 'td'].includes(cell.tagName.toLowerCase()))
           .map(cell => Array.from(cell.childNodes, serializeInline).join('').trim())
       );
-      if (!rows.length) return node.outerHTML || '';
-      const columnCount = Math.max(...rows.map(row => row.length));
+      if (!rows.length || rows.some(row => row.length !== firstRowCells.length)) return node.outerHTML || '';
+      const columnCount = firstRowCells.length;
       const renderRow = row => `| ${Array.from({ length: columnCount }, (_, index) => row[index] || '').join(' | ')} |`;
       return [renderRow(rows[0]), renderRow(Array(columnCount).fill('---')), ...rows.slice(1).map(renderRow)].join('\n');
     }

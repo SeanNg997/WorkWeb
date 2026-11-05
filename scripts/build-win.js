@@ -6,6 +6,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const RELEASE_DIR = path.join(ROOT_DIR, 'release');
 const UNPACKED_DIR = path.join(RELEASE_DIR, 'win-unpacked');
 const EXE_PATH = path.join(UNPACKED_DIR, 'WorkWeb.exe');
+const ELECTRON_DIST = path.join(ROOT_DIR, 'node_modules', 'electron', 'dist');
 const ICON_SOURCE = path.join(ROOT_DIR, 'image', 'icon.ico');
 const NODE_COMMAND = process.execPath;
 const ELECTRON_BUILDER_CLI = path.join(ROOT_DIR, 'node_modules', 'electron-builder', 'cli.js');
@@ -74,14 +75,14 @@ async function patchWindowsExecutable() {
 }
 
 async function main() {
-  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--win', 'dir', '--publish', 'never']);
+  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--win', 'dir', '--publish', 'never', `--config.electronDist=${ELECTRON_DIST}`]);
 
   if (!fs.existsSync(EXE_PATH)) {
     throw new Error(`未找到打包后的程序：${EXE_PATH}`);
   }
 
   await patchWindowsExecutable();
-  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--prepackaged', UNPACKED_DIR, '--win', 'nsis', '--publish', 'never']);
+  await run(NODE_COMMAND, [ELECTRON_BUILDER_CLI, '--prepackaged', UNPACKED_DIR, '--win', 'nsis', '--publish', 'never', `--config.electronDist=${ELECTRON_DIST}`]);
 }
 
 main().catch(error => {
