@@ -291,6 +291,10 @@ body:has(.confirm-overlay.active) .sidebar {
   background: var(--sidebar-bg);
 }
 
+html.platform-win32 .sidebar-header {
+  padding-top: 35px;
+}
+
 /* 红绿灯在左上角，标题整体下移避让 */
 html.platform-darwin .sidebar-header {
   padding-top: 56px;
@@ -3805,7 +3809,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
       <p class="settings-message" id="settingsMessage"></p>
     </div>
     <div class="modal-footer">
-      <span class="settings-app-version" id="settingsAppVersion">版本 v3.1.0</span>
+      <span class="settings-app-version" id="settingsAppVersion">版本 v3.2.0</span>
       <button class="btn btn-secondary" onclick="checkUpdateFromSettings()" id="settingsCheckUpdateBtn">检查更新</button>
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
     </div>
