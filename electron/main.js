@@ -53,6 +53,8 @@ const nativeAcrylicSupported = supportsWindowsAcrylic(
   process.getSystemVersion(),
   typeof BrowserWindow.prototype.setBackgroundMaterial === 'function'
 );
+const nativeVibrancySupported = process.platform === 'darwin'
+  && typeof BrowserWindow.prototype.setVibrancy === 'function';
 
 let mainWindow = null;
 let localServer = null;
@@ -464,7 +466,8 @@ function applyWindowTheme(theme) {
 
   const style = WINDOW_THEME_STYLES[theme];
   nativeTheme.themeSource = theme;
-  if (!nativeAcrylicSupported) mainWindow.setBackgroundColor(style.backgroundColor);
+  if (!nativeAcrylicSupported && !nativeVibrancySupported) mainWindow.setBackgroundColor(style.backgroundColor);
+  if (nativeVibrancySupported) mainWindow.setVibrancy('sidebar');
   if (process.platform === 'win32') {
     mainWindow.setTitleBarOverlay({
       color: '#00000000',
@@ -481,7 +484,15 @@ function createWindow() {
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
-        trafficLightPosition: { x: 16, y: 18 }
+        trafficLightPosition: { x: 16, y: 18 },
+        ...(nativeVibrancySupported
+          ? {
+              vibrancy: 'sidebar',
+              visualEffectState: 'active',
+              roundedCorners: true,
+              hasShadow: true
+            }
+          : {})
       }
     : process.platform === 'win32'
       ? {
@@ -498,17 +509,23 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    transparent: false,
+    transparent: nativeVibrancySupported,
     autoHideMenuBar: true,
     ...chromeOptions,
     ...(nativeAcrylicSupported
       ? { backgroundColor: '#00000000', backgroundMaterial: 'acrylic' }
-      : { backgroundColor: '#171719' }),
+      : nativeVibrancySupported
+        ? { backgroundColor: '#00000000' }
+        : { backgroundColor: '#171719' }),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: PRELOAD_PATH,
-      additionalArguments: nativeAcrylicSupported ? ['--workweb-native-acrylic'] : []
+      additionalArguments: nativeAcrylicSupported
+        ? ['--workweb-native-acrylic']
+        : nativeVibrancySupported
+          ? ['--workweb-native-vibrancy']
+          : []
     }
   });
 

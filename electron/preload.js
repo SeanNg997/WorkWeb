@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('workwebDesktop', {
   platform: process.platform,
   nativeAcrylic: process.argv.includes('--workweb-native-acrylic'),
+  nativeVibrancy: process.argv.includes('--workweb-native-vibrancy'),
   setWindowTheme: theme => (theme === 'light' || theme === 'dark')
     ? ipcRenderer.invoke('workweb:setWindowTheme', theme)
     : Promise.resolve(false),

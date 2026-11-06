@@ -18,6 +18,9 @@ if (workwebDesktopPlatform) {
 if (window.workwebDesktop?.nativeAcrylic) {
   document.documentElement.classList.add('native-acrylic');
 }
+if (window.workwebDesktop?.nativeVibrancy) {
+  document.documentElement.classList.add('native-vibrancy');
+}
 </script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -114,6 +117,10 @@ body[data-theme="dark"] { color-scheme: dark; }
 
 html.native-acrylic,
 html.native-acrylic body { background: transparent !important; }
+
+/* 原生 vibrancy（macOS）：窗口整块透明，只有侧边栏露出系统材质，工作区仍由自己铺满 */
+html.native-vibrancy,
+html.native-vibrancy body { background: transparent !important; }
 
 body[data-markdown-size="small"] { --markdown-font-scale: 0.9; }
 body[data-markdown-size="normal"] { --markdown-font-scale: 1; }
@@ -264,6 +271,30 @@ html.native-acrylic .sidebar {
 }
 
 html.native-acrylic .sidebar::before { display: none; }
+
+/* === vibrancy（macOS 侧边栏）=== */
+html.native-vibrancy .workspace { background-color: var(--bg); }
+
+html.native-vibrancy .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 25%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.native-vibrancy .sidebar::before { display: none; }
+
+/* 弹窗打开时把侧栏切换成不透明底色：
+   侧栏背后的原生材质不在网页里，遮罩的 backdrop-filter 模糊不到它，
+   会导致「侧栏背景干净、工作区整体被糊」的观感不一致 */
+body:has(.modal-overlay.active) .sidebar,
+body:has(.confirm-overlay.active) .sidebar {
+  background: var(--sidebar-bg);
+}
+
+/* 红绿灯在左上角，标题整体下移避让 */
+html.platform-darwin .sidebar-header {
+  padding-top: 56px;
+}
 
 .workspace-header {
   padding: 26px 32px 16px;
@@ -727,6 +758,46 @@ select:focus-visible,
 
 input[type="checkbox"],
 input[type="radio"] { accent-color: var(--accent); }
+
+/* 仅浅色主题：原生单选在浅色下会把强调色一路填到外圈，和深色主题
+   （外圈 + 留白 + 实心点）不一致，这里单独改成同一套造型；深色主题保持原生不变 */
+body[data-theme="light"] input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  position: relative;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text-light) 62%, transparent);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+body[data-theme="light"] input[type="radio"]::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+body[data-theme="light"] input[type="radio"]:checked { border-color: var(--accent); }
+
+body[data-theme="light"] input[type="radio"]:checked::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+body[data-theme="light"] input[type="radio"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+  outline-offset: 2px;
+}
 
 /* === 便笺网格 === */
 .notes-grid {
