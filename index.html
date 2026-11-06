@@ -15,6 +15,9 @@ const workwebDesktopPlatform = window.workwebDesktop?.platform || '';
 if (workwebDesktopPlatform) {
   document.documentElement.classList.add('desktop-window', `platform-${workwebDesktopPlatform}`);
 }
+if (window.workwebDesktop?.nativeAcrylic) {
+  document.documentElement.classList.add('native-acrylic');
+}
 </script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -108,6 +111,9 @@ body {
 }
 
 body[data-theme="dark"] { color-scheme: dark; }
+
+html.native-acrylic,
+html.native-acrylic body { background: transparent !important; }
 
 body[data-markdown-size="small"] { --markdown-font-scale: 0.9; }
 body[data-markdown-size="normal"] { --markdown-font-scale: 1; }
@@ -248,6 +254,16 @@ body.sidebar-collapsed .sidebar {
 body.sidebar-collapsed .workspace {
   border-radius: 0;
 }
+
+html.native-acrylic .workspace { background-color: var(--bg); }
+
+html.native-acrylic .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 36%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.native-acrylic .sidebar::before { display: none; }
 
 .workspace-header {
   padding: 26px 32px 16px;

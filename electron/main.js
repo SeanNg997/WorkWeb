@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
-const { app, BrowserWindow, dialog, ipcMain, Menu, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, screen } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { startServer } = require('../server');
 
@@ -40,7 +40,19 @@ const WINDOW_THEME_STYLES = Object.freeze({
   light: Object.freeze({ backgroundColor: '#f6f8f7', symbolColor: '#314038' }),
   dark: Object.freeze({ backgroundColor: '#171719', symbolColor: '#f1f1f2' })
 });
+const WINDOWS_ACRYLIC_MIN_BUILD = 22621;
 const WINDOW_WORK_AREA_MARGIN = 32;
+
+function supportsWindowsAcrylic(platform, systemVersion, hasBackgroundMaterialApi) {
+  const build = Number(String(systemVersion || '').split('.')[2]);
+  return platform === 'win32' && hasBackgroundMaterialApi === true && Number.isInteger(build) && build >= WINDOWS_ACRYLIC_MIN_BUILD;
+}
+
+const nativeAcrylicSupported = supportsWindowsAcrylic(
+  process.platform,
+  process.getSystemVersion(),
+  typeof BrowserWindow.prototype.setBackgroundMaterial === 'function'
+);
 
 let mainWindow = null;
 let localServer = null;
@@ -451,7 +463,8 @@ function applyWindowTheme(theme) {
   if (typeof theme !== 'string' || !Object.hasOwn(WINDOW_THEME_STYLES, theme) || !mainWindow) return false;
 
   const style = WINDOW_THEME_STYLES[theme];
-  mainWindow.setBackgroundColor(style.backgroundColor);
+  nativeTheme.themeSource = theme;
+  if (!nativeAcrylicSupported) mainWindow.setBackgroundColor(style.backgroundColor);
   if (process.platform === 'win32') {
     mainWindow.setTitleBarOverlay({
       color: '#00000000',
@@ -464,6 +477,7 @@ function applyWindowTheme(theme) {
 
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
+  if (nativeAcrylicSupported) nativeTheme.themeSource = 'dark';
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
@@ -484,13 +498,17 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    backgroundColor: '#171719',
+    transparent: false,
     autoHideMenuBar: true,
     ...chromeOptions,
+    ...(nativeAcrylicSupported
+      ? { backgroundColor: '#00000000', backgroundMaterial: 'acrylic' }
+      : { backgroundColor: '#171719' }),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: PRELOAD_PATH
+      preload: PRELOAD_PATH,
+      additionalArguments: nativeAcrylicSupported ? ['--workweb-native-acrylic'] : []
     }
   });
 
