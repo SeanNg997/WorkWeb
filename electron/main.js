@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
-const { app, BrowserWindow, dialog, ipcMain, Menu, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, screen } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { startServer } = require('../server');
 
@@ -36,7 +36,25 @@ const DEFAULT_WINDOW_BOUNDS = {
   minWidth: 1080,
   minHeight: 620
 };
+const WINDOW_THEME_STYLES = Object.freeze({
+  light: Object.freeze({ backgroundColor: '#f6f8f7', symbolColor: '#314038' }),
+  dark: Object.freeze({ backgroundColor: '#171719', symbolColor: '#f1f1f2' })
+});
+const WINDOWS_ACRYLIC_MIN_BUILD = 22621;
 const WINDOW_WORK_AREA_MARGIN = 32;
+
+function supportsWindowsAcrylic(platform, systemVersion, hasBackgroundMaterialApi) {
+  const build = Number(String(systemVersion || '').split('.')[2]);
+  return platform === 'win32' && hasBackgroundMaterialApi === true && Number.isInteger(build) && build >= WINDOWS_ACRYLIC_MIN_BUILD;
+}
+
+const nativeAcrylicSupported = supportsWindowsAcrylic(
+  process.platform,
+  process.getSystemVersion(),
+  typeof BrowserWindow.prototype.setBackgroundMaterial === 'function'
+);
+const nativeVibrancySupported = process.platform === 'darwin'
+  && typeof BrowserWindow.prototype.setVibrancy === 'function';
 
 let mainWindow = null;
 let localServer = null;
@@ -443,19 +461,45 @@ async function ensureServer() {
   return localServer.origin;
 }
 
+function applyWindowTheme(theme) {
+  if (typeof theme !== 'string' || !Object.hasOwn(WINDOW_THEME_STYLES, theme) || !mainWindow) return false;
+
+  const style = WINDOW_THEME_STYLES[theme];
+  nativeTheme.themeSource = theme;
+  if (!nativeAcrylicSupported && !nativeVibrancySupported) mainWindow.setBackgroundColor(style.backgroundColor);
+  if (nativeVibrancySupported) mainWindow.setVibrancy('sidebar');
+  if (process.platform === 'win32') {
+    mainWindow.setTitleBarOverlay({
+      color: '#00000000',
+      symbolColor: style.symbolColor,
+      height: 42
+    });
+  }
+  return true;
+}
+
 function createWindow() {
   const windowBounds = clampWindowBoundsToWorkArea();
+  if (nativeAcrylicSupported) nativeTheme.themeSource = 'dark';
   const chromeOptions = process.platform === 'darwin'
     ? {
         titleBarStyle: 'hiddenInset',
-        trafficLightPosition: { x: 16, y: 18 }
+        trafficLightPosition: { x: 16, y: 18 },
+        ...(nativeVibrancySupported
+          ? {
+              vibrancy: 'sidebar',
+              visualEffectState: 'active',
+              roundedCorners: true,
+              hasShadow: true
+            }
+          : {})
       }
     : process.platform === 'win32'
       ? {
           titleBarStyle: 'hidden',
           titleBarOverlay: {
             color: '#00000000',
-            symbolColor: '#314038',
+            symbolColor: '#f1f1f2',
             height: 42
           }
         }
@@ -465,13 +509,23 @@ function createWindow() {
     ...windowBounds,
     title: 'WorkWeb',
     icon: ICON_PATH,
-    backgroundColor: '#f4efe4',
+    transparent: nativeVibrancySupported,
     autoHideMenuBar: true,
     ...chromeOptions,
+    ...(nativeAcrylicSupported
+      ? { backgroundColor: '#00000000', backgroundMaterial: 'acrylic' }
+      : nativeVibrancySupported
+        ? { backgroundColor: '#00000000' }
+        : { backgroundColor: '#171719' }),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: PRELOAD_PATH
+      preload: PRELOAD_PATH,
+      additionalArguments: nativeAcrylicSupported
+        ? ['--workweb-native-acrylic']
+        : nativeVibrancySupported
+          ? ['--workweb-native-vibrancy']
+          : []
     }
   });
 
@@ -493,6 +547,8 @@ function createWindow() {
 }
 
 function registerIpcHandlers() {
+  ipcMain.handle('workweb:setWindowTheme', (_event, theme) => applyWindowTheme(theme));
+
   ipcMain.handle('workweb:minimizeWindow', () => {
     mainWindow?.minimize();
   });

@@ -15,183 +15,112 @@ const workwebDesktopPlatform = window.workwebDesktop?.platform || '';
 if (workwebDesktopPlatform) {
   document.documentElement.classList.add('desktop-window', `platform-${workwebDesktopPlatform}`);
 }
+if (window.workwebDesktop?.nativeAcrylic) {
+  document.documentElement.classList.add('native-acrylic');
+}
+if (window.workwebDesktop?.nativeVibrancy) {
+  document.documentElement.classList.add('native-vibrancy');
+}
 </script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --sidebar-bg: #26312d;
-  --sidebar-hover: rgba(255,255,255,0.07);
-  --sidebar-active: #dbe5dd;
-  --sidebar-text: #b8c4bd;
-  --sidebar-text-active: #26312d;
-  --bg: #edf0eb;
-  --bg-glow: rgba(225,233,227,0.85);
-  --bg-start: #f4f2ec;
-  --bg-end: #e7ece6;
-  --card-bg: #fbfaf6;
-  --surface-muted: #f4f3ee;
-  --secondary-hover: #eaeee8;
-  --line: #dfe3dc;
-  --card-shadow: 0 1px 2px rgba(35,45,41,0.05);
-  --card-shadow-hover: 0 8px 20px rgba(35,45,41,0.085);
-  --text: #2f3834;
-  --text-light: #75817a;
-  --accent: #70857a;
-  --accent-hover: #5f7368;
-  --accent-soft: #e1e9e3;
-  --danger: #b86d62;
-  --danger-hover: #a75f55;
-  --success: #729b7b;
-  --book-start: #8fa196;
-  --book-mid: #70857a;
-  --book-end: #596c62;
-  --book-text: #f8faf6;
-  --project-left-start: #d8e3da;
-  --project-left-end: #c8d6cc;
-  --radius: 10px;
+  --sidebar-bg: #f6f8f7;
+  --sidebar-underlay-start: #e3ede7;
+  --sidebar-underlay-end: #f1f7f3;
+  --sidebar-underlay-highlight: rgba(255,255,255,0.78);
+  --sidebar-underlay-shadow: rgba(92,171,126,0.24);
+  --sidebar-underlay-cool: rgba(145,201,214,0.2);
+  --sidebar-glass-sheen: rgba(255,255,255,0.26);
+  --sidebar-glass-edge: rgba(255,255,255,0.68);
+  --sidebar-hover: #edf4ef;
+  --sidebar-active: #e2f1e8;
+  --sidebar-text: #5b625e;
+  --sidebar-text-active: #34483c;
+  --bg: #f1f4f2;
+  --bg-glow: rgba(203,232,216,0.24);
+  --bg-start: #f8faf9;
+  --bg-end: #eef3f0;
+  --card-bg: #ffffff;
+  --surface-muted: #f3f6f4;
+  --secondary-hover: #eaf2ed;
+  --line: #e1e8e3;
+  --card-shadow: 0 10px 28px rgba(39,57,47,0.08);
+  --card-shadow-hover: 0 14px 32px rgba(39,57,47,0.12);
+  --text: #202521;
+  --text-light: #768079;
+  --accent: #59ad82;
+  --accent-hover: #418f68;
+  --accent-soft: #e3f2e9;
+  --danger: #bd6e68;
+  --danger-hover: #a95e58;
+  --success: #4b9e78;
+  --project-left-start: #eef5f0;
+  --project-left-end: #e3eee6;
+  --radius: 18px;
   --transition: 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
   --col-unit: 270px;
-  --sidebar-width: 240px;
-}
-
-body[data-theme="sand"] {
-  --sidebar-bg: #3a332b;
-  --sidebar-hover: rgba(255,255,255,0.08);
-  --sidebar-active: #efe5d5;
-  --sidebar-text: #d6cbbb;
-  --sidebar-text-active: #3a332b;
-  --bg: #f1ede5;
-  --bg-glow: rgba(239,229,213,0.9);
-  --bg-start: #faf6ee;
-  --bg-end: #e9dfd1;
-  --card-bg: #fffdf7;
-  --surface-muted: #f4eee4;
-  --secondary-hover: #ece4d8;
-  --line: #e3d8c8;
-  --card-shadow: 0 1px 2px rgba(55,45,32,0.05);
-  --card-shadow-hover: 0 10px 26px rgba(55,45,32,0.1);
-  --text: #3d3933;
-  --text-light: #81786d;
-  --accent: #8b806f;
-  --accent-hover: #756b5d;
-  --accent-soft: #ebe4d8;
-  --danger: #a86e64;
-  --danger-hover: #965f57;
-  --success: #7d8f73;
-  --book-start: #b9ad9a;
-  --book-mid: #8f8372;
-  --book-end: #6f6558;
-  --book-text: #fffdf7;
-  --project-left-start: #e7d8bf;
-  --project-left-end: #d8c5a8;
-}
-
-body[data-theme="blue"] {
-  --sidebar-bg: #26323d;
-  --sidebar-hover: rgba(255,255,255,0.08);
-  --sidebar-active: #d8e4ec;
-  --sidebar-text: #b8c6cf;
-  --sidebar-text-active: #26323d;
-  --bg: #eaf0f2;
-  --bg-glow: rgba(216,228,236,0.88);
-  --bg-start: #f4f7f7;
-  --bg-end: #dfe9ed;
-  --card-bg: #fbfcfb;
-  --surface-muted: #eef3f4;
-  --secondary-hover: #e2ebee;
-  --line: #d9e3e6;
-  --card-shadow: 0 1px 2px rgba(31,44,53,0.05);
-  --card-shadow-hover: 0 10px 26px rgba(31,44,53,0.1);
-  --text: #2d3940;
-  --text-light: #6f7e86;
-  --accent: #6f8796;
-  --accent-hover: #5d7482;
-  --accent-soft: #dfeaf0;
-  --danger: #ac706d;
-  --danger-hover: #9b625f;
-  --success: #6b927d;
-  --book-start: #91a7b3;
-  --book-mid: #6f8796;
-  --book-end: #586f7d;
-  --book-text: #f7fbfc;
-  --project-left-start: #d5e3ea;
-  --project-left-end: #c3d5de;
+  --sidebar-width: 270px;
 }
 
 body[data-theme="dark"] {
-  --sidebar-bg: #2E3033;
-  --sidebar-hover: rgba(255,255,255,0.06);
-  --sidebar-active: #3a3e44;
-  --sidebar-text: #b8bfc6;
-  --sidebar-text-active: #DEDEDE;
-  --bg: #26292c;
-  --bg-glow: rgba(54,60,66,0.28);
-  --bg-start: #2a2d31;
-  --bg-end: #22262a;
-  --card-bg: #333333;
-  --surface-muted: #2b2e32;
-  --secondary-hover: #3a3e44;
-  --line: #454a50;
-  --card-shadow: 0 1px 2px rgba(0,0,0,0.35);
-  --card-shadow-hover: 0 10px 24px rgba(0,0,0,0.4);
-  --text: #b8bfc6;
-  --text-light: #8e979f;
-  --accent: #6dc1e7;
-  --accent-hover: #8fd0f0;
-  --accent-soft: #243844;
-  --danger: #d08980;
-  --danger-hover: #e0a199;
-  --success: #8eb39a;
-  --book-start: #7c8793;
-  --book-mid: #5b6672;
-  --book-end: #424c57;
-  --book-text: #f2f5f7;
-  --project-left-start: #2E3033;
-  --project-left-end: #26292c;
-}
-body[data-theme="dark"] .sidebar-header h1 { color: #DEDEDE; }
-
-body[data-theme="stone"] {
-  --sidebar-bg: #2f3030;
-  --sidebar-hover: rgba(255,255,255,0.08);
-  --sidebar-active: #deded8;
-  --sidebar-text: #c4c4be;
-  --sidebar-text-active: #2f3030;
-  --bg: #ececea;
-  --bg-glow: rgba(222,222,216,0.88);
-  --bg-start: #f6f5f1;
-  --bg-end: #e2e3df;
-  --card-bg: #fbfaf7;
-  --surface-muted: #f0f0ec;
-  --secondary-hover: #e5e5df;
-  --line: #dcded8;
-  --card-shadow: 0 1px 2px rgba(38,39,38,0.05);
-  --card-shadow-hover: 0 10px 26px rgba(38,39,38,0.1);
-  --text: #333634;
-  --text-light: #777b77;
-  --accent: #747a74;
-  --accent-hover: #626862;
-  --accent-soft: #e4e6e1;
-  --danger: #a66f67;
-  --danger-hover: #965f58;
-  --success: #758f72;
-  --book-start: #9b9f99;
-  --book-mid: #747a74;
-  --book-end: #5d635d;
-  --book-text: #fbfaf7;
-  --project-left-start: #ddddd4;
-  --project-left-end: #cccec5;
+  --sidebar-bg: #292a2d;
+  --sidebar-underlay-start: #191a1c;
+  --sidebar-underlay-end: #252629;
+  --sidebar-underlay-highlight: rgba(255,255,255,0.1);
+  --sidebar-underlay-shadow: rgba(0,0,0,0.24);
+  --sidebar-underlay-cool: rgba(255,255,255,0.035);
+  --sidebar-glass-sheen: rgba(255,255,255,0.08);
+  --sidebar-glass-edge: rgba(255,255,255,0.14);
+  --sidebar-hover: #38393d;
+  --sidebar-active: #3b3c40;
+  --sidebar-text: #c3c4c7;
+  --sidebar-text-active: #f1f1f2;
+  --bg: #171719;
+  --bg-glow: rgba(255,255,255,0);
+  --bg-start: #171719;
+  --bg-end: #171719;
+  --card-bg: #222326;
+  --surface-muted: #2b2c30;
+  --secondary-hover: #343539;
+  --line: #3b3c40;
+  --card-shadow: 0 10px 28px rgba(0,0,0,0.18);
+  --card-shadow-hover: 0 12px 30px rgba(0,0,0,0.24);
+  --text: #ededee;
+  --text-light: #a7a8ac;
+  --accent: #d2d3d6;
+  --accent-hover: #f1f1f2;
+  --accent-soft: #393a3e;
+  --danger: #e0958a;
+  --danger-hover: #f0a89d;
+  --success: #a6c9af;
+  --project-left-start: #292a2d;
+  --project-left-end: #232427;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: var(--sidebar-bg);
+  background:
+    radial-gradient(ellipse 120px 140px at 32px 10%, var(--sidebar-underlay-highlight), transparent 78%),
+    radial-gradient(ellipse 150px 170px at 248px 42%, var(--sidebar-underlay-shadow), transparent 76%),
+    radial-gradient(ellipse 105px 145px at 110px 84%, var(--sidebar-underlay-cool), transparent 79%),
+    linear-gradient(153deg, var(--sidebar-underlay-start), var(--sidebar-underlay-end));
   color: var(--text);
+  color-scheme: light;
   height: 100vh;
   display: flex;
   overflow: hidden;
 }
+
+body[data-theme="dark"] { color-scheme: dark; }
+
+html.native-acrylic,
+html.native-acrylic body { background: transparent !important; }
+
+/* 原生 vibrancy（macOS）：窗口整块透明，只有侧边栏露出系统材质，工作区仍由自己铺满 */
+html.native-vibrancy,
+html.native-vibrancy body { background: transparent !important; }
 
 body[data-markdown-size="small"] { --markdown-font-scale: 0.9; }
 body[data-markdown-size="normal"] { --markdown-font-scale: 1; }
@@ -200,11 +129,17 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 /* === 侧边栏 === */
 .sidebar {
   width: var(--sidebar-width); min-width: var(--sidebar-width);
-  background: var(--sidebar-bg);
+  background: color-mix(in srgb, var(--sidebar-bg) 45%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  backdrop-filter: blur(18px) saturate(1.08);
   position: relative;
   display: flex; flex-direction: column;
   user-select: none;
-  padding-bottom: 20px;
+  padding: 0 0 14px;
+  margin: 0;
+  border-radius: 0;
+  border-right: 1px solid color-mix(in srgb, var(--line) 52%, transparent);
+  box-shadow: none;
   overflow: hidden;
   transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
               min-width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
@@ -213,68 +148,72 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 
 .sidebar > * { flex-shrink: 0; }
 
-.sidebar-header,
-.sidebar-nav,
-.sidebar-version {
-  width: var(--sidebar-width);
+.sidebar::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='frost'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.065' filter='url(%23frost)'/%3E%3C/svg%3E"),
+    linear-gradient(112deg, var(--sidebar-glass-sheen), transparent 35% 72%, color-mix(in srgb, var(--sidebar-glass-sheen) 38%, transparent));
+  box-shadow: inset 0 1px 0 var(--sidebar-glass-edge), inset -1px 0 0 var(--sidebar-glass-edge);
+  content: '';
+  pointer-events: none;
 }
 
-.sidebar-settings {
-  width: calc(var(--sidebar-width) - 32px);
+.sidebar > * { position: relative; z-index: 1; }
+
+.sidebar-header,
+.sidebar-nav {
+  width: var(--sidebar-width);
 }
 
 body.sidebar-collapsed .sidebar {
   width: 0;
   min-width: 0;
   padding-bottom: 0;
+  margin-left: 0;
+  border-right: 0;
 }
 
 .sidebar-header {
-  padding: 28px 24px 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22px 16px;
+  border-bottom: 1px solid var(--line);
   text-align: center;
 }
 
-.sidebar-header h1 { font-size: 29px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-.sidebar-header p { font-size: 15px; color: var(--sidebar-text); margin-top: 8px; }
+.sidebar-header h1 { margin: 0; font-size: 30px; font-weight: 700; color: var(--text); }
+.sidebar-header p { margin: 6px 0 0; font-size: 14px; color: var(--text-light); }
 
-.sidebar-nav { padding: 12px 12px; flex: 1; }
+.sidebar-nav { padding: 16px 14px; flex: 1; }
 
-.sidebar-version {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: 6px 16px 10px;
-  color: var(--sidebar-text);
-  font-size: 14px;
-  line-height: 1.35;
-  letter-spacing: 0.04em;
-  user-select: text;
-  text-align: center;
-}
-
-.sidebar-version-update {
-  margin-left: 6px;
-  color: #f1d08a;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(241,208,138,0.45);
-  transition: color var(--transition), border-color var(--transition), opacity var(--transition);
-}
-
-.sidebar-version-update:hover {
-  color: #ffe7b6;
-  border-color: rgba(255,231,182,0.82);
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0 12px;
+  order: 2;
+  margin-top: 8px;
 }
 
 .sidebar-settings {
-  margin: 6px 16px 10px;
-  min-height: 36px;
-  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 14px;
+  text-align: left;
+  margin: 0;
+  min-height: 44px;
+  border: 0;
   border-radius: 12px;
-  background: rgba(255,255,255,0.06);
+  background: transparent;
   color: var(--sidebar-text);
-  font-size: 14px;
-  letter-spacing: 0.04em;
+  font-size: 15px;
   cursor: pointer;
   transition: all var(--transition);
 }
@@ -287,31 +226,35 @@ body.sidebar-collapsed .sidebar {
 
 .nav-item {
   display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: 8px;
+  padding: 12px 14px; border-radius: 14px;
   color: var(--sidebar-text); cursor: pointer;
-  transition: all var(--transition); font-size: 15px; margin-bottom: 4px;
+  transition: all var(--transition); font-size: 17px; margin-bottom: 4px;
 }
 
 .nav-item[hidden] { display: none !important; }
-.nav-item:hover { background: var(--sidebar-hover); color: #f3f6f2; }
-.nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 500; }
+.nav-item:hover { background: var(--sidebar-hover); color: var(--text); }
+.nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 650; }
 
 .nav-icon {
   width: 20px; height: 20px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
+  color: currentColor; flex-shrink: 0;
 }
+.nav-icon svg { width: 20px; height: 20px; display: block; }
 
 /* === 工作区 === */
 .workspace {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background:
-    radial-gradient(circle at 18% 12%, var(--bg-glow), transparent 32%),
+    radial-gradient(ellipse at 91% 5%, var(--bg-glow), transparent 34%),
     linear-gradient(135deg, var(--bg-start) 0%, var(--bg) 55%, var(--bg-end) 100%);
-  border-radius: 14px 0 0 14px;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
   transition: border-radius 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -319,15 +262,53 @@ body.sidebar-collapsed .workspace {
   border-radius: 0;
 }
 
+html.native-acrylic .workspace { background-color: var(--bg); }
+
+html.native-acrylic .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 70%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.native-acrylic .sidebar::before { display: none; }
+
+/* === vibrancy（macOS 侧边栏）=== */
+html.native-vibrancy .workspace { background-color: var(--bg); }
+
+html.native-vibrancy .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 25%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.native-vibrancy .sidebar::before { display: none; }
+
+/* 弹窗打开时把侧栏切换成不透明底色：
+   侧栏背后的原生材质不在网页里，遮罩的 backdrop-filter 模糊不到它，
+   会导致「侧栏背景干净、工作区整体被糊」的观感不一致 */
+body:has(.modal-overlay.active) .sidebar,
+body:has(.confirm-overlay.active) .sidebar {
+  background: var(--sidebar-bg);
+}
+
+html.platform-win32 .sidebar-header {
+  padding-top: 35px;
+}
+
+/* 红绿灯在左上角，标题整体下移避让 */
+html.platform-darwin .sidebar-header {
+  padding-top: 56px;
+}
+
 .workspace-header {
-  padding: 22px 32px 14px;
+  padding: 26px 32px 16px;
   display: flex; align-items: center; justify-content: space-between;
   position: relative;
   z-index: 2;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 64%, transparent);
+  border-bottom: 0;
 }
 
-.workspace-header h2 { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.workspace-header h2 { font-size: 25px; font-weight: 700; color: var(--text); line-height: 1.25; }
 
 html.platform-win32 .workspace-header {
   min-height: 86px;
@@ -335,7 +316,7 @@ html.platform-win32 .workspace-header {
 }
 
 .workspace-body {
-  flex: 1; overflow-y: auto; padding: 12px 32px 32px;
+  flex: 1; overflow-y: auto; padding: 12px 32px 30px;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.1) transparent;
 }
 
@@ -349,13 +330,14 @@ html.platform-win32 .workspace-header {
 .workspace-body::-webkit-scrollbar-track { background: transparent; }
 .workspace-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
 
-html.desktop-window .sidebar-header,
-html.desktop-window .workspace-header {
+html.desktop-window .sidebar-header {
   -webkit-app-region: drag;
 }
 
-html.desktop-window .sidebar-header { padding-top: 52px; }
-html.desktop-window .workspace-header { padding-top: 52px; }
+html.desktop-window .workspace-header {
+  padding-top: 52px;
+  -webkit-app-region: drag;
+}
 
 html.desktop-window button,
 html.desktop-window input,
@@ -368,77 +350,78 @@ html.desktop-window .workspace-body,
 html.desktop-window .modal-overlay,
 html.desktop-window .project-page-tabs,
 html.desktop-window .project-page-find,
-html.desktop-window .novel-toolbar {
+html.desktop-window .novel-toolbar,
+html.desktop-window .sidebar-expand-toggle {
   -webkit-app-region: no-drag;
 }
 
-.sidebar-toggle-zone {
-  position: fixed;
-  left: calc(var(--sidebar-width) - 36px);
-  top: 0;
-  bottom: 0;
-  width: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  z-index: 40;
-  -webkit-app-region: no-drag;
-  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-toggle-zone.is-animating .sidebar-toggle {
-  opacity: 0;
-  pointer-events: none;
-}
-
-body.sidebar-collapsed .sidebar-toggle-zone {
-  left: 0;
-}
-
-.sidebar-toggle-zone[data-visual-state="collapsed"] {
-  justify-content: flex-start;
-}
+html.desktop-window .modal-header { -webkit-app-region: drag; }
 
 .sidebar-toggle {
-  width: 30px;
-  height: 76px;
-  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
-  border-right: none;
-  border-radius: 12px 0 0 12px;
-  background: color-mix(in srgb, var(--card-bg) 94%, var(--accent-soft));
-  color: var(--accent);
-  box-shadow: 0 10px 24px rgba(35,45,41,0.12);
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--sidebar-text);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.18s ease,
-              background var(--transition),
-              color var(--transition),
-              box-shadow var(--transition);
+  transition: background var(--transition), color var(--transition);
 }
 
-.sidebar-toggle-zone[data-visual-state="collapsed"] .sidebar-toggle {
-  border-right: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
-  border-left: none;
-  border-radius: 0 12px 12px 0;
-}
-
-.sidebar-toggle-zone:hover .sidebar-toggle,
-.sidebar-toggle:focus-visible {
-  opacity: 1;
-}
-
-.sidebar-toggle:hover {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 14px 30px rgba(35,45,41,0.18);
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible,
+.sidebar-expand-toggle:hover,
+.sidebar-expand-toggle:focus-visible {
+  background: var(--sidebar-hover);
+  color: var(--text);
 }
 
 .sidebar-toggle .sidebar-toggle-icon {
   display: block;
-  font-size: 23px;
-  line-height: 1;
-  transform: translateY(-1px);
+  width: 20px;
+  height: 20px;
 }
+
+.sidebar-toggle:focus-visible,
+.sidebar-expand-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sidebar-expand-toggle {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 10;
+  display: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--sidebar-text);
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+html.desktop-window .sidebar-expand-toggle { top: 52px; }
+
+.sidebar-expand-toggle .sidebar-toggle-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+body.sidebar-collapsed .sidebar-expand-toggle { display: grid; }
+body.sidebar-collapsed .workspace-header { margin-left: 72px; padding-left: 0; }
 
 .desktop-titlebar {
   position: fixed;
@@ -571,33 +554,43 @@ html.platform-win32 .windows-window-controls {
 .bot-todo-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 22px;
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 36px;
+  padding: 10px 32px 28px;
 }
+.workspace-header .btn-primary { border-radius: 999px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 16%, transparent); }
+.bot-todo-header-actions { display: flex; align-items: center; }
+.bot-todo-update-icon { width: 19px; height: 19px; display: block; }
 .bot-todo-islands {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: 22px;
 }
 .bot-todo-island {
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  border: 1px solid var(--line);
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
   border-radius: var(--radius);
-  background: var(--card-bg);
+  background: color-mix(in srgb, var(--card-bg) 91%, transparent);
   box-shadow: var(--card-shadow);
 }
-.bot-todo-island > h3 {
+.bot-todo-island-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 12px;
-  text-align: center;
-  font-size: 17px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+}
+.bot-todo-island-heading h3 {
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -613,17 +606,17 @@ html.platform-win32 .windows-window-controls {
 }
 .bot-todo-markdown-inner {
   width: 100%;
-  margin-block: auto;
+  margin-block: 0;
 }
 .bot-todo-markdown p,
 .bot-todo-markdown ul,
 .bot-todo-markdown ol { margin: 0 0 0.7em; }
 .bot-todo-day {
-  margin: 14px 0 6px;
-  font-size: 17px;
+  margin: 14px 0 10px;
+  font-size: 18px;
   font-weight: 700;
   text-align: left;
-  color: var(--text);
+  color: var(--accent-hover);
 }
 .bot-todo-plain {
   list-style: none;
@@ -631,41 +624,50 @@ html.platform-win32 .windows-window-controls {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-.bot-todo-plain.is-bulleted {
-  list-style: disc;
-  padding-left: 1.25em;
+  gap: 10px;
 }
 .bot-todo-plain li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
   margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: 16px;
-  line-height: 1.45;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
 }
+.bot-todo-check { width: 28px; height: 28px; flex: 0 0 auto; border: 2px solid var(--line); border-radius: 7px; background: color-mix(in srgb, var(--card-bg) 90%, transparent); }
+.bot-todo-event { gap: 14px !important; min-height: 62px; padding: 10px 18px !important; border-radius: 16px !important; background: color-mix(in srgb, var(--accent-soft) 82%, var(--card-bg)) !important; }
+.bot-todo-event-marker { width: 8px; height: 38px; flex: 0 0 auto; border-radius: 999px; background: var(--accent); box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 26%, transparent); }
+.bot-todo-event-time { min-width: 86px; color: var(--text); font-weight: 700; }
+.bot-todo-event-title { min-width: 0; color: var(--text); }
+.bot-todo-plain li > span:not(.bot-todo-check):not(.bot-todo-event-marker):not(.bot-todo-event-time),
+.bot-todo-event-title { overflow-wrap: anywhere; word-break: break-word; }
 .bot-todo-status { margin: 24px 8px; text-align: center; color: var(--text-light); font-size: 15px; }
 .bot-todo-status.is-error { color: var(--danger); }
 .bot-todo-composer {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: min(720px, 100%);
-  height: 48px;
-  margin: 0 auto;
-  padding: 4px 4px 4px 16px;
+  gap: 14px;
+  width: 100%;
+  height: 64px;
+  margin: 0;
+  padding: 5px 8px 5px 22px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--card-bg);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--card-bg) 92%, transparent);
+  box-shadow: var(--card-shadow);
 }
 .bot-todo-composer:focus-within {
   border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
   outline: none;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
-    0 0 0 7px color-mix(in srgb, var(--accent) 10%, transparent),
-    0 10px 22px color-mix(in srgb, var(--accent) 12%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .bot-todo-input {
   flex: 1;
@@ -676,16 +678,18 @@ html.platform-win32 .windows-window-controls {
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: 17px;
 }
+.bot-todo-input::placeholder { color: var(--text-light); }
+.bot-todo-compose-icon { width: 22px; height: 22px; flex: 0 0 auto; color: var(--text-light); }
 .bot-todo-input:focus,
 .bot-todo-input:focus-visible {
   outline: none;
   box-shadow: none;
 }
 .bot-todo-send {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -706,7 +710,7 @@ html.platform-win32 .windows-window-controls {
 }
 .bot-todo-send.is-unavailable:hover,
 .bot-todo-send.is-unavailable:active { transform: none; }
-.bot-todo-send svg { width: 16px; height: 16px; display: block; }
+.bot-todo-send svg { width: 18px; height: 18px; display: block; }
 .bot-todo-send.is-unavailable,
 .btn.is-unavailable { opacity: 0.48; }
 .grok-bot-webhook-row > label:first-child { width: 118px; }
@@ -714,13 +718,13 @@ html.platform-win32 .windows-window-controls {
 /* === 按钮 === */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 18px; border: 1px solid transparent; border-radius: 10px;
+  padding: 8px 18px; border: 1px solid transparent; border-radius: 999px;
   font-size: 14px; font-weight: 500; cursor: pointer;
   transition: all var(--transition); white-space: nowrap;
 }
 
 .btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(95,115,104,0.18); }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 24%, transparent); }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-danger-solid { background: var(--danger); color: #fff; }
@@ -731,7 +735,7 @@ html.platform-win32 .windows-window-controls {
 .settings-actions .btn-danger-solid:hover { background: var(--danger-hover); color: #fff; }
 
 .btn-ghost { background: transparent; color: var(--text-light); padding: 4px 8px; }
-.btn-ghost:hover { background: rgba(47,56,52,0.06); color: var(--text); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 
 .btn-secondary { background: var(--surface-muted); color: var(--text); border-color: var(--line); }
 .btn-secondary:hover { background: var(--secondary-hover); }
@@ -752,6 +756,49 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 [role="button"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"],
+input[type="radio"] { accent-color: var(--accent); }
+
+/* 仅浅色主题：原生单选在浅色下会把强调色一路填到外圈，和深色主题
+   （外圈 + 留白 + 实心点）不一致，这里单独改成同一套造型；深色主题保持原生不变 */
+body[data-theme="light"] input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  position: relative;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text-light) 62%, transparent);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+body[data-theme="light"] input[type="radio"]::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+body[data-theme="light"] input[type="radio"]:checked { border-color: var(--accent); }
+
+body[data-theme="light"] input[type="radio"]:checked::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+body[data-theme="light"] input[type="radio"]:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
   outline-offset: 2px;
 }
@@ -803,6 +850,9 @@ select:focus-visible,
 
 .note-entrance { animation: noteIn 0.3s ease both; }
 
+.bot-todo-island.note-entrance { animation-duration: 0.48s; }
+.bot-todo-island:nth-child(2).note-entrance { animation-delay: 0.08s; }
+
 @keyframes projectShelfIn {
   from { opacity: 0; transform: translateY(8px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -831,7 +881,7 @@ select:focus-visible,
   box-sizing: border-box;
   margin: 0 !important;
   opacity: 0.92;
-  box-shadow: 0 22px 48px rgba(35,45,41,0.22);
+  box-shadow: 0 22px 48px rgba(0,0,0,0.22);
   transform-origin: center;
 }
 
@@ -865,7 +915,7 @@ select:focus-visible,
   transition: background var(--transition);
 }
 
-.note-resize-handle:hover { background: rgba(112,133,122,0.16); }
+.note-resize-handle:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 
 .note-resize-indicator {
   position: absolute;
@@ -1101,74 +1151,30 @@ select:focus-visible,
 }
 
 .project-shelf {
-  display: grid;
-  gap: 26px;
-  padding-top: 16px;
-}
-
-.project-tag-section {
-  display: grid;
-  gap: 14px;
-  cursor: default;
-}
-
-.project-tag-section.dragging {
-  opacity: 0.45;
-}
-
-.project-tag-section.drag-over {
-  outline: 2px dashed var(--accent);
-  outline-offset: 8px;
-  border-radius: 14px;
-}
-
-.project-tag-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 28px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.project-tag-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.project-tag-count {
-  font-size: 12px;
-  color: var(--text-light);
-  background: var(--surface-muted);
-  padding: 1px 8px;
-  border-radius: 10px;
-}
-
-.project-tag-books {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 24px;
-  align-items: start;
-  cursor: default;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
 }
 
 .project-book-card {
   position: relative;
-  min-height: 260px;
-  padding: 26px 22px 22px;
+  min-height: 76px;
+  padding: 12px 20px;
   display: flex;
-  border-radius: 14px 12px 12px 14px;
-  background: linear-gradient(145deg, var(--book-start) 0%, var(--book-mid) 48%, var(--book-end) 100%);
-  color: var(--book-text);
-  box-shadow: 0 14px 30px rgba(59,76,68,0.14);
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text);
+  box-shadow: none;
   cursor: pointer;
-  overflow: hidden;
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
 }
 
 .project-book-card:active {
-  cursor: move;
+  cursor: grabbing;
 }
 
 .project-book-card.sort-drag-proxy {
@@ -1177,10 +1183,12 @@ select:focus-visible,
   top: 0;
   z-index: 4000;
   display: flex;
-  opacity: 0.55;
+  opacity: 0.92;
   cursor: grabbing;
-  background: linear-gradient(145deg, var(--book-start) 0%, var(--book-mid) 48%, var(--book-end) 100%);
-  color: var(--book-text);
+  background: var(--card-bg);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: var(--card-shadow-hover);
   transition: none !important;
   animation: none !important;
   will-change: transform;
@@ -1191,126 +1199,82 @@ select:focus-visible,
   animation-delay: calc(var(--project-enter-index, 0) * 0.04s);
 }
 
-.project-book-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08));
-}
-
-.project-book-card::after {
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: var(--radius);
-  pointer-events: none;
-}
-
 .project-book-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(59,76,68,0.16);
-  z-index: 3;
+  background: color-mix(in srgb, var(--surface-muted) 58%, var(--card-bg));
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  box-shadow: var(--card-shadow);
 }
 
 .project-book-actions {
-  position: absolute;
-  top: 18px;
-  right: 18px;
+  position: relative;
   z-index: 2;
   display: flex;
-  gap: 4px;
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events: none;
-  transition: opacity var(--transition), transform var(--transition);
-}
-
-.project-book-card:hover .project-book-actions,
-.project-book-card:focus-within .project-book-actions {
+  flex: 0 0 auto;
+  gap: 2px;
+  margin-left: auto;
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
   pointer-events: auto;
 }
 
 .project-book-action-btn {
   min-width: 32px;
   min-height: 32px;
-  padding: 0 10px;
-  border-color: rgba(255,255,255,0.24);
-  background: rgba(255,255,255,0.16);
-  color: rgba(255,255,255,0.94);
-  backdrop-filter: blur(8px);
+  padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-light);
 }
 
 .project-book-action-btn:hover {
-  background: rgba(255,255,255,0.24);
-  color: #fff;
+  background: var(--surface-muted);
+  color: var(--text);
 }
 
 .project-book-action-btn.project-book-action-danger {
-  color: #ffd6d0;
+  color: var(--danger);
 }
 
 .project-book-action-btn.project-book-action-danger:hover {
-  background: rgba(184,109,98,0.22);
-  color: #fff0ed;
+  background: color-mix(in srgb, var(--danger) 12%, var(--card-bg));
+  color: var(--danger-hover);
 }
 
-.project-book-cover {
-  position: relative;
-  z-index: 1;
+.project-row-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: center;
+  gap: 5px;
 }
 
-.project-book-cover-title {
-  margin: 0;
-  font-size: 27px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: 1px;
-  word-break: break-word;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.18);
-}
-
-.project-tag-row {
+.project-row-heading {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  pointer-events: none;
-  user-select: none;
+  gap: 8px 12px;
+  min-width: 0;
 }
 
-.project-tag-pill {
-  max-width: 100%;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.92);
-  font-size: 12px;
-  font-weight: 700;
+.project-list-title {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.4;
   word-break: break-word;
-  pointer-events: none;
 }
 
-.project-overview-tags {
-  justify-content: flex-start;
-  margin: -8px 0 14px;
-}
-
-.project-overview-tags .project-tag-pill {
-  background: var(--accent-soft);
-  color: var(--accent-hover);
-  backdrop-filter: none;
+.project-list-summary {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
 }
 
 .project-book-view {
@@ -1339,25 +1303,25 @@ select:focus-visible,
   justify-content: center;
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid rgba(62,79,71,0.12);
+  border-top: 1px solid var(--line);
 }
 
 .project-book-return {
   min-height: 48px;
   padding: 8px 20px;
   border-width: 1.5px;
-  border-color: rgba(62,79,71,0.18);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--accent-soft) 78%, white);
+  border-color: var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
   color: var(--text);
   font-size: 15px;
   font-weight: 700;
   line-height: 1.1;
-  box-shadow: 0 8px 20px rgba(62,79,71,0.08);
+  box-shadow: var(--card-shadow);
 }
 
 .project-book-return:hover {
-  background: color-mix(in srgb, var(--accent-soft) 92%, white);
+  background: var(--secondary-hover);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
   color: var(--accent-hover);
 }
@@ -1368,36 +1332,36 @@ select:focus-visible,
   flex: 1;
   width: 100%;
   min-height: 0;
-  border-radius: 28px;
+  border-radius: 14px;
   overflow: hidden;
   background: var(--card-bg);
-  box-shadow: 0 18px 46px rgba(35,45,41,0.1);
+  box-shadow: var(--card-shadow);
   transform-origin: center;
 }
 
 .project-book-view.opening .project-book-spread {
-  animation: bookOpenIn 0.58s cubic-bezier(0.2, 0.9, 0.2, 1);
+  animation: bookOpenIn 0.24s ease-out;
 }
 
 @keyframes bookOpenIn {
   from {
     opacity: 0;
-    transform: perspective(1600px) rotateY(-18deg) scale(0.94);
+    transform: translateY(7px);
   }
   to {
     opacity: 1;
-    transform: perspective(1600px) rotateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes bookCloseOut {
   from {
     opacity: 1;
-    transform: perspective(1600px) rotateY(0) scale(1);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: perspective(1600px) rotateY(16deg) scale(0.94);
+    transform: translateY(-5px);
   }
 }
 
@@ -1468,7 +1432,7 @@ select:focus-visible,
   width: 100%;
   height: 1px;
   border-radius: 999px;
-  background: rgba(62,79,71,0.16);
+  background: var(--line);
   transition: height 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -1507,12 +1471,12 @@ select:focus-visible,
   gap: 4px;
   padding-right: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(47,56,52,0.18) transparent;
+  scrollbar-color: color-mix(in srgb, var(--text) 18%, transparent) transparent;
 }
 
 .project-outline-list::-webkit-scrollbar { width: 5px; }
 .project-outline-list::-webkit-scrollbar-track { background: transparent; }
-.project-outline-list::-webkit-scrollbar-thumb { background: rgba(47,56,52,0.18); border-radius: 3px; }
+.project-outline-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text) 18%, transparent); border-radius: 3px; }
 
 .project-outline-empty {
   color: var(--text-light);
@@ -1541,7 +1505,7 @@ select:focus-visible,
 }
 
 .project-outline-toggle:hover {
-  background: rgba(255,255,255,0.24);
+  background: var(--surface-muted);
   color: var(--accent-hover);
 }
 
@@ -1569,8 +1533,8 @@ select:focus-visible,
 }
 
 .project-outline-item:hover {
-  border-color: rgba(62,79,71,0.14);
-  background: rgba(255,255,255,0.28);
+  border-color: var(--line);
+  background: var(--surface-muted);
   color: var(--accent-hover);
 }
 
@@ -2196,7 +2160,7 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 .modal {
   background: var(--card-bg);
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius);
   width: 560px; max-width: 90vw; max-height: 80vh;
   display: flex; flex-direction: column;
   box-shadow: 0 18px 54px rgba(35,45,41,0.14);
@@ -2237,15 +2201,17 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 }
 
 .settings-card {
-  padding: 16px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--surface-muted) 74%, white);
+  background: color-mix(in srgb, var(--card-bg) 82%, var(--surface-muted));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 .settings-card h4 {
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .settings-card p {
@@ -2332,10 +2298,11 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 .form-row input[type="text"],
 .form-row input[type="password"] {
   flex: 1;
-  padding: 6px 10px;
+  min-width: 0;
+  padding: 9px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--card-bg);
+  border-radius: 12px;
+  background: var(--surface-muted);
   color: var(--text);
   font-size: 14px;
   outline: none;
@@ -2494,14 +2461,14 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 
 .form-input {
   width: 100%; padding: 10px 14px;
-  border: 1.5px solid var(--line); border-radius: 8px;
-  font-size: 15px; color: var(--text); background: #f8faf6;
+  border: 1px solid var(--line); border-radius: 12px;
+  font-size: 15px; color: var(--text); background: var(--surface-muted);
   transition: all var(--transition); outline: none; font-family: inherit;
 }
 
 .form-input:focus {
-  border-color: var(--accent); background: #fff;
-  box-shadow: 0 0 0 3px rgba(112,133,122,0.12);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--card-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .tag-suggestions {
@@ -2555,6 +2522,15 @@ textarea.form-input {
   border-top: 1px solid var(--line);
 }
 
+.modal-footer .project-editor-delete-btn { display: none; margin-right: auto; }
+.modal-footer .project-editor-delete-btn.is-visible { display: inline-flex; }
+
+.settings-app-version {
+  margin-right: auto;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
 /* === 确认框 === */
 .confirm-overlay {
   position: fixed; inset: 0;
@@ -2569,7 +2545,7 @@ textarea.form-input {
 
 .confirm-box {
   background: var(--card-bg);
-  border-radius: 14px; padding: 24px;
+  border-radius: var(--radius); padding: 24px;
   width: 340px; text-align: center;
   box-shadow: 0 18px 54px rgba(35,45,41,0.14);
   transform: scale(0.9); transition: transform var(--transition);
@@ -2620,7 +2596,7 @@ textarea.form-input {
 
 .info-tag-group.collapsed .info-tag-arrow { transform: rotate(-90deg); }
 
-.info-tag-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.info-tag-name { font-size: 16px; font-weight: 600; color: var(--text); }
 
 .info-tag-count {
   font-size: 12px; color: var(--text-light);
@@ -2649,7 +2625,7 @@ textarea.form-input {
   transition: background var(--transition);
 }
 
-.info-panel-header:hover { background: rgba(47,56,52,0.035); }
+.info-panel-header:hover { background: color-mix(in srgb, var(--text) 3.5%, transparent); }
 
 .info-panel-arrow {
   width: 20px; height: 20px;
@@ -2660,7 +2636,7 @@ textarea.form-input {
 
 .info-panel.expanded .info-panel-arrow { transform: rotate(90deg); }
 
-.info-panel-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+.info-panel-title { flex: 1; font-size: 16px; font-weight: 600; color: var(--text); }
 
 .info-panel-tag {
   font-size: 12px; color: var(--accent); background: var(--accent-soft);
@@ -2722,7 +2698,7 @@ textarea.form-input {
   color: var(--accent-hover);
   font-size: 16px;
   font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(112,133,122,0.14);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
   flex-shrink: 0;
 }
 
@@ -2802,26 +2778,26 @@ textarea.form-input {
 /* === 运动日志 === */
 .fitness-workspace-body { padding-top: 18px; }
 .fitness-page-header { align-items: center; }
-.fitness-view-actions { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: color-mix(in srgb, var(--surface-muted) 84%, transparent); }
-.fitness-view-actions .btn { min-width: 76px; min-height: 42px; justify-content: center; padding: 8px 12px; border-color: transparent; font-size: 14px; text-align: center; }
+.fitness-view-actions { display: flex; align-items: center; gap: 2px; height: 37.6px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--surface-muted) 84%, transparent); }
+.fitness-view-actions .btn { height: 100%; min-width: 76px; min-height: 0; justify-content: center; padding: 0 12px; border-color: transparent; border-radius: 999px; background: transparent; color: var(--text-light); font-size: 13px; text-align: center; }
 .fitness-view-actions .btn.active { background: var(--card-bg); border-color: var(--line); color: var(--text); box-shadow: var(--card-shadow); }
 .fitness-calendar-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.95fr); gap: 18px; min-height: 0; container-type: inline-size; }
 .fitness-calendar-panel,
 .fitness-detail-panel,
 .fitness-chart-card { background: color-mix(in srgb, var(--card-bg) 88%, transparent); border: 1px solid color-mix(in srgb, var(--line) 86%, transparent); border-radius: var(--radius); box-shadow: var(--card-shadow); }
-.fitness-calendar-panel { min-width: 0; padding: 22px; }
+.fitness-calendar-panel { min-width: 0; padding: 20px; }
 .fitness-panel-heading,
 .fitness-analytics-toolbar,
 .fitness-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .fitness-eyebrow,
 .fitness-calendar-panel .fitness-eyebrow,
-.fitness-detail-panel .fitness-eyebrow { color: var(--text-light); font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; }
+.fitness-detail-panel .fitness-eyebrow { margin-top: 4px; color: var(--text-light); font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; }
 .fitness-calendar-layout[hidden],
 .fitness-analytics[hidden],
 #fitnessTrainingChartCard[hidden],
 #fitnessGrowthChartCard[hidden] { display: none !important; }
 .fitness-panel-heading h3,
-.fitness-analytics-toolbar h3 { margin-top: 5px; color: var(--text); font-size: 21px; font-weight: 650; line-height: 1.25; }
+.fitness-analytics-toolbar h3 { margin-top: 0; color: var(--text); font-size: 16px; font-weight: 600; line-height: 1.25; }
 .fitness-calendar-nav { display: flex; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0; }
 .fitness-calendar-nav .btn { min-width: 32px; justify-content: center; padding: 7px 8px; text-align: center; }
 .fitness-weekdays,
@@ -2849,7 +2825,7 @@ textarea.form-input {
 .fitness-show-exercises input { accent-color: var(--accent); }
 .fitness-detail-panel { min-width: 0; align-self: start; overflow: hidden; }
 .fitness-detail-heading { padding: 20px 20px 15px; border-bottom: 1px solid var(--line); }
-.fitness-detail-heading h3 { margin-top: 4px; color: var(--text); font-size: 18px; font-weight: 650; }
+.fitness-detail-heading h3 { margin-top: 0; color: var(--text); font-size: 16px; font-weight: 600; }
 .fitness-detail-heading p { margin-top: 4px; color: var(--text-light); font-size: 13px; }
 .fitness-detail-body { padding: 14px 16px 18px; }
 .fitness-detail-empty { padding: 26px 12px; color: var(--text-light); font-size: 14px; line-height: 1.7; text-align: center; }
@@ -2874,7 +2850,7 @@ textarea.form-input {
 .fitness-date-range { position: relative; display: flex; align-items: center; gap: 8px; color: var(--text-light); font-size: 13px; }
 .fitness-date-button { min-width: 112px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-muted); color: var(--text); cursor: pointer; font: inherit; font-size: 13px; text-align: left; }
 .fitness-date-button:hover { border-color: var(--accent); background: var(--card-bg); }
-.fitness-date-picker { position: absolute; top: calc(100% + 8px); right: 0; z-index: 8; width: 264px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--card-bg); box-shadow: 0 14px 36px rgba(35,45,41,0.15); }
+.fitness-date-picker { position: absolute; top: calc(100% + 8px); right: 0; z-index: 8; width: 264px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--card-bg); box-shadow: 0 14px 36px rgba(0,0,0,0.15); }
 .fitness-picker-header,
 .fitness-picker-weekdays,
 .fitness-picker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -2909,7 +2885,7 @@ textarea.form-input {
 .fitness-select-trigger:hover,
 .fitness-select-trigger[aria-expanded="true"] { border-color: var(--accent); background: var(--card-bg); }
 .fitness-select-chevron { margin-left: 10px; color: var(--text-light); font-size: 11px; }
-.fitness-select-menu { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 12; display: grid; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(35,45,41,0.14); }
+.fitness-select-menu { position: absolute; top: calc(100% + 6px); right: 0; left: 0; z-index: 12; display: grid; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(0,0,0,0.14); }
 .fitness-select-menu[hidden] { display: none; }
 .fitness-select-option { width: 100%; padding: 8px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--text); cursor: pointer; font: inherit; font-size: 13px; text-align: left; }
 .fitness-select-option:hover,
@@ -2964,7 +2940,7 @@ textarea.form-input {
 .reminder-more { position: relative; z-index: 1; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-light); cursor: pointer; font: inherit; font-size: 30px; font-weight: 700; line-height: 1; }
 .reminder-more:hover,
 .is-menu-open .reminder-more { background: transparent; color: var(--text); }
-.reminder-menu { position: absolute; top: 50%; right: 40px; display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 6px 18px rgba(35,45,41,.16); opacity: 0; pointer-events: none; transform: translate(8px, -50%) scale(.96); transform-origin: right center; transition: opacity var(--transition), transform var(--transition); }
+.reminder-menu { position: absolute; top: 50%; right: 40px; display: flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 6px 18px rgba(0,0,0,.16); opacity: 0; pointer-events: none; transform: translate(8px, -50%) scale(.96); transform-origin: right center; transition: opacity var(--transition), transform var(--transition); }
 .reminder-menu:not([hidden]) { opacity: 1; pointer-events: auto; transform: translate(0, -50%) scale(1); }
 .reminder-menu[hidden] { display: none; }
 .reminder-action-danger { color: var(--danger); }
@@ -2979,7 +2955,7 @@ textarea.form-input {
 .reminder-date-row .fitness-date-button { width: 100%; min-width: 0; min-height: 38px; }
 .reminder-date-separator { color: var(--text-light); text-align: center; }
 .reminder-frequency-picker .fitness-select-trigger { min-height: 38px; }
-.reminder-weekday-popover { position: absolute; top: calc(100% + 6px); left: 0; z-index: 24; width: min(290px, calc(100vw - 72px)); padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(35,45,41,.16); }
+.reminder-weekday-popover { position: absolute; top: calc(100% + 6px); left: 0; z-index: 24; width: min(290px, calc(100vw - 72px)); padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: 0 12px 28px rgba(0,0,0,.16); }
 .reminder-weekday-popover[hidden] { display: none; }
 .reminder-weekday-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 6px; padding: 12px 0; }
 .reminder-weekday-options .reminder-day { justify-content: center; }
@@ -3024,14 +3000,14 @@ textarea.form-input {
   .fitness-workspace-body { padding: 10px 12px 16px; }
   .fitness-page-header { align-items: flex-start; flex-wrap: wrap; }
   .fitness-view-actions { margin-left: auto; }
-  .fitness-view-actions .btn { min-width: 68px; min-height: 42px; padding: 8px; font-size: 13px; }
-  .fitness-calendar-panel { padding: 14px 10px; }
-  .fitness-panel-heading h3 { font-size: 19px; }
+  .fitness-view-actions .btn { min-width: 68px; min-height: 0; padding: 0 8px; }
+  .fitness-calendar-panel { padding: 14px 16px; }
+  .fitness-panel-heading h3 { font-size: 16px; }
   .fitness-day { min-height: 56px; padding: 5px 3px; text-align: center; }
   .fitness-day-number { width: 28px; height: 28px; font-size: 15px; }
   .fitness-calendar-legend { align-items: flex-start; margin-top: 10px; }
   .fitness-calendar-legend-items { flex-wrap: wrap; gap: 8px; }
-  .fitness-analytics-panel { padding: 14px 12px; }
+  .fitness-analytics-panel { padding: 14px 16px; }
   .fitness-analytics-toolbar { align-items: stretch; flex-direction: column; }
   .fitness-analytics-date-controls { margin-left: 0; }
   .fitness-analytics-date-controls .fitness-date-range { width: 100%; justify-content: space-between; }
@@ -3087,12 +3063,15 @@ textarea.form-input {
     min-width: 0;
     height: 64px;
     padding: 0;
+    margin: 0;
     flex-direction: row;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: 0 -5px 18px rgba(0,0,0,0.06);
   }
 
-  .sidebar-header,
-  .sidebar-version { display: none; }
+  .sidebar-header { display: none; }
 
   .sidebar-nav {
     width: auto;
@@ -3101,10 +3080,11 @@ textarea.form-input {
     display: flex;
     align-items: stretch;
     gap: 2px;
+    overflow-x: auto;
   }
 
   .nav-item {
-    min-width: 0;
+    min-width: 52px;
     flex: 1;
     flex-direction: column;
     justify-content: center;
@@ -3118,27 +3098,45 @@ textarea.form-input {
   .nav-item span:last-child { white-space: nowrap; font-size: 11px; }
 
   .sidebar-settings {
-    width: 56px;
-    min-width: 56px;
-    margin: 5px;
+    width: 48px;
+    min-width: 48px;
+    flex: 1;
+    margin: 0;
+    padding: 0;
     align-self: stretch;
     font-size: 12px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
   }
+
+  .sidebar-settings .nav-icon { width: 18px; height: 18px; }
+  .sidebar-settings .nav-icon svg { width: 18px; height: 18px; }
+  .sidebar-footer { width: 56px; min-width: 56px; margin: 4px; padding: 0; }
+  .sidebar-footer .sidebar-toggle { display: none; }
 
   .workspace {
     order: 1;
     width: 100%;
     min-width: 0;
     min-height: 0;
+    margin: 0;
     border-radius: 0;
+    box-shadow: none;
   }
 
   .workspace-header { min-width: 0; gap: 8px; padding: 16px; }
   .workspace-header h2 { min-width: 0; font-size: 19px; }
   .workspace-header .btn { padding: 8px 10px; font-size: 14px; white-space: nowrap; }
   .workspace-body { padding: 12px 16px 20px; }
-  .bot-todo-islands { grid-template-columns: 1fr; }
-  .sidebar-toggle-zone { display: none; }
+  .bot-todo-header-actions { gap: 8px; }
+  .bot-todo-body { gap: 14px; padding: 6px 16px 20px; overflow-y: auto; }
+  .bot-todo-islands { flex: none; grid-template-columns: 1fr; gap: 12px; }
+  .bot-todo-island { min-height: 250px; padding: 20px; }
+  .bot-todo-island-heading h3 { font-size: 16px; }
+  .bot-todo-composer { flex: 0 0 58px; height: 58px; }
+  .sidebar-expand-toggle { display: none !important; }
+  body.sidebar-collapsed .workspace-header { margin-left: 0; padding-left: 16px; }
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -3195,57 +3193,66 @@ body[data-theme="dark"] :is(
   .project-book-title,
   .reminder-title
 ) {
-  color: #DEDEDE;
+  color: var(--text);
 }
+
+body[data-theme="dark"] .bot-todo-markdown .bot-todo-day { color: var(--accent); }
+body[data-theme="dark"] .btn-primary,
+body[data-theme="dark"] .bot-todo-send { color: #1b1c1e; }
 
 body[data-theme="dark"] .settings-card,
 body[data-theme="dark"] .project-page-editor .novel-toolbar,
 body[data-theme="dark"] .project-page-editor .novel-toolbar-menu,
 body[data-theme="dark"] .note-save-status,
 body[data-theme="dark"] .project-page-editor .novel-save-status {
-  background: #333333;
+  background: var(--card-bg);
 }
 
 body[data-theme="dark"] .path-display,
 body[data-theme="dark"] .form-input,
 body[data-theme="dark"] .field-encrypt {
-  background: #2b2e32;
-  color: #b8bfc6;
+  background: var(--surface-muted);
+  color: var(--text);
 }
 
 body[data-theme="dark"] .form-input:focus {
-  background: #333333;
-  box-shadow: 0 0 0 3px rgba(109, 193, 231, 0.2);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 body[data-theme="dark"] .project-page-editor .novel-project-editor-content,
 body[data-theme="dark"] .project-source-editor {
-  background: #26292c;
-  color: #b8bfc6;
+  background: var(--bg);
+  color: var(--text);
 }
 
 body[data-theme="dark"] .project-page-editor .novel-project-editor-prose,
 body[data-theme="dark"] .note-content-editor-host .novel-project-editor-prose {
-  color: #b8bfc6;
+  color: var(--text);
 }
 
 body[data-theme="dark"] .project-book-card,
 body[data-theme="dark"] .project-book-card.sort-drag-proxy {
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.38);
+  box-shadow: none;
 }
 
 body[data-theme="dark"] .project-book-card:hover {
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.16);
+}
+
+body[data-theme="dark"] .project-book-card.drag-over {
+  background: var(--surface-muted);
+  outline-color: var(--accent);
 }
 
 /* === 更新通知弹框 === */
 </style>
 </head>
-<body>
+<body data-theme="dark">
 
-<aside class="sidebar">
+<aside class="sidebar" id="primarySidebar">
   <div class="sidebar-header">
-    <h1>工作面板</h1>
+    <h1>WorkWeb</h1>
     <p id="dateDisplay"></p>
   </div>
   <nav class="sidebar-nav">
@@ -3253,30 +3260,28 @@ body[data-theme="dark"] .project-book-card:hover {
       <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="3.2" width="13.6" height="13.6" rx="3"></rect><path d="M6.7 10.1l2.1 2.1 4.5-4.6"></path></svg></span><span>Bot TODO</span>
     </div>
     <div class="nav-item active" data-page="todo" onclick="switchPage('todo')">
-      <span class="nav-icon">&#9745;</span><span>TODO</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="3.5" width="13" height="13" rx="3"/></svg></span><span>TODO</span>
     </div>
     <div class="nav-item" data-page="progress" onclick="switchPage('progress')">
-      <span class="nav-icon">&#9783;</span><span>项目书架</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 2.8 7 3.7-7 3.7-7-3.7 7-3.7Z"/><path d="m3 10 7 3.7 7-3.7M3 13.2l7 3.8 7-3.8"/></svg></span><span>项目书架</span>
     </div>
     <div class="nav-item" data-page="info" onclick="switchPage('info')">
-      <span class="nav-icon">&#9786;</span><span>常用个人信息</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6" r="3.2"/><path d="M3.2 17c.4-3.2 2.7-5 6.8-5s6.4 1.8 6.8 5H3.2Z"/></svg></span><span>常用个人信息</span>
     </div>
     <div class="nav-item" data-page="fitness" onclick="switchPage('fitness')">
-      <span class="nav-icon">&#9672;</span><span>运动日志</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.8" cy="3.8" r="1.5"/><path d="m8.7 7.2 3.1 1.2 2.2 3.1M7 9.3l-2.4 2.4-2.4 4M8.2 8.8l-1.1 4-3.8 4M8.7 7.2 11 5.8l2.8.3M7.2 12.8l4.1 1.4 2.5 2.8"/></svg></span><span>运动日志</span>
     </div>
     <div class="nav-item" data-page="reminders" onclick="switchPage('reminders')">
-      <span class="nav-icon">&#10003;</span><span>每日提醒</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a5 5 0 0 1 10 0c0 6 2 6 2 7H3c0-1 2-1 2-7ZM8 17h4"/><path d="M10 2V1"/></svg></span><span>每日提醒</span>
     </div>
   </nav>
-  <button class="sidebar-settings" id="sidebarSettingsBtn" onclick="openSettings()">设置</button>
-  <div class="sidebar-version" id="sidebarVersion">v3.1.0</div>
+  <div class="sidebar-footer">
+    <button class="sidebar-settings" id="sidebarSettingsBtn" type="button" onclick="openSettings()"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 2.8h3.8l.5 2a5.8 5.8 0 0 1 1.2.7l1.9-.7 1.9 3.3-1.5 1.4v1.4l1.5 1.4-1.9 3.3-1.9-.7a5.8 5.8 0 0 1-1.2.7l-.5 2H8.1l-.5-2a5.8 5.8 0 0 1-1.2-.7l-1.9.7-1.9-3.3 1.5-1.4v-1.4L2.6 8l1.9-3.3 1.9.7a5.8 5.8 0 0 1 1.2-.7l.5-1.9Z"/><circle cx="10" cy="10.2" r="2.2"/></svg></span><span>设置</span></button>
+    <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="true" aria-label="收起导航栏" title="收起导航栏">
+      <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m16 9-3 3 3 3"/></svg>
+    </button>
+  </div>
 </aside>
-
-<div class="sidebar-toggle-zone" aria-hidden="false">
-  <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" onclick="toggleSidebar()" aria-label="收起导航栏">
-    <span class="sidebar-toggle-icon" aria-hidden="true">&#8249;</span>
-  </button>
-</div>
 
 <div class="desktop-titlebar">
   <div class="windows-window-controls" aria-label="窗口控制">
@@ -3294,6 +3299,9 @@ body[data-theme="dark"] .project-book-card:hover {
 
 <!-- 工作区 -->
 <main class="workspace">
+  <button class="sidebar-expand-toggle" id="sidebarExpandBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="false" aria-label="展开导航栏" title="展开导航栏">
+    <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>
+  </button>
   <!-- TODO -->
   <div class="page active" id="page-todo">
     <div class="workspace-header">
@@ -3321,9 +3329,9 @@ body[data-theme="dark"] .project-book-card:hover {
         <div id="projectShelfView">
           <div class="project-shelf" id="projectShelf"></div>
           <div class="empty-state" id="projectEmptyState" style="display:none;">
-            <div class="empty-state-icon">&#128218;</div>
+            <div class="empty-state-icon">&#128196;</div>
             <h3>还没有项目</h3>
-            <p>点击右上角「添加项目」创建你的第一本书</p>
+            <p>点击右上角「添加项目」创建第一个项目</p>
           </div>
         </div>
 
@@ -3354,7 +3362,7 @@ body[data-theme="dark"] .project-book-card:hover {
                   oninput="handleProjectSourceInput(this.value)"
                 ></textarea>
                 <div class="project-page-find" id="projectFindBar">
-                  <input type="text" id="projectFindInput" placeholder="查找当前本子..." autocomplete="off" oninput="updateProjectFind(this.value)">
+                  <input type="text" id="projectFindInput" placeholder="查找当前项目页..." autocomplete="off" oninput="updateProjectFind(this.value)">
                   <span class="project-page-find-count" id="projectFindCount">0/0</span>
                   <button type="button" title="上一个" onclick="moveProjectFind(-1)">&#8249;</button>
                   <button type="button" title="下一个" onclick="moveProjectFind(1)">&#8250;</button>
@@ -3403,8 +3411,8 @@ body[data-theme="dark"] .project-book-card:hover {
         <div class="fitness-calendar-panel">
           <div class="fitness-panel-heading">
             <div>
-              <p class="fitness-eyebrow">TRAINING CALENDAR</p>
               <h3 id="fitnessMonthLabel"></h3>
+              <p class="fitness-eyebrow">TRAINING CALENDAR</p>
             </div>
             <div class="fitness-calendar-nav">
               <button class="btn btn-ghost btn-sm" title="上个月" aria-label="上个月" onclick="shiftFitnessMonth(-1)">&#8249;</button>
@@ -3431,8 +3439,8 @@ body[data-theme="dark"] .project-book-card:hover {
         <div class="fitness-analytics-panel">
         <div class="fitness-analytics-toolbar">
           <div>
-            <p class="fitness-eyebrow" id="fitnessAnalyticsEyebrow">TRAINING RECORD</p>
             <h3 id="fitnessAnalyticsTitle">运动天数</h3>
+            <p class="fitness-eyebrow" id="fitnessAnalyticsEyebrow">TRAINING RECORD</p>
           </div>
           <div class="fitness-analytics-date-controls">
             <div class="fitness-date-range" id="fitnessTrainingDateRange">
@@ -3492,21 +3500,26 @@ body[data-theme="dark"] .project-book-card:hover {
 
   <div class="page" id="page-bot-todo">
     <div class="workspace-header">
-      <h2>TODO in Grok Bot</h2>
-      <button class="btn btn-primary" id="botTodoUpdateBtn" type="button" onclick="updateBotTodo()">更新</button>
+      <div class="bot-todo-title-group">
+        <h2>TODO in Grok Bot</h2>
+      </div>
+      <div class="bot-todo-header-actions">
+        <button class="btn btn-primary" id="botTodoUpdateBtn" type="button" onclick="updateBotTodo()"><svg class="bot-todo-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>更新</button>
+      </div>
     </div>
     <div class="workspace-body bot-todo-body">
       <div class="bot-todo-islands">
         <section class="bot-todo-island" aria-label="待办">
-          <h3>待办</h3>
+          <div class="bot-todo-island-heading"><h3>待办</h3></div>
           <div class="bot-todo-markdown" id="botTodoTodos"></div>
         </section>
         <section class="bot-todo-island" aria-label="日程">
-          <h3>日程</h3>
+          <div class="bot-todo-island-heading"><h3>日程</h3></div>
           <div class="bot-todo-markdown" id="botTodoSchedule"></div>
         </section>
       </div>
       <form class="bot-todo-composer" onsubmit="sendBotTodoMessage(event)">
+        <svg class="bot-todo-compose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l4.4-1 10.8-10.8a2.8 2.8 0 0 0-4-4L4.4 15 4 20Z"/><path d="M4 20h16"/></svg>
         <input class="bot-todo-input" id="botTodoInput" type="text" placeholder="发给 Grok Bot" autocomplete="off" enterkeyhint="send">
         <button class="bot-todo-send" id="botTodoSendBtn" type="submit" aria-label="发送">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.8 11.6L19.6 4.4l-6.6 15.2-.9-6.1-7.3-1.9z"></path><path d="M12.1 13.5L19.6 4.4"></path></svg>
@@ -3644,23 +3657,13 @@ body[data-theme="dark"] .project-book-card:hover {
         <label>项目名称</label>
         <input type="text" class="form-input" id="projectTitle" placeholder="输入项目名称..." maxlength="60">
       </div>
-      <div class="form-group with-suggestions">
-        <label>项目标签</label>
-        <input
-          type="text"
-          class="form-input"
-          id="projectTags"
-          placeholder="输入标签，用空格、逗号或顿号分隔..."
-          onfocus="showProjectTagSuggestions()"
-          oninput="showProjectTagSuggestions()">
-        <div class="tag-suggestions" id="projectTagSuggestions"></div>
-      </div>
       <div class="form-group">
         <label>项目简介</label>
         <textarea class="form-input project-summary-input" id="projectSummary" placeholder="输入项目简介..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger-solid project-editor-delete-btn" id="projectDeleteBtn" type="button" onclick="deleteEditedProject()">删除</button>
       <button class="btn btn-secondary" onclick="closeProjectEditor()">取消</button>
       <button class="btn btn-primary" onclick="saveProject()">保存</button>
     </div>
@@ -3704,10 +3707,7 @@ body[data-theme="dark"] .project-book-card:hover {
             <div class="form-row">
               <label>软件皮肤</label>
               <div class="radio-group display-theme-options">
-                <label><input type="radio" name="appTheme" value="sage" onchange="setTheme(this.value)"> 雾灰绿</label>
-                <label><input type="radio" name="appTheme" value="sand" onchange="setTheme(this.value)"> 暖沙</label>
-                <label><input type="radio" name="appTheme" value="blue" onchange="setTheme(this.value)"> 静谧蓝</label>
-                <label><input type="radio" name="appTheme" value="stone" onchange="setTheme(this.value)"> 岩灰</label>
+                <label><input type="radio" name="appTheme" value="light" onchange="setTheme(this.value)"> 浅色</label>
                 <label><input type="radio" name="appTheme" value="dark" onchange="setTheme(this.value)"> 深色</label>
               </div>
             </div>
@@ -3809,6 +3809,7 @@ body[data-theme="dark"] .project-book-card:hover {
       <p class="settings-message" id="settingsMessage"></p>
     </div>
     <div class="modal-footer">
+      <span class="settings-app-version" id="settingsAppVersion">版本 v3.2.0</span>
       <button class="btn btn-secondary" onclick="checkUpdateFromSettings()" id="settingsCheckUpdateBtn">检查更新</button>
       <button class="btn btn-secondary" onclick="closeSettings()">关闭</button>
     </div>
@@ -4062,18 +4063,17 @@ async function loadAppVersion() {
   try {
     const meta = await apiGet('version');
     const version = normalizeVersionText(meta?.version);
-    if (!version) return;
-
-    const versionEl = document.getElementById('sidebarVersion');
-    if (versionEl) versionEl.textContent = `v${version}`;
-    if (window.workwebDesktop?.checkLatestVersion) {
+    const versionEl = document.getElementById('settingsAppVersion');
+    if (version && versionEl) versionEl.textContent = `版本 v${version}`;
+    if (version && window.workwebDesktop?.checkLatestVersion) {
       window.workwebDesktop.checkLatestVersion().then(result => {
         if (result?.hasUpdate && versionEl) {
-          versionEl.textContent = `v${version}（有新版可用）`;
+          versionEl.textContent = `版本 v${version}（有新版可用）`;
         }
       }).catch(() => {});
     }
-
+  } catch {}
+  try {
     await loadUpdateState();
   } catch {}
 }
@@ -4279,8 +4279,10 @@ async function deleteProjectRemote(projectId) {
   try {
     if (serverOnline) await apiDelete(`projects/${encodeURIComponent(projectId)}`);
     else saveLocalData('wb_projects', projects);
+    return true;
   } catch (error) {
     handlePersistError(error, 'wb_projects', projects);
+    return false;
   }
 }
 
@@ -4292,7 +4294,6 @@ let draggedId = null;
 const noteEditors = new Map();
 const noteDraftTimers = new Map();
 const noteSaveStates = new Map();
-let draggedProjectTag = null;
 let draggedInfoTag = null;
 let draggedInfoPanelId = null;
 let suppressProjectOpen = false;
@@ -4362,26 +4363,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+function normalizeTheme(theme) {
+  if (theme === 'dark') return 'dark';
+  if (theme === 'light' || ['sage', 'sand', 'blue', 'stone'].includes(theme)) return 'light';
+  return 'dark';
+}
+
 function setTheme(theme) {
-  const safeTheme = ['sage', 'sand', 'blue', 'stone', 'dark'].includes(theme) ? theme : 'sage';
+  const safeTheme = normalizeTheme(theme);
   document.body.dataset.theme = safeTheme;
   localStorage.setItem('wb_theme', safeTheme);
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
     radio.checked = radio.value === safeTheme;
   });
+  window.workwebDesktop?.setWindowTheme?.(safeTheme)?.catch?.(() => {});
 }
 
 function loadTheme() {
-  setTheme(localStorage.getItem('wb_theme') || 'sage');
+  setTheme(localStorage.getItem('wb_theme') || 'dark');
 }
 
 function applySidebarToggleVisual(collapsed) {
-  const zone = document.querySelector('.sidebar-toggle-zone');
-  const button = document.getElementById('sidebarToggleBtn');
-  const icon = button?.querySelector('.sidebar-toggle-icon');
-  if (zone) zone.dataset.visualState = collapsed ? 'collapsed' : 'expanded';
-  if (button) button.setAttribute('aria-label', collapsed ? '展开导航栏' : '收起导航栏');
-  if (icon) icon.textContent = collapsed ? '›' : '‹';
+  [
+    [document.getElementById('sidebarToggleBtn'), '收起导航栏'],
+    [document.getElementById('sidebarExpandBtn'), '展开导航栏']
+  ].forEach(([button, label]) => {
+    if (!button) return;
+    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    button.title = label;
+  });
 }
 
 function clearSidebarTransitionTimer() {
@@ -4391,12 +4402,11 @@ function clearSidebarTransitionTimer() {
 }
 
 function finalizeSidebarToggle(collapsed) {
-  const zone = document.querySelector('.sidebar-toggle-zone');
-  const button = document.getElementById('sidebarToggleBtn');
   clearSidebarTransitionTimer();
   sidebarToggleAnimating = false;
-  zone?.classList.remove('is-animating');
-  if (button) button.disabled = false;
+  [document.getElementById('sidebarToggleBtn'), document.getElementById('sidebarExpandBtn')]
+    .filter(Boolean)
+    .forEach(button => { button.disabled = false; });
   applySidebarToggleVisual(collapsed);
 }
 
@@ -4411,11 +4421,10 @@ function toggleSidebar() {
   if (sidebarToggleAnimating) return;
   const currentCollapsed = document.body.classList.contains('sidebar-collapsed');
   const nextCollapsed = !currentCollapsed;
-  const zone = document.querySelector('.sidebar-toggle-zone');
-  const button = document.getElementById('sidebarToggleBtn');
+  const buttons = [document.getElementById('sidebarToggleBtn'), document.getElementById('sidebarExpandBtn')]
+    .filter(Boolean);
   sidebarToggleAnimating = true;
-  zone?.classList.add('is-animating');
-  if (button) button.disabled = true;
+  buttons.forEach(button => { button.disabled = true; });
   applySidebarToggleVisual(currentCollapsed);
   setSidebarCollapsed(nextCollapsed, true, false);
   clearSidebarTransitionTimer();
@@ -4457,10 +4466,6 @@ async function initWindowControls() {
   bindDesktopWindowControl('windowMinimizeBtn', minimizeDesktopWindow);
   bindDesktopWindowControl('windowMaximizeBtn', toggleDesktopMaximize);
   bindDesktopWindowControl('windowCloseBtn', closeDesktopWindow);
-  document.querySelector('.sidebar-toggle-zone')?.addEventListener('transitionend', event => {
-    if (event.propertyName !== 'left' || !sidebarToggleAnimating) return;
-    finalizeSidebarToggle(document.body.classList.contains('sidebar-collapsed'));
-  });
   window.workwebDesktop?.onWindowMaximized?.(updateWindowMaximizeButton);
   if (window.workwebDesktop?.isWindowMaximized) {
     updateWindowMaximizeButton(await window.workwebDesktop.isWindowMaximized());
@@ -5426,7 +5431,7 @@ function renderFitnessDetail() {
   `).join('');
   panel.innerHTML = `
     <div class="fitness-detail-heading">
-      <div><p class="fitness-eyebrow">SELECTED DAY</p><h3>${dateLabel}</h3></div>
+      <div><h3>${dateLabel}</h3><p class="fitness-eyebrow">SELECTED DAY</p></div>
     </div>
     <div class="fitness-detail-body">
       ${draft && exercises.length ? cards : !draft ? '<div class="fitness-detail-empty"><button class="btn btn-primary" onclick="startFitnessDetail()">开始记录</button></div>' : ''}
@@ -5760,8 +5765,10 @@ function switchPage(page) {
     el.classList.toggle('active', el.dataset.page === page));
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
-  if (page === 'bot-todo') startBotTodoPolling();
-  else stopBotTodoPolling();
+  if (page === 'bot-todo') {
+    document.querySelectorAll('#page-bot-todo .bot-todo-island').forEach(playNoteEntrance);
+    startBotTodoPolling();
+  } else stopBotTodoPolling();
   if (page === 'progress') replayProjectShelfAnimation();
   if (page === 'fitness') renderFitnessPage();
   if (page === 'reminders') renderDailyReminders(null, null, null, true);
@@ -5885,7 +5892,24 @@ function botTodoPushScheduleLine(groups, line, headingGroup) {
 function botTodoRenderList(items, bulleted) {
   if (!items.length) return '';
   const cls = bulleted ? 'bot-todo-plain is-bulleted' : 'bot-todo-plain';
-  return `<ul class="${cls}">${items.map(item => `<li>${escHtml(item)}</li>`).join('')}</ul>`;
+  return `<ul class="${cls}">${items.map(item => {
+    if (bulleted) return `<li><span class="bot-todo-check" aria-hidden="true"></span><span>${escHtml(item)}</span></li>`;
+    const timeMatch = String(item).match(/^(\d{1,2}:\d{2})\s+(.+)$/);
+    const time = timeMatch ? `<span class="bot-todo-event-time">${escHtml(timeMatch[1])}</span>` : '';
+    const title = timeMatch ? timeMatch[2] : item;
+    return `<li class="bot-todo-event"><span class="bot-todo-event-marker" aria-hidden="true"></span>${time}<span class="bot-todo-event-title">${escHtml(title)}</span></li>`;
+  }).join('')}</ul>`;
+}
+
+function botTodoFormatDateTitle(title) {
+  const match = String(title || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return title;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return title;
+  return `${date.getMonth() + 1}月${date.getDate()}日 周${'日一二三四五六'[date.getDay()]}`;
 }
 
 function botTodoRenderSchedule(groups) {
@@ -5896,7 +5920,7 @@ function botTodoRenderSchedule(groups) {
     ...all.filter(group => group.kind === 'date').sort((a, b) => a.title.localeCompare(b.title))
   ];
   return ordered.map(group => {
-    const title = group.title ? `<h3 class="bot-todo-day">${escHtml(group.title)}</h3>` : '';
+    const title = group.title ? `<h3 class="bot-todo-day">${escHtml(botTodoFormatDateTitle(group.title))}</h3>` : '';
     return `${title}${botTodoRenderList(group.items)}`;
   }).join('');
 }
@@ -6140,15 +6164,6 @@ function normalizeTags(value) {
   return [...new Set(rawTags
     .map(tag => String(tag || '').trim())
     .filter(Boolean))];
-}
-
-function renderProjectTags(tags = []) {
-  const safeTags = normalizeTags(tags);
-  return safeTags.map(tag => `<span class="project-tag-pill">${escHtml(tag)}</span>`).join('');
-}
-
-function getProjectGroupTag(project) {
-  return normalizeTags(project?.tags)[0] || '未分类';
 }
 
 function normalizeProject(project) {
@@ -6734,7 +6749,6 @@ function isModalContentEmpty(modalId) {
   }
   if (modalId === 'projectEditorModal') {
     return !document.getElementById('projectTitle').value.trim()
-        && !document.getElementById('projectTags').value.trim()
         && !document.getElementById('projectSummary').value.trim();
   }
   return true;
@@ -7130,38 +7144,21 @@ function renderProjects() {
     shelf.style.display = 'none';
     empty.style.display = 'block';
   } else {
-    shelf.style.display = 'grid';
+    shelf.style.display = 'flex';
     empty.style.display = 'none';
-    const { groups, tagOrder } = groupItemsByTag(projects, getProjectGroupTag);
-
-    let enterIndex = 0;
-    shelf.innerHTML = tagOrder.map(tag => `
-      <section class="project-tag-section" data-tag="${escAttr(tag)}">
-        <div class="project-tag-header">
-          <span class="project-tag-name">${escHtml(tag)}</span>
-          <span class="project-tag-count">${groups.get(tag).length}</span>
+    shelf.innerHTML = projects.map((project, index) => `
+      <article class="project-book-card page-reveal" style="--project-enter-index:${index};" data-id="${escAttr(project.id)}" tabindex="0" aria-label="打开项目：${escAttr(project.title || '未命名项目')}" onclick="handleProjectBookClick(this.dataset.id)" onkeydown="handleProjectRowKeydown(event, this.dataset.id)">
+        <div class="project-row-content">
+          <div class="project-row-heading">
+            <h3 class="project-list-title">${escHtml(project.title || '未命名项目')}</h3>
+          </div>
+          <p class="project-list-summary">${escHtml(project.summary || '暂无项目简介')}</p>
         </div>
-        <div class="project-tag-books">
-          ${groups.get(tag).map(project => {
-            const html = `
-              <article class="project-book-card page-reveal" style="--project-enter-index:${enterIndex};" data-id="${escAttr(project.id)}" onclick="handleProjectBookClick('${project.id}')">
-                <div class="project-book-actions">
-                  <button class="btn btn-ghost btn-sm project-book-action-btn" title="编辑" onclick="event.stopPropagation();openProjectEditor('${project.id}')">&#9998;</button>
-                  <button class="btn btn-danger btn-sm project-book-action-btn project-book-action-danger" title="删除" onclick="event.stopPropagation();askDeleteProject('${project.id}')">&#10005;</button>
-                </div>
-                <div class="project-book-cover">
-                  <h3 class="project-book-cover-title">${escHtml(project.title || '未命名项目')}</h3>
-                  <div class="project-tag-row">${renderProjectTags(project.tags)}</div>
-                </div>
-              </article>
-            `;
-            enterIndex += 1;
-            return html;
-          }).join('')}
+        <div class="project-book-actions">
+          <button class="btn btn-ghost btn-sm project-book-action-btn" type="button" title="编辑" aria-label="编辑项目" onclick="event.stopPropagation();openProjectEditor(this.closest('.project-book-card').dataset.id)">&#9998;</button>
         </div>
-      </section>
+      </article>
     `).join('');
-    bindProjectTagDrag();
     bindProjectShelfDrag();
   }
 
@@ -7180,75 +7177,10 @@ function handleProjectBookClick(id) {
   openProjectBook(id);
 }
 
-function bindProjectTagDrag() {
-  document.querySelectorAll('.project-tag-section').forEach(section => {
-    let dragCounter = 0;
-    let dragArmed = false;
-    const header = section.querySelector('.project-tag-header');
-
-    function disableDrag() {
-      dragArmed = false;
-      if (!draggedProjectTag) section.draggable = false;
-    }
-
-    header?.addEventListener('pointerdown', e => {
-      if (e.button !== 0) return;
-      dragArmed = true;
-      section.draggable = true;
-      window.addEventListener('pointerup', disableDrag, { once: true });
-      window.addEventListener('pointercancel', disableDrag, { once: true });
-    });
-
-    section.addEventListener('dragstart', e => {
-      if (!dragArmed) {
-        e.preventDefault();
-        section.draggable = false;
-        return;
-      }
-
-      draggedProjectTag = section.dataset.tag;
-      section.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-
-    section.addEventListener('dragend', () => {
-      draggedProjectTag = null;
-      dragCounter = 0;
-      dragArmed = false;
-      section.draggable = false;
-      section.classList.remove('dragging', 'drag-over');
-    });
-
-    section.addEventListener('dragover', e => {
-      if (!draggedProjectTag) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    });
-
-    section.addEventListener('dragenter', e => {
-      if (!draggedProjectTag) return;
-      e.preventDefault();
-      dragCounter++;
-      if (draggedProjectTag !== section.dataset.tag) section.classList.add('drag-over');
-    });
-
-    section.addEventListener('dragleave', () => {
-      if (!draggedProjectTag) return;
-      dragCounter--;
-      if (dragCounter <= 0) {
-        dragCounter = 0;
-        section.classList.remove('drag-over');
-      }
-    });
-
-    section.addEventListener('drop', e => {
-      if (!draggedProjectTag) return;
-      e.preventDefault();
-      dragCounter = 0;
-      section.classList.remove('drag-over');
-      if (draggedProjectTag !== section.dataset.tag) reorderProjectTags(draggedProjectTag, section.dataset.tag);
-    });
-  });
+function handleProjectRowKeydown(event, id) {
+  if (event.target !== event.currentTarget || !['Enter', ' '].includes(event.key)) return;
+  event.preventDefault();
+  handleProjectBookClick(id);
 }
 
 function bindProjectShelfDrag() {
@@ -7257,7 +7189,7 @@ function bindProjectShelfDrag() {
       if (event.button !== 0) return;
       if (event.target.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
 
-      const container = card.closest('.project-tag-books');
+      const container = document.getElementById('projectShelf');
       const source = card;
       const sourceId = source.dataset.id;
       const startX = event.clientX;
@@ -7363,14 +7295,6 @@ function bindProjectShelfDrag() {
       document.addEventListener('pointercancel', handleCancel);
     });
   });
-}
-
-function reorderProjectTags(fromTag, toTag) {
-  const reordered = reorderTaggedItems(projects, getProjectGroupTag, fromTag, toTag);
-  if (reordered === projects) return;
-  projects = reordered;
-  persistProjectOrder();
-  renderProjects();
 }
 
 function reorderProjects(fromId, toId) {
@@ -7950,49 +7874,6 @@ function goToProjectFindResult(options = {}) {
   }
 }
 
-function getExistingProjectTags() {
-  return [...new Set(projects.flatMap(project => normalizeTags(project.tags)))];
-}
-
-function showProjectTagSuggestions() {
-  const input = document.getElementById('projectTags');
-  const box = document.getElementById('projectTagSuggestions');
-  if (!input || !box) return;
-
-  const rawParts = input.value.split(/[,，、\s]+/);
-  const keyword = (rawParts.at(-1) || '').trim().toLowerCase();
-  const selected = new Set(normalizeTags(input.value).map(tag => tag.toLowerCase()));
-  const tags = getExistingProjectTags().filter(tag => {
-    const lower = tag.toLowerCase();
-    return !selected.has(lower) && (!keyword || lower.includes(keyword));
-  });
-
-  if (!tags.length) {
-    hideProjectTagSuggestions();
-    return;
-  }
-
-  box.innerHTML = tags.map(tag => `
-    <button type="button" class="tag-suggestion-item" onmousedown="selectProjectTagSuggestion('${escAttr(tag)}')">${escHtml(tag)}</button>
-  `).join('');
-  box.classList.add('active');
-}
-
-function hideProjectTagSuggestions() {
-  document.getElementById('projectTagSuggestions')?.classList.remove('active');
-}
-
-function selectProjectTagSuggestion(tag) {
-  const input = document.getElementById('projectTags');
-  if (!input) return;
-
-  const tags = normalizeTags(input.value);
-  if (!tags.includes(tag)) tags.push(tag);
-  input.value = tags.join(' ');
-  hideProjectTagSuggestions();
-  input.focus();
-}
-
 function renderProjectBook() {
   const view = document.getElementById('projectBookView');
   const project = getProjectById(activeProjectId);
@@ -8120,22 +8001,22 @@ function isPointerOverProjectPageDeleteDropzone(x, y) {
 function openProjectEditor(id) {
   editingProjectId = id || null;
   const title = document.getElementById('projectTitle');
-  const tags = document.getElementById('projectTags');
   const summary = document.getElementById('projectSummary');
   const modalTitle = document.getElementById('projectModalTitle');
+  const deleteButton = document.getElementById('projectDeleteBtn');
 
   if (id) {
     const project = getProjectById(id);
     if (!project) return;
     title.value = project.title;
-    tags.value = normalizeTags(project.tags).join(' ');
     summary.value = project.summary;
     modalTitle.textContent = '编辑项目';
+    deleteButton?.classList.add('is-visible');
   } else {
     title.value = '';
-    tags.value = '';
     summary.value = '';
     modalTitle.textContent = '添加项目';
+    deleteButton?.classList.remove('is-visible');
   }
 
   document.getElementById('projectEditorModal').classList.add('active');
@@ -8144,16 +8025,19 @@ function openProjectEditor(id) {
 
 function closeProjectEditor() {
   document.getElementById('projectEditorModal').classList.remove('active');
-  hideProjectTagSuggestions();
+  document.getElementById('projectDeleteBtn')?.classList.remove('is-visible');
   editingProjectId = null;
+}
+
+function deleteEditedProject() {
+  if (editingProjectId) askDeleteProject(editingProjectId);
 }
 
 async function saveProject() {
   const title = document.getElementById('projectTitle').value.trim();
-  const tags = normalizeTags(document.getElementById('projectTags').value);
   const summary = document.getElementById('projectSummary').value.trim();
 
-  if (!title && !summary && !tags.length) {
+  if (!title && !summary) {
     document.getElementById('projectTitle').focus();
     return;
   }
@@ -8162,7 +8046,6 @@ async function saveProject() {
     const project = getProjectById(editingProjectId);
     if (project) {
       project.title = title;
-      project.tags = tags;
       project.summary = summary;
       project.updatedAt = Date.now();
       try {
@@ -8175,7 +8058,7 @@ async function saveProject() {
     const project = normalizeProject({
       id: genId('p'),
       title,
-      tags,
+      tags: [],
       summary,
       pages: [''],
       createdAt: Date.now(),
@@ -8205,7 +8088,8 @@ function askDeleteProject(id) {
         projectCloseTimer = null;
       }
 
-      await deleteProjectRemote(id);
+      const deleted = await deleteProjectRemote(id);
+      if (!deleted) return;
       projects = projects.filter(p => p.id !== id);
 
       if (activeProjectId === id) {
@@ -8214,6 +8098,7 @@ function askDeleteProject(id) {
         document.getElementById('projectBookView').classList.remove('active', 'opening', 'closing');
       }
 
+      if (editingProjectId === id) closeProjectEditor();
       renderProjects();
     }
   );

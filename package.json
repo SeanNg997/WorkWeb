@@ -1,6 +1,6 @@
 {
   "name": "workweb",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "本地个人工作面板桌面应用",
   "author": "Xiaoran",
   "private": true,
@@ -11,7 +11,7 @@
     "desktop": "electron .",
     "build:novel": "vite build --config vite.novel.config.mjs",
     "pack:win": "node scripts/build-win.js",
-    "pack:mac": "electron-builder --mac dmg"
+    "pack:mac": "node scripts/build-mac.js"
   },
   "devDependencies": {
     "@tiptap/core": "^2.27.1",
