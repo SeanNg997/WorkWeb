@@ -21,10 +21,13 @@ if (workwebDesktopPlatform) {
 
 :root {
   --sidebar-bg: #f6f8f7;
-  --sidebar-underlay-start: #e4ece5;
-  --sidebar-underlay-end: #f3f7f4;
-  --sidebar-underlay-highlight: rgba(255,255,255,0.92);
-  --sidebar-underlay-shadow: rgba(98,150,117,0.28);
+  --sidebar-underlay-start: #e3ede7;
+  --sidebar-underlay-end: #f1f7f3;
+  --sidebar-underlay-highlight: rgba(255,255,255,0.78);
+  --sidebar-underlay-shadow: rgba(92,171,126,0.24);
+  --sidebar-underlay-cool: rgba(145,201,214,0.2);
+  --sidebar-glass-sheen: rgba(255,255,255,0.26);
+  --sidebar-glass-edge: rgba(255,255,255,0.68);
   --sidebar-hover: #edf4ef;
   --sidebar-active: #e2f1e8;
   --sidebar-text: #5b625e;
@@ -57,10 +60,13 @@ if (workwebDesktopPlatform) {
 
 body[data-theme="dark"] {
   --sidebar-bg: #292a2d;
-  --sidebar-underlay-start: #1b1c1f;
-  --sidebar-underlay-end: #2a2b2e;
-  --sidebar-underlay-highlight: rgba(255,255,255,0.12);
-  --sidebar-underlay-shadow: rgba(0,0,0,0.30);
+  --sidebar-underlay-start: #191a1c;
+  --sidebar-underlay-end: #252629;
+  --sidebar-underlay-highlight: rgba(255,255,255,0.1);
+  --sidebar-underlay-shadow: rgba(0,0,0,0.24);
+  --sidebar-underlay-cool: rgba(255,255,255,0.035);
+  --sidebar-glass-sheen: rgba(255,255,255,0.08);
+  --sidebar-glass-edge: rgba(255,255,255,0.14);
   --sidebar-hover: #38393d;
   --sidebar-active: #3b3c40;
   --sidebar-text: #c3c4c7;
@@ -90,9 +96,10 @@ body[data-theme="dark"] {
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background:
-    radial-gradient(ellipse 270px 340px at 132px 8%, var(--sidebar-underlay-highlight), transparent 76%),
-    radial-gradient(ellipse 300px 390px at 218px 92%, var(--sidebar-underlay-shadow), transparent 74%),
-    linear-gradient(180deg, var(--sidebar-underlay-start), var(--sidebar-underlay-end));
+    radial-gradient(ellipse 120px 140px at 32px 10%, var(--sidebar-underlay-highlight), transparent 78%),
+    radial-gradient(ellipse 150px 170px at 248px 42%, var(--sidebar-underlay-shadow), transparent 76%),
+    radial-gradient(ellipse 105px 145px at 110px 84%, var(--sidebar-underlay-cool), transparent 79%),
+    linear-gradient(153deg, var(--sidebar-underlay-start), var(--sidebar-underlay-end));
   color: var(--text);
   color-scheme: light;
   height: 100vh;
@@ -127,6 +134,20 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 }
 
 .sidebar > * { flex-shrink: 0; }
+
+.sidebar::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='frost'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.065' filter='url(%23frost)'/%3E%3C/svg%3E"),
+    linear-gradient(112deg, var(--sidebar-glass-sheen), transparent 35% 72%, color-mix(in srgb, var(--sidebar-glass-sheen) 38%, transparent));
+  box-shadow: inset 0 1px 0 var(--sidebar-glass-edge), inset -1px 0 0 var(--sidebar-glass-edge);
+  content: '';
+  pointer-events: none;
+}
+
+.sidebar > * { position: relative; z-index: 1; }
 
 .sidebar-header,
 .sidebar-nav {
@@ -3140,7 +3161,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
 
 <aside class="sidebar" id="primarySidebar">
   <div class="sidebar-header">
-    <h1>Workweb</h1>
+    <h1>WorkWeb</h1>
     <p id="dateDisplay"></p>
   </div>
   <nav class="sidebar-nav">
