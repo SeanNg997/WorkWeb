@@ -227,6 +227,38 @@ async function run() {
     assert.deepEqual(updated.pages, ['第二本书的正文']);
     log('PASS metadata edit retained page body');
 
+    log('START project page tab stable styles');
+    await evaluate(window, "openProjectBook('p_beta')");
+    await waitFor(async () => evaluate(window,
+      "document.querySelector('#projectPageTabs .project-page-tab') && document.getElementById('projectBookView').classList.contains('active')"
+    ), 'project page tab render');
+    await wait(700);
+    const pageTabState = await evaluate(window, `(() => {
+      const tab = document.querySelector('#projectPageTabs .project-page-tab');
+      const panel = document.querySelector('.project-left-page');
+      const ancestors = [
+        document.getElementById('projectBookView'),
+        document.querySelector('.project-book-spread'),
+        panel,
+        document.querySelector('.project-page-manager'),
+        document.querySelector('.project-page-tabs')
+      ];
+      return {
+        willChange: getComputedStyle(tab).willChange,
+        transform: getComputedStyle(tab).transform,
+        parentTransforms: ancestors.map(element => getComputedStyle(element).transform),
+        fontFamily: getComputedStyle(tab).fontFamily,
+        panelFontFamily: getComputedStyle(panel).fontFamily
+      };
+    })()`);
+    assert.equal(pageTabState.willChange, 'auto');
+    assert.equal(pageTabState.transform, 'none');
+    assert.ok(pageTabState.parentTransforms.every(value => value === 'none'), JSON.stringify(pageTabState.parentTransforms));
+    assert.equal(pageTabState.fontFamily, pageTabState.panelFontFamily);
+    log(`PASS project page tab stable styles ${JSON.stringify(pageTabState)}`);
+    await evaluate(window, 'closeProjectBook()');
+    await waitFor(async () => evaluate(window, 'activeProjectId === null'), 'project book close');
+
     await evaluate(window, "switchPage('progress')");
     window.setSize(1380, 900);
     await wait(500);
