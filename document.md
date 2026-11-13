@@ -12,12 +12,11 @@
 WorkWeb 是一个完全本地化的个人工作面板，可作为本地 Web 服务运行，也可通过 Electron 打包成桌面应用。核心功能包括：
 
 - TODO / 便笺：卡片式便笺，支持标题内联编辑、富文本正文、拖拽排序、卡片宽度调整、保存状态提示。
-- Bot TODO：只读展示数据目录中的 `bot-todo/todos.md` 与 `bot-todo/schedule.md`，并通过设置里的 Grok Bot Webhook 请求更新或发送消息。
 - 项目书架：按标签分组展示项目，支持项目标签和项目卡片排序。
-- 项目书本视图：每个项目包含简介、标题大纲、多页内容、富文本编辑、源码模式、项目内查找、页码排序和页面删除。
+- 项目书本视图：每个项目包含页面管理、本页大纲、多页内容、富文本编辑、源码模式、项目切换、项目内查找、页面排序和删除。
 - 项目页图片：支持插入和粘贴图片，图片保存到当前数据目录的 `projects/figures/`。
 - 常用个人信息：按标签分组的信息面板，字段可遮罩显示，支持复制、折叠、拖拽排序。
-- 设置中心：支持 Markdown 字号、AI 写作助手、Grok Bot Webhook、数据导入导出、数据目录迁移、回收站恢复和自动更新检查。
+- 设置中心：支持 Markdown 字号、AI 写作助手、三套浅色主题和深色主题、数据导入导出、数据目录迁移、回收站恢复和自动更新检查。
 - 数据升级：旧版数据会在前端启动时触发 schema v2 迁移，迁移前自动备份。
 
 注意：信息字段的“加密”目前只是前端遮罩，不是真正加密。AI API Key 也会保存到桌面设置或浏览器 `localStorage`，属于本机明文配置。
@@ -44,6 +43,8 @@ npm run build:novel  # 构建 src/novel-project-editor.jsx 到 vendor/novel-proj
 npm run pack:win     # Windows NSIS 打包
 npm run pack:mac     # macOS DMG 打包
 ```
+
+后续每轮代码修改完成后都运行 `npm run pack:win` 更新 Windows 安装包；若修改 `src/novel-project-editor.jsx`，先运行 `npm run build:novel` 更新运行时产物。
 
 修改 `src/novel-project-editor.jsx` 后必须运行 `npm run build:novel`，否则运行时仍加载旧的 `vendor/novel-project-editor.js`。
 
@@ -120,9 +121,6 @@ data/
 ├── trash/
 │   ├── notes/
 │   └── projects/
-├── bot-todo/
-│   ├── todos.md
-│   └── schedule.md
 └── backups/
     └── pre-schema-v2-{timestamp}/
 ```
@@ -204,17 +202,10 @@ POST   /api/project-figures
 GET    /api/trash
 POST   /api/restore-trash
 POST   /api/clear-trash
-GET    /api/bot-todo
-POST   /api/bot-todo/webhook
 POST   /api/ai/complete
 
 GET    /projects/figures/...
 ```
-
-Bot TODO：
-
-- `GET /api/bot-todo` 返回 `{ todos, schedule }`，分别是 `bot-todo/todos.md` 和 `bot-todo/schedule.md` 的原文。文件缺失时返回空字符串，并补齐目录和空文件。页面按列表渲染：待办只显示事项；日程按日期或周期分组，条目为「时间 事项」。
-- `POST /api/bot-todo/webhook` 接收 `{ type, text, webhookUrl, botTodoPath, platform }`。`type` 只能是 `update` 或 `message`，URL 必须是 `http` 或 `https`。`botTodoPath` 是数据目录下 `bot-todo` 的绝对路径；前端会传入，缺省时服务端用当前数据目录拼接。转发到上游的 JSON 包含 `type`、`text`、`botTodoPath`，有平台时再加 `platform`。设置里「Bot TODO」开关默认开启，关闭后侧栏不显示该入口。
 
 并发和冲突：
 
@@ -316,7 +307,7 @@ Bot TODO：
 
 - `loadData()` 访问 API 失败时从 `localStorage` 读取 `wb_notes`、`wb_info`、`wb_projects`。
 - 保存失败时也会临时写入这些 `localStorage` key。
-- 主题保存在 `wb_theme`。深色 `body[data-theme="dark"]` 用 Typora night 的 `#26292c` / `#b8bfc6` / `#2E3033` / `#333` / `#DEDEDE` / `#6dc1e7`，书架书脊为石墨灰蓝。浅色主题不改。界面字号在原 `font-size` 上统一加 1px。
+- 主题保存在 `wb_theme`。保留原深色和浅色，并新增 `paper`、`mist` 两套浅色主题；旧版 `rose` 值映射到原浅色。
 - 侧边栏折叠状态保存在 `wb_sidebar_collapsed`。
 - Markdown 字号和 AI 设置优先写桌面设置，同时也写 `localStorage`。
 
@@ -325,16 +316,15 @@ Bot TODO：
 `index.html` 分为三块：
 
 1. `<style>`：主题变量、窗口标题栏、侧边栏、便笺、项目书架、书本视图、富文本编辑器、信息面板、设置页、迁移和更新弹窗。
-2. `<body>`：侧边栏、三个页面、编辑弹窗、设置弹窗、回收站、更新弹窗、存储迁移弹窗、确认框和 toast。
+2. `<body>`：侧边栏、主页面、编辑弹窗、设置弹窗、回收站、更新弹窗、存储迁移弹窗、确认框和 toast。
 3. `<script>`：API 封装、全局状态、渲染函数、拖拽、保存、快捷键和桌面桥接。
 
 页面结构：
 
 - `#page-todo`：TODO / 便笺页面，主体是 `#notesGrid`。
-- `#page-bot-todo`：Grok Bot 待办与日程只读页，停留时约每 4 秒轮询。
 - `#page-progress`：项目书架与书本编辑页面。
 - `#page-info`：常用个人信息页面。
-- `#settingsModal`：Markdown 字号、AI 写作助手、数据文件、Grok Bot Webhook、数据目录、更新。
+- `#settingsModal`：Markdown 字号、主题、AI 写作助手、数据文件、数据目录、更新。
 - `#storageMigrationModal`：schema 迁移进度。
 - `#trashRestoreModal`：回收站恢复列表。
 - `#updateModal` 和 `#updateToast`：自动更新状态。
@@ -346,15 +336,14 @@ Bot TODO：
 3. `initWindowControls()`
 4. `loadMarkdownFontSize()`
 5. `loadAISettings()`
-6. `loadGrokBotSettings()`
-7. 绑定 `window.workwebDesktop.onUpdateState`
-8. `loadAppVersion()`
-9. `ensureStorageReady()`
-10. `loadData()`
-11. `renderNotes()` / `renderProjects()` / `renderInfoPanels()`
-12. `applyProjectEditorMode()` / `applyAIConfig()`
-13. 绑定项目大纲 resizer 和交互
-14. `updateDateDisplay()` 并每分钟更新
+6. 绑定 `window.workwebDesktop.onUpdateState`
+7. `loadAppVersion()`
+8. `ensureStorageReady()`
+9. `loadData()`
+10. `renderNotes()` / `renderProjects()` / `renderInfoPanels()`
+11. `applyProjectEditorMode()` / `applyAIConfig()`
+12. 绑定项目大纲 resizer 和交互
+13. `updateDateDisplay()` 并每分钟更新
 
 API 封装：
 
@@ -407,7 +396,7 @@ API 封装：
 项目模块包含两个层级：
 
 - 书架视图：按首个标签分组展示项目卡片。
-- 书本视图：左页项目标题、简介和标题大纲；右页富文本编辑器和页码。
+- 书本视图：左侧上半部是页面管理，下半部是本页大纲；右侧是富文本编辑器。标题栏可返回书架或切换项目；侧栏显示/隐藏按钮仅在具体项目打开时出现。
 
 主要函数：
 
@@ -419,14 +408,14 @@ API 封装：
 - `openProjectEditor()` / `saveProject()`：新增或编辑项目元信息。
 - `askDeleteProject()`：删除项目到回收站。
 - `openProjectBook()` / `closeProjectBook()`：进入或退出书本视图。
-- `renderProjectBook()`：同步左页标题、简介、大纲、右页内容和页码。
+- `renderProjectBook()`：同步项目标题切换器、左侧大纲和右侧内容。
 - `ensureProjectEditor()`：挂载富文本编辑器。
 - `handleProjectPageInput()`：写回当前页内容、更新大纲、防抖保存。
 - `queuePersistProjects()` / `flushProjectPersist()`：项目页保存。
 - `persistProjectPageByIndex()`：单页 PUT 保存。
 - `switchProjectPage()`：切页前 flush 当前页。
-- `addProjectPage()`：新增页面并持久化项目元信息。
-- `deleteProjectPage()`：删除页面；如果只剩一页，则清空而不是移除最后一页。
+- `addProjectPage()`：在当前页后插入空白页并立即切换；当前页是末页时追加，同时持久化页面顺序和 `pageIds`。
+- `deleteProjectPage()`：编辑器工具栏提供删除入口；确认时按项目 ID 和页面 ID 定位目标。多页项目删除不可恢复；唯一一页确认后清空内容并保留空白页。
 - `reorderProjectPages()`：重排页面，同时重排 `pageIds`。
 
 标题大纲：
@@ -434,28 +423,31 @@ API 封装：
 - `getProjectOutlineItems()` 从每页 HTML 或 Markdown 中提取 `h1` 到 `h4`。
 - `renderProjectOutline()` 渲染左侧大纲。
 - 大纲支持层级折叠，折叠状态在内存的 `projectOutlineCollapsedKeys` 中。
-- 点击大纲会切到对应页面并滚动到标题。
-- `bindProjectOutlineResizer()` 可拖动调整项目简介和大纲区域高度。
+- 点击大纲标题会切到对应页面并滚动到标题；可折叠标题同时切换其下级显示，方向键可展开或收起。
+- `bindProjectOutlineResizer()` 可拖动调整页面管理和本页大纲区域高度。
 
 项目内查找：
 
-- `openProjectFind()` 只在打开项目时有效。
+- 页面管理顶部常驻项目查找框；`Ctrl+F` / `⌘F` 会聚焦并选中查找内容，侧栏隐藏时会先展开。
 - 查找基于每页文本内容，输入后统计全部匹配数量。
 - 点击上/下按钮时才跳转并选中对应匹配。
 - 源码模式下使用 textarea selection；富文本模式下调用编辑器 API `selectText()`。
 
-页码操作：
+页面管理：
 
-- 页码由 `renderProjectPageTabs()` 渲染。
+- 页面由 `renderProjectPageTabs()` 渲染；每行标题取页面首个非空行并按宽度省略，右侧显示页码，当前页以浅色强调并暴露为当前页状态。
 - `bindProjectPageDrag()` 使用通用 `bindPointerSortable()`。
-- 页码拖拽可重排；拖到删除区会触发删除确认。
-- 新增按钮始终在页码末尾，拖拽插入位置会受 `maxIndex` 限制。
+- 页面拖拽可重排；拖到删除区会触发删除确认。
+- 新增按钮位于页面管理标题右侧，拖拽插入位置会受 `maxIndex` 限制；新增页插在当前页之后。
+- 编辑器工具栏右侧的删除图标在富文本与源码模式都可用；便笺编辑器不显示此操作。
 
 图片上传：
 
 - `uploadProjectImage(file)` 把图片读成 data URL，调用 `POST /api/project-figures`。
 - 后端保存到 `projects/figures/`，返回相对路径。
 - 如果图片宽度超过编辑器宽度的一半，默认插入 `width: 50%`。
+
+侧栏和项目面板的线性图标使用 Tabler Icons；常用个人信息的钥匙图标使用 Lucide。许可文本见 `vendor/tabler-icons-LICENSE.txt` 和 `vendor/lucide-LICENSE.txt`。
 
 修改入口：
 
@@ -691,7 +683,6 @@ window.workwebDesktop = {
 
 - Markdown 字号：`MARKDOWN_FONT_SIZE_KEY`、`setMarkdownFontSize()`、CSS `body[data-markdown-size=...]`。
 - AI 设置：`loadAISettings()`、`saveAISettings()`、`getAIConfig()`、`testAIConnection()`。
-- Grok Bot：`wb_grok_bot_webhook_url`、`wb_grok_bot_webhook_key`、`wb_grok_bot_webhook_authorization`、`wb_bot_todo_enabled`，由 `loadGrokBotSettings()` / `saveGrokBotSettings()` 分别保存。`wb_bot_todo_enabled` 默认开启，关闭后侧栏隐藏 Bot TODO 并停止轮询。桌面端需在 `ALLOWED_DESKTOP_SETTING_KEYS` 中放行。有 key 时上游 JSON 增加 `key`，并带 `X-Webhook-Key`；Authorization 只放在请求头，原文转发。上游 JSON 另含 `botTodoPath`（数据目录与 `bot-todo` 拼成的绝对路径），桌面端再附 `platform`。
 - 数据导入导出：`exportDataFile()`、`importDataFile()`、`createDataExport()`、`importDataExport()`。
 - 数据目录：`chooseNextDataDir()`、`changeDataDir()`、`migrateDataDir()`、`mergeDataDirs()`。
 - 回收站：`openTrashRestore()`、`restoreTrashItem()`、`askClearTrash()`、`listTrash()`。
@@ -736,9 +727,9 @@ npm run server
 
 然后打开 `http://127.0.0.1:3000`，验证：
 
-- 各页面可以切换。Bot TODO 打开后能看到待办和日程；未配置 Webhook 时，更新和发送只提示、不发出请求。
+- 全局侧栏可折叠为图标栏，项目侧栏可单独隐藏；切换主题后颜色和桌面窗口主题保持一致。
 - 便笺新增、编辑、调整宽度、拖拽排序、删除和恢复正常。
-- 项目新增、编辑、打开、切页、排序、删除页面、项目内查找正常。
+- 项目新增、编辑、打开、切换项目、切页、排序、删除页面、项目内查找正常。
 - 信息面板新增、编辑、复制、遮罩、拖拽排序正常。
 - 刷新页面后数据仍在。
 
