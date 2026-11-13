@@ -425,7 +425,7 @@ function isClickBelowLastBlock(prose, event, emptyResult = false) {
   return event.clientY > lastBlock.getBoundingClientRect().bottom;
 }
 
-function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus, onImageUpload, aiConfig, onAIToggle }) {
+function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true, saveStatus, onImageUpload, aiConfig, onAIToggle, onDeletePage }) {
   const { editor } = useEditor();
   const fileInputRef = useRef(null);
   const [, forceToolbarRender] = useState(0);
@@ -554,6 +554,23 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
       >
         {saveStatus?.text || ''}
       </span>
+      {onDeletePage && (
+        <button
+          type="button"
+          className="novel-toolbar-delete-page"
+          aria-label="删除此页"
+          title="删除此页"
+          onClick={onDeletePage}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 7l16 0" />
+            <path d="M10 11l0 6" />
+            <path d="M14 11l0 6" />
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -577,6 +594,7 @@ function NovelProjectEditor({
   showToolbar = true,
   showSourceToggle = true,
   saveStatus = null,
+  onDeletePage,
   onImageUpload,
   onEditorReady,
   onAIToggle,
@@ -690,6 +708,7 @@ function NovelProjectEditor({
             onToggleSourceMode={onToggleSourceMode}
             showSourceToggle={showSourceToggle}
             saveStatus={saveStatus}
+            onDeletePage={onDeletePage}
             onImageUpload={onImageUpload}
             aiConfig={aiConfig}
             onAIToggle={onAIToggle}
@@ -802,6 +821,7 @@ function mountNovelProjectEditor(el, options = {}) {
     showToolbar: options.showToolbar !== false,
     showSourceToggle: options.showSourceToggle !== false,
     saveStatus: options.saveStatus || null,
+    onDeletePage: options.onDeletePage,
     onImageUpload: options.onImageUpload,
     onAIToggle: options.onAIToggle,
     aiConfig: options.aiConfig || null,
@@ -889,6 +909,7 @@ function mountNovelProjectEditor(el, options = {}) {
         showToolbar={state.showToolbar}
         showSourceToggle={state.showSourceToggle}
         saveStatus={state.saveStatus}
+        onDeletePage={state.onDeletePage}
         onImageUpload={state.onImageUpload}
         onEditorReady={editor => { state.editor = editor; }}
         onAIToggle={state.onAIToggle}

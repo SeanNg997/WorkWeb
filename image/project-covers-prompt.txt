@@ -1,0 +1,11 @@
+Use case: product-mockup
+Asset type: standalone sprite sheet for project covers in a desktop productivity app
+Primary request: Create one image containing exactly 20 distinct, related, flat front-cover artworks in a precise 4-column by 5-row grid. Every cell is equal size, edge-to-edge with no gaps, and contains exactly one complete cover design.
+Input images: Image 1 is a style reference only for the soft, minimal pastel cover artwork. Do not reproduce its application interface, text, layout, or any screenshot content.
+Subject: 20 elegant modern editorial cover designs with restrained abstract motifs such as leaves, circles, hills, lines, and simple geometric shapes.
+Style/medium: minimal matte paper illustration, soft subtle paper texture, clean refined shapes, cohesive visual family with clearly distinct compositions.
+Composition/framing: perfectly aligned orthographic flat artwork, exact 4 by 5 grid, each cover fills its cell, no overlap, no perspective, no frames, no margins, no gutter, no book mockup, no spine, no shadows outside the artwork.
+Color palette: varied muted sage, soft ivory, powder blue, dusty rose, lavender, teal, pale yellow, coral, mint, and a few other balanced muted colors; use diverse combinations across the 20 cells.
+Text (verbatim): none
+Constraints: exactly 20 unique covers in row-major order; full bleed to each cell edge; clear straight cell boundaries; no legible text, letters, numbers, labels, logos, or watermark.
+Avoid: user interface, cards outside the grid, white padding, empty cells, duplicated covers, photorealistic objects, strong gradients, harsh contrast, clutter, and typography.

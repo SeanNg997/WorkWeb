@@ -99,6 +99,30 @@ body[data-theme="dark"] {
   --project-left-end: #232427;
 }
 
+body[data-theme="paper"] {
+  --sidebar-bg: #f4f6f6; --sidebar-underlay-start: #dfe9e7; --sidebar-underlay-end: #f3f6f6;
+  --sidebar-underlay-highlight: rgba(255,255,255,.8); --sidebar-underlay-shadow: rgba(87,144,144,.16);
+  --sidebar-underlay-cool: rgba(121,178,183,.13); --sidebar-glass-sheen: rgba(255,255,255,.26);
+  --sidebar-glass-edge: rgba(255,255,255,.68); --sidebar-hover: #e9efef; --sidebar-active: #deebea;
+  --sidebar-text: #596462; --sidebar-text-active: #304544; --bg: #f2f5f4; --bg-glow: rgba(195,220,216,.2);
+  --bg-start: #fafbfb; --bg-end: #edf2f1; --card-bg: #fff; --surface-muted: #f0f4f3;
+  --secondary-hover: #e7efed; --line: #dfe7e5; --text: #222a29; --text-light: #737f7c;
+  --accent: #5b9d96; --accent-hover: #427f79; --accent-soft: #e0efed;
+  --project-left-start: #edf4f2; --project-left-end: #e2ece9;
+}
+
+body[data-theme="mist"] {
+  --sidebar-bg: #f1f5f8; --sidebar-underlay-start: #dfe9f1; --sidebar-underlay-end: #f2f6f9;
+  --sidebar-underlay-highlight: rgba(255,255,255,.82); --sidebar-underlay-shadow: rgba(91,131,169,.16);
+  --sidebar-underlay-cool: rgba(123,172,190,.13); --sidebar-glass-sheen: rgba(255,255,255,.27);
+  --sidebar-glass-edge: rgba(255,255,255,.7); --sidebar-hover: #e8eff5; --sidebar-active: #dce9f1;
+  --sidebar-text: #5a6670; --sidebar-text-active: #34495a; --bg: #f2f5f8; --bg-glow: rgba(193,213,231,.2);
+  --bg-start: #fafbfd; --bg-end: #edf2f6; --card-bg: #fff; --surface-muted: #f0f4f7;
+  --secondary-hover: #e7eef4; --line: #dfe6ec; --text: #222a31; --text-light: #74808b;
+  --accent: #7198b7; --accent-hover: #587f9d; --accent-soft: #e2edf5;
+  --project-left-start: #edf3f7; --project-left-end: #e2ebf2;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background:
@@ -165,57 +189,77 @@ body[data-markdown-size="large"] { --markdown-font-scale: 1.14; }
 .sidebar-header,
 .sidebar-nav {
   width: var(--sidebar-width);
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1), padding 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body.sidebar-collapsed .sidebar {
-  width: 0;
-  min-width: 0;
-  padding-bottom: 0;
-  margin-left: 0;
-  border-right: 0;
-}
+body.sidebar-collapsed .sidebar { width: 64px; min-width: 64px; padding-bottom: 12px; border-right: 1px solid color-mix(in srgb, var(--line) 52%, transparent); }
+body.sidebar-collapsed .sidebar-header { height: 0; min-height: 0; grid-template-rows: 0 0; row-gap: 0; padding-block: 0; border-bottom-width: 0; opacity: 0; }
+body.sidebar-collapsed .sidebar-nav { width: 64px; padding: 14px 8px; }
+body.sidebar-collapsed .nav-item { height: 48px; padding: 0 0 0 14px; gap: 0; }
+body.sidebar-collapsed .nav-item span:last-child { max-width: 0; opacity: 0; transform: translateX(-5px); visibility: hidden; transition: max-width 0.32s ease, opacity 0.12s ease, transform 0.32s ease, visibility 0s linear 0.32s; }
+body.sidebar-collapsed .sidebar-footer { height: 88px; min-height: 88px; }
+body.sidebar-collapsed .sidebar-settings { width: 40px; min-height: 40px; gap: 0; padding: 0 10px; transform: translateY(48px); }
+body.sidebar-collapsed .sidebar-settings > span:last-child { max-width: 0; opacity: 0; transform: translateX(-5px); visibility: hidden; transition: max-width 0.32s ease, opacity 0.12s ease, transform 0.32s ease, visibility 0s linear 0.32s; }
+body.sidebar-collapsed .sidebar-toggle { opacity: 0; transform: translateY(5px); visibility: hidden; pointer-events: none; transition: opacity 0.14s ease, transform 0.32s ease, visibility 0s linear 0.32s; }
+body.sidebar-collapsed .sidebar-expand-toggle { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition: opacity 0.14s ease 0.1s, transform 0.32s ease, visibility 0s; }
 
 .sidebar-header {
-  display: flex;
-  flex-direction: column;
+  --sidebar-header-top-padding: 22px;
+  display: grid;
+  grid-template-rows: 36px 18px;
+  row-gap: 6px;
   align-items: center;
-  padding: 22px 16px;
+  box-sizing: border-box;
+  height: calc(var(--sidebar-header-top-padding) + 83px);
+  min-height: calc(var(--sidebar-header-top-padding) + 83px);
+  padding: var(--sidebar-header-top-padding) 16px 22px;
+  overflow: hidden;
   border-bottom: 1px solid var(--line);
   text-align: center;
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1), height 0.32s cubic-bezier(0.4, 0, 0.2, 1), min-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), padding 0.32s cubic-bezier(0.4, 0, 0.2, 1), grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1), row-gap 0.32s cubic-bezier(0.4, 0, 0.2, 1), border-bottom-width 0.32s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease, opacity 0.16s ease;
 }
 
-.sidebar-header h1 { margin: 0; font-size: 30px; font-weight: 700; color: var(--text); }
-.sidebar-header p { margin: 6px 0 0; font-size: 14px; color: var(--text-light); }
+.sidebar-header h1 { min-height: 0; overflow: hidden; margin: 0; font-size: 30px; line-height: 36px; font-weight: 700; color: var(--text); }
+.sidebar-header p { min-height: 0; overflow: hidden; margin: 0; font-size: 14px; line-height: 18px; color: var(--text-light); }
 
-.sidebar-nav { padding: 16px 14px; flex: 1; }
+.sidebar-nav { padding: 16px 14px; flex: 1; min-height: 0; overflow-y: auto; }
 
 .sidebar-footer {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  position: relative;
+  display: block;
+  box-sizing: border-box;
   width: 100%;
+  height: 40px;
+  min-height: 40px;
   padding: 0 12px;
   order: 2;
   margin-top: 8px;
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1), height 0.32s cubic-bezier(0.4, 0, 0.2, 1), min-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-settings {
   display: flex;
   align-items: center;
+  position: absolute;
+  top: 0;
+  left: 12px;
+  box-sizing: border-box;
   gap: 12px;
-  flex: 1;
+  width: calc(100% - 66px);
+  min-height: 40px;
+  flex: none;
   min-width: 0;
   padding: 0 14px;
   text-align: left;
   margin: 0;
-  min-height: 44px;
   border: 0;
   border-radius: 12px;
   background: transparent;
   color: var(--sidebar-text);
   font-size: 15px;
   cursor: pointer;
-  transition: all var(--transition);
+  transform: translateY(0);
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1), padding 0.32s cubic-bezier(0.4, 0, 0.2, 1), gap 0.32s cubic-bezier(0.4, 0, 0.2, 1), transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), background var(--transition), color var(--transition);
 }
 
 .sidebar-settings:hover,
@@ -223,17 +267,21 @@ body.sidebar-collapsed .sidebar {
   background: var(--sidebar-active);
   color: var(--sidebar-text-active);
 }
+.sidebar-settings > span:last-child { max-width: 80px; overflow: hidden; white-space: nowrap; transition: max-width 0.32s ease, opacity 0.16s ease 0.1s, transform 0.32s ease, visibility 0s; }
 
 .nav-item {
   display: flex; align-items: center; gap: 12px;
+  box-sizing: border-box;
+  width: 100%; height: 44px;
   padding: 12px 14px; border-radius: 14px;
   color: var(--sidebar-text); cursor: pointer;
-  transition: all var(--transition); font-size: 17px; margin-bottom: 4px;
+  transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1), height 0.32s cubic-bezier(0.4, 0, 0.2, 1), padding 0.32s cubic-bezier(0.4, 0, 0.2, 1), gap 0.32s cubic-bezier(0.4, 0, 0.2, 1), background var(--transition), color var(--transition); font-size: 17px; margin-bottom: 4px;
 }
 
 .nav-item[hidden] { display: none !important; }
 .nav-item:hover { background: var(--sidebar-hover); color: var(--text); }
 .nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 650; }
+.nav-item span:last-child { display: inline-block; max-width: 180px; overflow: hidden; white-space: nowrap; transition: max-width 0.32s ease, opacity 0.16s ease 0.1s, transform 0.32s ease, visibility 0s; }
 
 .nav-icon {
   width: 20px; height: 20px;
@@ -292,12 +340,12 @@ body:has(.confirm-overlay.active) .sidebar {
 }
 
 html.platform-win32 .sidebar-header {
-  padding-top: 35px;
+  --sidebar-header-top-padding: 35px;
 }
 
 /* 红绿灯在左上角，标题整体下移避让 */
 html.platform-darwin .sidebar-header {
-  padding-top: 56px;
+  --sidebar-header-top-padding: 56px;
 }
 
 .workspace-header {
@@ -309,6 +357,37 @@ html.platform-darwin .sidebar-header {
 }
 
 .workspace-header h2 { font-size: 25px; font-weight: 700; color: var(--text); line-height: 1.25; }
+.workspace-header .btn-primary { box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 16%, transparent); }
+
+.project-header-titles { display: flex; align-items: center; gap: 9px; min-width: 0; font-size: 25px; font-weight: 700; line-height: 1.25; }
+.page#page-progress > .workspace-header { z-index: 40; overflow: visible; }
+.project-book-crumb { border: 0; padding: 2px; border-radius: 4px; background: transparent; color: inherit; font: inherit; line-height: inherit; cursor: pointer; transition: color var(--transition); }
+.project-book-crumb:hover { color: var(--accent-hover); }
+.project-book-title-separator { color: var(--text-light); }
+.project-switcher-wrap { position: relative; min-width: 0; }
+.project-switcher-wrap[hidden],
+.project-book-title-separator[hidden] { display: none; }
+.project-switcher-button { position: relative; max-width: min(42vw, 520px); min-width: 0; overflow: hidden; padding: 2px; border: 0; background: transparent; color: var(--text); font: inherit; font-family: Arial, 'Microsoft YaHei', '微软雅黑', sans-serif; line-height: inherit; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: color var(--transition); }
+.project-switcher-button::after { position: absolute; right: 2px; bottom: 0; left: 2px; height: 2px; background: var(--accent); content: ''; transform: scaleX(0); transform-origin: left; transition: transform var(--transition); }
+.project-switcher-button:hover::after,
+.project-switcher-button:focus-visible::after { transform: scaleX(1); }
+.project-switcher-button:hover { color: var(--accent-hover); }
+.project-switcher-menu { display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: min(320px, 78vw); max-height: 50vh; overflow: auto; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); box-shadow: var(--card-shadow); }
+.project-switcher-menu.active { display: block; }
+.project-switcher-option { display: flex; align-items: center; width: 100%; min-height: 38px; padding: 7px 10px; border: 0; border-radius: 5px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.project-switcher-option:hover,
+.project-switcher-option[aria-selected="true"] { background: var(--surface-muted); color: var(--accent-hover); }
+.project-panel-toggle-slot { flex: 0 0 0; width: 0; height: 36px; margin-right: -9px; overflow: hidden; transition: flex-basis 0.32s cubic-bezier(0.4, 0, 0.2, 1), width 0.32s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.32s cubic-bezier(0.4, 0, 0.2, 1); }
+.project-panel-toggle-slot:has(.project-panel-toggle:not([hidden])) { flex-basis: 36px; width: 36px; margin-right: 0; }
+.project-panel-toggle { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; transition: all var(--transition); }
+.project-panel-toggle[hidden] { display: none; }
+.project-panel-icon { display: block; width: 20px; height: 20px; }
+.project-panel-toggle[data-panel-hidden="false"] .project-panel-icon-closed,
+.project-panel-toggle[data-panel-hidden="true"] .project-panel-icon-open { display: none; }
+.project-panel-toggle:hover,
+.project-panel-toggle:focus-visible,
+.project-panel-toggle:active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+#projectAddButton[hidden] { display: none; }
 
 html.platform-win32 .workspace-header {
   min-height: 86px;
@@ -358,6 +437,9 @@ html.desktop-window .sidebar-expand-toggle {
 html.desktop-window .modal-header { -webkit-app-region: drag; }
 
 .sidebar-toggle {
+  position: absolute;
+  top: 0;
+  right: 12px;
   display: grid;
   place-items: center;
   flex: 0 0 40px;
@@ -369,7 +451,7 @@ html.desktop-window .modal-header { -webkit-app-region: drag; }
   background: transparent;
   color: var(--sidebar-text);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), opacity 0.14s ease 0.1s, transform 0.32s ease, visibility 0s;
 }
 
 .sidebar-toggle:hover,
@@ -394,10 +476,11 @@ html.desktop-window .modal-header { -webkit-app-region: drag; }
 
 .sidebar-expand-toggle {
   position: absolute;
-  top: 18px;
-  left: 18px;
+  top: 0;
+  right: 12px;
   z-index: 10;
-  display: none;
+  display: grid;
+  flex: 0 0 40px;
   place-items: center;
   width: 40px;
   height: 40px;
@@ -409,10 +492,14 @@ html.desktop-window .modal-header { -webkit-app-region: drag; }
   box-shadow: none;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  opacity: 0;
+  transform: translateY(-5px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), opacity 0.14s ease 0.1s, transform 0.32s ease, visibility 0s linear 0.32s;
 }
 
-html.desktop-window .sidebar-expand-toggle { top: 52px; }
+html.desktop-window .sidebar-expand-toggle { top: 0; }
 
 .sidebar-expand-toggle .sidebar-toggle-icon {
   display: block;
@@ -420,8 +507,7 @@ html.desktop-window .sidebar-expand-toggle { top: 52px; }
   height: 20px;
 }
 
-body.sidebar-collapsed .sidebar-expand-toggle { display: grid; }
-body.sidebar-collapsed .workspace-header { margin-left: 72px; padding-left: 0; }
+body.sidebar-collapsed .workspace-header { margin-left: 0; padding-left: 32px; }
 
 .desktop-titlebar {
   position: fixed;
@@ -551,170 +637,6 @@ html.platform-win32 .windows-window-controls {
 .page { display: none; }
 .page.active { display: flex; flex-direction: column; height: 100%; }
 
-.bot-todo-body {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  min-height: 0;
-  overflow: hidden;
-  padding: 10px 32px 28px;
-}
-.workspace-header .btn-primary { border-radius: 999px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 16%, transparent); }
-.bot-todo-header-actions { display: flex; align-items: center; }
-.bot-todo-update-icon { width: 19px; height: 19px; display: block; }
-.bot-todo-islands {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 22px;
-}
-.bot-todo-island {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--card-bg) 91%, transparent);
-  box-shadow: var(--card-shadow);
-}
-.bot-todo-island-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 0 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
-}
-.bot-todo-island-heading h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-}
-.bot-todo-markdown {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--text);
-}
-.bot-todo-markdown-inner {
-  width: 100%;
-  margin-block: 0;
-}
-.bot-todo-markdown p,
-.bot-todo-markdown ul,
-.bot-todo-markdown ol { margin: 0 0 0.7em; }
-.bot-todo-day {
-  margin: 14px 0 10px;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: left;
-  color: var(--accent-hover);
-}
-.bot-todo-plain {
-  list-style: none;
-  margin: 0 0 12px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.bot-todo-plain li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  margin: 0;
-  padding: 8px 4px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-.bot-todo-check { width: 28px; height: 28px; flex: 0 0 auto; border: 2px solid var(--line); border-radius: 7px; background: color-mix(in srgb, var(--card-bg) 90%, transparent); }
-.bot-todo-event { gap: 14px !important; min-height: 62px; padding: 10px 18px !important; border-radius: 16px !important; background: color-mix(in srgb, var(--accent-soft) 82%, var(--card-bg)) !important; }
-.bot-todo-event-marker { width: 8px; height: 38px; flex: 0 0 auto; border-radius: 999px; background: var(--accent); box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 26%, transparent); }
-.bot-todo-event-time { min-width: 86px; color: var(--text); font-weight: 700; }
-.bot-todo-event-title { min-width: 0; color: var(--text); }
-.bot-todo-plain li > span:not(.bot-todo-check):not(.bot-todo-event-marker):not(.bot-todo-event-time),
-.bot-todo-event-title { overflow-wrap: anywhere; word-break: break-word; }
-.bot-todo-status { margin: 24px 8px; text-align: center; color: var(--text-light); font-size: 15px; }
-.bot-todo-status.is-error { color: var(--danger); }
-.bot-todo-composer {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  height: 64px;
-  margin: 0;
-  padding: 5px 8px 5px 22px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--card-bg) 92%, transparent);
-  box-shadow: var(--card-shadow);
-}
-.bot-todo-composer:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
-  outline: none;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent),
-    inset 0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
-}
-.bot-todo-input {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 17px;
-}
-.bot-todo-input::placeholder { color: var(--text-light); }
-.bot-todo-compose-icon { width: 22px; height: 22px; flex: 0 0 auto; color: var(--text-light); }
-.bot-todo-input:focus,
-.bot-todo-input:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-.bot-todo-send {
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-  transition: background var(--transition), transform 0.12s ease;
-}
-.bot-todo-send:hover { background: var(--accent-hover); }
-.bot-todo-send:active { transform: scale(0.94); }
-.bot-todo-send:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
-  outline-offset: 3px;
-}
-.bot-todo-send.is-unavailable:hover,
-.bot-todo-send.is-unavailable:active { transform: none; }
-.bot-todo-send svg { width: 18px; height: 18px; display: block; }
-.bot-todo-send.is-unavailable,
-.btn.is-unavailable { opacity: 0.48; }
-.grok-bot-webhook-row > label:first-child { width: 118px; }
-
 /* === 按钮 === */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -765,7 +687,7 @@ input[type="radio"] { accent-color: var(--accent); }
 
 /* 仅浅色主题：原生单选在浅色下会把强调色一路填到外圈，和深色主题
    （外圈 + 留白 + 实心点）不一致，这里单独改成同一套造型；深色主题保持原生不变 */
-body[data-theme="light"] input[type="radio"] {
+body:not([data-theme="dark"]) input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
   flex: 0 0 13px;
@@ -780,7 +702,7 @@ body[data-theme="light"] input[type="radio"] {
   transition: border-color var(--transition);
 }
 
-body[data-theme="light"] input[type="radio"]::after {
+body:not([data-theme="dark"]) input[type="radio"]::after {
   content: '';
   position: absolute;
   inset: 1.5px;
@@ -791,14 +713,14 @@ body[data-theme="light"] input[type="radio"]::after {
   transition: opacity var(--transition), transform var(--transition);
 }
 
-body[data-theme="light"] input[type="radio"]:checked { border-color: var(--accent); }
+body:not([data-theme="dark"]) input[type="radio"]:checked { border-color: var(--accent); }
 
-body[data-theme="light"] input[type="radio"]:checked::after {
+body:not([data-theme="dark"]) input[type="radio"]:checked::after {
   opacity: 1;
   transform: scale(1);
 }
 
-body[data-theme="light"] input[type="radio"]:focus-visible {
+body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
   outline-offset: 2px;
 }
@@ -850,8 +772,6 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 
 .note-entrance { animation: noteIn 0.3s ease both; }
 
-.bot-todo-island.note-entrance { animation-duration: 0.48s; }
-.bot-todo-island:nth-child(2).note-entrance { animation-delay: 0.08s; }
 
 @keyframes projectShelfIn {
   from { opacity: 0; transform: translateY(8px) scale(0.99); }
@@ -1151,30 +1071,67 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 }
 
 .project-shelf {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 168px));
+  justify-content: start;
+  gap: 36px 28px;
+  max-width: 1480px;
+  padding-top: 24px;
 }
 
 .project-book-card {
   position: relative;
-  min-height: 76px;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card-bg);
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--text);
   box-shadow: none;
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+  transition: transform var(--transition);
 }
 
-.project-book-card:active {
-  cursor: grabbing;
+.project-book-card:active { transform: scale(0.985); }
+
+.project-book-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 5px;
+  background-color: #dce9df;
+  background-image: url('image/project-covers.png');
+  background-repeat: no-repeat;
+  background-size: 400% 500%;
+  background-position: var(--cover-x) var(--cover-y);
+  box-shadow: 4px 7px 15px rgba(28, 42, 35, 0.17);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.project-book-cover::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.34);
+  background: linear-gradient(90deg, rgba(30, 40, 34, 0.2), rgba(255, 255, 255, 0.14) 44%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.project-book-card:hover .project-book-cover {
+  transform: translateY(-3px);
+  box-shadow: 6px 12px 21px rgba(28, 42, 35, 0.2);
+}
+
+.project-book-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+  border-radius: 4px;
 }
 
 .project-book-card.sort-drag-proxy {
@@ -1182,13 +1139,14 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   left: 0;
   top: 0;
   z-index: 4000;
-  display: flex;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 14px;
   opacity: 0.92;
   cursor: grabbing;
-  background: var(--card-bg);
-  border-color: var(--accent);
+  background: transparent;
   color: var(--text);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: none;
   transition: none !important;
   animation: none !important;
   will-change: transform;
@@ -1197,12 +1155,6 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 .project-book-card.page-reveal {
   animation: projectShelfIn 0.42s cubic-bezier(0.2, 0.9, 0.2, 1) both;
   animation-delay: calc(var(--project-enter-index, 0) * 0.04s);
-}
-
-.project-book-card:hover {
-  background: color-mix(in srgb, var(--surface-muted) 58%, var(--card-bg));
-  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
-  box-shadow: var(--card-shadow);
 }
 
 .project-book-actions {
@@ -1259,10 +1211,11 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 .project-list-title {
   min-width: 0;
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 650;
   line-height: 1.4;
   word-break: break-word;
+  text-align: center;
 }
 
 .project-list-summary {
@@ -1276,6 +1229,124 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   -webkit-line-clamp: 2;
   word-break: break-word;
 }
+
+.project-shelf-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+}
+
+.project-tag-filters,
+.project-shelf-tools,
+.project-tag-selection,
+.project-tag-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-tag-filters { min-width: 0; flex-wrap: wrap; }
+
+.project-tag-filter {
+  min-height: 38px;
+  padding: 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: transparent;
+  color: var(--text-light);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.project-tag-filter:hover { border-color: var(--accent); color: var(--text); }
+.project-tag-filter[aria-pressed="true"] { border-color: transparent; background: var(--accent-soft); color: var(--accent-hover); font-weight: 650; }
+.project-shelf-tools { flex: 0 0 auto; }
+
+.project-shelf-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(300px, 28vw);
+  min-width: 190px;
+  min-height: 40px;
+  padding: 0 4px 0 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-light);
+}
+
+.project-shelf-search svg { width: 19px; height: 19px; flex: 0 0 auto; }
+.project-shelf-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; }
+.project-shelf-search input::placeholder { color: var(--text-light); }
+
+.project-manager-button,
+.project-manager-action {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.project-manager-button svg,
+.project-manager-action svg { width: 20px; height: 20px; display: block; }
+.project-manager-button:hover,
+.project-manager-button:focus-visible,
+.project-manager-action:hover,
+.project-manager-action:focus-visible { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.project-manager-action-danger:hover,
+.project-manager-action-danger:focus-visible { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--card-bg)); color: var(--danger-hover); }
+
+.project-cover-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.project-cover-option {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  background-color: #dce9df;
+  box-shadow: 2px 3px 7px rgba(28, 42, 35, 0.14);
+  cursor: pointer;
+}
+
+.project-cover-option::before {
+  content: '';
+  position: absolute;
+  inset: -2%;
+  background: url('image/project-covers.png') no-repeat var(--cover-x) var(--cover-y) / 400% 500%;
+  pointer-events: none;
+}
+
+.project-cover-option[aria-pressed="true"] { border-color: var(--accent-hover); box-shadow: 0 0 0 2px var(--accent-soft), 2px 3px 7px rgba(28, 42, 35, 0.14); }
+.project-tag-selection { flex-wrap: wrap; }
+.project-tag-option { min-height: 32px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 18px; background: transparent; color: var(--text-light); cursor: pointer; }
+.project-tag-option[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.project-tag-entry { margin-top: 8px; }
+.project-tag-entry .form-input { flex: 1; min-width: 0; }
+
+.project-manager-modal { width: 680px; max-width: 92vw; }
+.project-manager-list { display: grid; gap: 8px; }
+.project-manager-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.project-manager-cover { width: 52px; aspect-ratio: 4 / 5; border-radius: 3px; background: #dce9df url('image/project-covers.png') no-repeat; background-size: 400% 500%; background-position: var(--cover-x) var(--cover-y); }
+.project-manager-name { min-width: 0; overflow-wrap: anywhere; color: var(--text); font-weight: 600; }
+.project-manager-actions { display: flex; gap: 4px; }
+.project-manager-empty { padding: 24px 0; color: var(--text-light); text-align: center; }
 
 .project-book-view {
   display: none;
@@ -1337,7 +1408,11 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   background: var(--card-bg);
   box-shadow: var(--card-shadow);
   transform-origin: center;
+  transition: grid-template-columns var(--transition);
 }
+
+.project-book-spread.project-left-hidden { grid-template-columns: 0 minmax(0, 1fr); }
+.project-book-spread.project-left-hidden .project-left-page { opacity: 0; padding-left: 0; padding-right: 0; pointer-events: none; }
 
 .project-book-view.opening .project-book-spread {
   animation: bookOpenIn 0.24s ease-out;
@@ -1373,11 +1448,18 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 }
 
 .project-left-page {
-  --project-summary-height: 32%;
+  --project-page-manager-height: 42%;
   background: linear-gradient(180deg, var(--project-left-start), var(--project-left-end));
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: opacity var(--transition), padding var(--transition);
 }
+
+.project-page-manager { display: flex; flex: 0 0 var(--project-page-manager-height); flex-direction: column; min-height: 112px; overflow: hidden; }
+.project-panel-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text); font-size: 15px; font-weight: 700; }
+.project-panel-heading .project-panel-add { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--text-light); font-size: 20px; cursor: pointer; transition: background var(--transition), color var(--transition); }
+.project-panel-heading .project-panel-add:hover { background: var(--surface-muted); color: var(--accent-hover); }
 
 .project-right-page {
   display: flex;
@@ -1446,7 +1528,7 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 .project-outline {
   flex: 1;
   min-height: 96px;
-  margin: 0 0 18px;
+  margin: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1463,8 +1545,10 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
 
 .project-outline-list {
   flex: 1;
+  min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   overflow-anchor: none;
   display: grid;
   align-content: start;
@@ -1488,34 +1572,15 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   display: flex;
   align-items: flex-start;
   gap: 2px;
-}
-
-.project-outline-toggle {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 30px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-light);
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
-}
-
-.project-outline-toggle:hover {
-  background: var(--surface-muted);
-  color: var(--accent-hover);
-}
-
-.project-outline-toggle.is-placeholder {
-  visibility: hidden;
-  pointer-events: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .project-outline-item {
+  display: flex;
   flex: 1;
+  align-items: flex-start;
+  gap: 0;
   min-width: 0;
   min-height: 30px;
   padding: 6px 8px;
@@ -1528,7 +1593,7 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   line-height: 1.35;
   text-align: left;
   cursor: pointer;
-  display: block;
+  overflow: hidden;
   transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
@@ -1681,6 +1746,31 @@ body[data-theme="light"] input[type="radio"]:focus-visible {
   background: var(--accent-soft);
   color: var(--accent-hover);
 }
+
+.project-page-editor .novel-toolbar-delete-page {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.project-page-editor .novel-toolbar-delete-page:hover,
+.project-page-editor .novel-toolbar-delete-page:focus-visible {
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger-hover);
+}
+
+.project-page-editor .novel-toolbar-delete-page:active { transform: scale(0.96); }
+.project-page-editor .novel-toolbar-delete-page svg { display: block; width: 18px; height: 18px; }
 
 .project-page-editor .novel-toolbar-group {
   position: relative;
@@ -1923,46 +2013,42 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 }
 
 .project-page-find {
-  position: absolute;
-  top: 68px;
-  right: 18px;
-  z-index: 8;
-  display: none;
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
-  width: min(340px, calc(100% - 36px));
-  padding: 6px 7px 6px 15px;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 4px 5px 4px 9px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--card-bg) 92%, white);
-  box-shadow: 0 14px 32px rgba(35,45,41,0.13);
-  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--card-bg) 90%, var(--surface-muted));
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.project-page-find.active {
-  display: flex;
-  animation: findBarIn 0.22s ease both;
+.project-page-find:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-@keyframes findBarIn {
-  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
+.project-page-find > svg { flex: 0 0 20px; width: 20px; height: 20px; color: var(--text-light); }
 
 .project-page-find input {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .project-page-find-count {
-  min-width: 44px;
+  flex: 0 0 32px;
+  min-width: 32px;
   color: var(--text-light);
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
 }
 
@@ -1970,10 +2056,11 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-light);
   font-size: 15px;
@@ -2030,29 +2117,31 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
   background: var(--surface-muted);
 }
 
-.project-page-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 4px 0 0;
-}
-
 .project-page-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 34px;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .project-page-tab {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 10px;
-  justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 34px;
+  height: auto;
+  padding: 0 10px;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 7px;
+  text-align: left;
   user-select: none;
   will-change: transform, opacity;
   transition:
@@ -2064,12 +2153,22 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
     box-shadow var(--transition);
 }
 
+.project-page-tab:hover { border-color: var(--line); background: var(--surface-muted); color: var(--text); transform: translateX(2px); }
+.project-page-tab:active { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--accent-soft); color: var(--accent-hover); }
+
 .project-page-tab.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(95,115,104,0.16);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--card-bg));
+  color: var(--accent-hover);
+  box-shadow: none;
+  font-weight: 650;
 }
+
+.project-page-tab.active:hover { border-color: var(--line); background: var(--accent-soft); transform: translateX(2px); }
+.project-page-tab.active .project-page-number { color: var(--accent-hover); }
+
+.project-page-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-page-number { flex: 0 0 auto; margin-left: 6px; color: var(--text-light); font-variant-numeric: tabular-nums; }
 
 .project-page-tab.dragging {
   opacity: 0.46;
@@ -2106,7 +2205,7 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 }
 
 .project-page-delete-dropzone.active {
-  display: inline-flex;
+  display: flex;
 }
 
 .project-page-delete-dropzone.over {
@@ -2118,10 +2217,12 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
 }
 
 .project-page-placeholder {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 100%;
+  min-height: 34px;
+  border-radius: 7px;
 }
+
+.project-page-delete-dropzone { width: 100%; min-height: 34px; height: auto; flex: 0 0 auto; }
 
 .project-summary-input {
   min-height: 160px !important;
@@ -2143,6 +2244,12 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
     transform: translateY(0);
     pointer-events: auto;
   }
+}
+
+@media (max-width: 680px) {
+  .project-shelf-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .project-shelf-tools { width: 100%; }
+  .project-shelf-search { flex: 1; width: auto; min-width: 0; }
 }
 
 /* === 模态框 === */
@@ -3081,9 +3188,12 @@ textarea.form-input {
     align-items: stretch;
     gap: 2px;
     overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .nav-item {
+    width: auto;
+    height: auto;
     min-width: 52px;
     flex: 1;
     flex-direction: column;
@@ -3098,6 +3208,7 @@ textarea.form-input {
   .nav-item span:last-child { white-space: nowrap; font-size: 11px; }
 
   .sidebar-settings {
+    position: static;
     width: 48px;
     min-width: 48px;
     flex: 1;
@@ -3112,7 +3223,7 @@ textarea.form-input {
 
   .sidebar-settings .nav-icon { width: 18px; height: 18px; }
   .sidebar-settings .nav-icon svg { width: 18px; height: 18px; }
-  .sidebar-footer { width: 56px; min-width: 56px; margin: 4px; padding: 0; }
+  .sidebar-footer { display: flex; width: 56px; min-width: 56px; height: auto; min-height: 0; margin: 4px; padding: 0; }
   .sidebar-footer .sidebar-toggle { display: none; }
 
   .workspace {
@@ -3127,15 +3238,18 @@ textarea.form-input {
 
   .workspace-header { min-width: 0; gap: 8px; padding: 16px; }
   .workspace-header h2 { min-width: 0; font-size: 19px; }
+  .project-header-titles { font-size: 19px; }
   .workspace-header .btn { padding: 8px 10px; font-size: 14px; white-space: nowrap; }
   .workspace-body { padding: 12px 16px 20px; }
-  .bot-todo-header-actions { gap: 8px; }
-  .bot-todo-body { gap: 14px; padding: 6px 16px 20px; overflow-y: auto; }
-  .bot-todo-islands { flex: none; grid-template-columns: 1fr; gap: 12px; }
-  .bot-todo-island { min-height: 250px; padding: 20px; }
-  .bot-todo-island-heading h3 { font-size: 16px; }
-  .bot-todo-composer { flex: 0 0 58px; height: 58px; }
   .sidebar-expand-toggle { display: none !important; }
+  body.sidebar-collapsed .sidebar-nav { width: auto; min-width: 0; padding: 4px; }
+  body.sidebar-collapsed .nav-item { width: auto; height: auto; min-width: 52px; flex: 1; flex-direction: column; gap: 2px; padding: 4px 2px; }
+  body.sidebar-collapsed .nav-item span:last-child { width: auto; max-width: none; opacity: 1; transform: none; visibility: visible; overflow: visible; }
+  body.sidebar-collapsed .sidebar-footer { display: flex; flex-direction: row; width: 56px; min-width: 56px; height: auto; min-height: 0; grid-template-columns: none; grid-template-rows: none; margin: 4px; padding: 0; }
+  body.sidebar-collapsed .sidebar-settings { position: static; width: 48px; min-width: 48px; flex: 1; min-height: 0; align-self: stretch; padding: 0; flex-direction: column; gap: 2px; transform: none; }
+  body.sidebar-collapsed .sidebar-settings > span:last-child { width: auto; max-width: none; opacity: 1; transform: none; visibility: visible; overflow: visible; }
+  body.sidebar-collapsed .sidebar-expand-toggle,
+  body.sidebar-collapsed .sidebar-toggle { display: none !important; }
   body.sidebar-collapsed .workspace-header { margin-left: 0; padding-left: 16px; }
 }
 
@@ -3158,6 +3272,7 @@ textarea.form-input {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
@@ -3196,9 +3311,7 @@ body[data-theme="dark"] :is(
   color: var(--text);
 }
 
-body[data-theme="dark"] .bot-todo-markdown .bot-todo-day { color: var(--accent); }
 body[data-theme="dark"] .btn-primary,
-body[data-theme="dark"] .bot-todo-send { color: #1b1c1e; }
 
 body[data-theme="dark"] .settings-card,
 body[data-theme="dark"] .project-page-editor .novel-toolbar,
@@ -3256,26 +3369,26 @@ body[data-theme="dark"] .project-book-card.drag-over {
     <p id="dateDisplay"></p>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-item" data-page="bot-todo" onclick="switchPage('bot-todo')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="3.2" width="13.6" height="13.6" rx="3"></rect><path d="M6.7 10.1l2.1 2.1 4.5-4.6"></path></svg></span><span>Bot TODO</span>
-    </div>
     <div class="nav-item active" data-page="todo" onclick="switchPage('todo')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="3.5" width="13" height="13" rx="3"/></svg></span><span>TODO</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h12"/><path d="M15 19l2 2l4 -4"/></svg></span><span>TODO</span>
     </div>
     <div class="nav-item" data-page="progress" onclick="switchPage('progress')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 2.8 7 3.7-7 3.7-7-3.7 7-3.7Z"/><path d="m3 10 7 3.7 7-3.7M3 13.2l7 3.8 7-3.8"/></svg></span><span>项目书架</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -14"/><path d="M9 5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -14"/><path d="M5 8h4"/><path d="M9 16h4"/><path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041"/><path d="M14 9l4 -1"/><path d="M16 16l3.923 -.98"/></svg></span><span>项目书架</span>
     </div>
     <div class="nav-item" data-page="info" onclick="switchPage('info')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6" r="3.2"/><path d="M3.2 17c.4-3.2 2.7-5 6.8-5s6.4 1.8 6.8 5H3.2Z"/></svg></span><span>常用个人信息</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></span><span>常用个人信息</span>
     </div>
     <div class="nav-item" data-page="fitness" onclick="switchPage('fitness')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.8" cy="3.8" r="1.5"/><path d="m8.7 7.2 3.1 1.2 2.2 3.1M7 9.3l-2.4 2.4-2.4 4M8.2 8.8l-1.1 4-3.8 4M8.7 7.2 11 5.8l2.8.3M7.2 12.8l4.1 1.4 2.5 2.8"/></svg></span><span>运动日志</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.007 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21v-4l-4 -3l1 -6"/><path d="M7 12v-3l5 -1l3 3l3 1"/></svg></span><span>运动日志</span>
     </div>
     <div class="nav-item" data-page="reminders" onclick="switchPage('reminders')">
-      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a5 5 0 0 1 10 0c0 6 2 6 2 7H3c0-1 2-1 2-7ZM8 17h4"/><path d="M10 2V1"/></svg></span><span>每日提醒</span>
+      <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg></span><span>每日提醒</span>
     </div>
   </nav>
   <div class="sidebar-footer">
+    <button class="sidebar-expand-toggle" id="sidebarExpandBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="false" aria-label="展开导航栏" title="展开导航栏">
+      <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>
+    </button>
     <button class="sidebar-settings" id="sidebarSettingsBtn" type="button" onclick="openSettings()"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.1 2.8h3.8l.5 2a5.8 5.8 0 0 1 1.2.7l1.9-.7 1.9 3.3-1.5 1.4v1.4l1.5 1.4-1.9 3.3-1.9-.7a5.8 5.8 0 0 1-1.2.7l-.5 2H8.1l-.5-2a5.8 5.8 0 0 1-1.2-.7l-1.9.7-1.9-3.3 1.5-1.4v-1.4L2.6 8l1.9-3.3 1.9.7a5.8 5.8 0 0 1 1.2-.7l.5-1.9Z"/><circle cx="10" cy="10.2" r="2.2"/></svg></span><span>设置</span></button>
     <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="true" aria-label="收起导航栏" title="收起导航栏">
       <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m16 9-3 3 3 3"/></svg>
@@ -3299,9 +3412,6 @@ body[data-theme="dark"] .project-book-card.drag-over {
 
 <!-- 工作区 -->
 <main class="workspace">
-  <button class="sidebar-expand-toggle" id="sidebarExpandBtn" type="button" onclick="toggleSidebar()" aria-controls="primarySidebar" aria-expanded="false" aria-label="展开导航栏" title="展开导航栏">
-    <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="m13 9 3 3-3 3"/></svg>
-  </button>
   <!-- TODO -->
   <div class="page active" id="page-todo">
     <div class="workspace-header">
@@ -3321,12 +3431,37 @@ body[data-theme="dark"] .project-book-card.drag-over {
   <!-- 项目书架 -->
   <div class="page" id="page-progress">
     <div class="workspace-header">
-      <h2>项目书架</h2>
-      <button class="btn btn-primary" onclick="openProjectEditor()"><span>&#43;</span> 添加项目</button>
+      <div class="project-header-titles">
+        <div class="project-panel-toggle-slot">
+          <button class="project-panel-toggle" id="projectOutlineToggle" type="button" onclick="toggleProjectOutline()" aria-label="隐藏项目侧栏" aria-pressed="false" data-panel-hidden="false" title="隐藏项目侧栏" hidden>
+            <svg class="project-panel-icon project-panel-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6l0 13"/><path d="M12 6l0 13"/><path d="M21 6l0 13"/></svg>
+            <svg class="project-panel-icon project-panel-icon-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12"/><path d="M19 16h-12a2 2 0 0 0 -2 2"/><path d="M9 8h6"/></svg>
+          </button>
+        </div>
+        <h2><button class="project-book-crumb" type="button" onclick="closeProjectBook()">项目书架</button></h2>
+        <span class="project-book-title-separator" id="projectTitleSeparator" hidden>/</span>
+        <div class="project-switcher-wrap" id="projectSwitcherWrap" hidden>
+          <button class="project-switcher-button" id="projectBookTitle" type="button" onclick="toggleProjectSwitcher()" aria-haspopup="listbox" aria-expanded="false"></button>
+          <div class="project-switcher-menu" id="projectSwitcherMenu" role="listbox" aria-label="切换项目"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="projectAddButton" onclick="openProjectEditor()"><span>&#43;</span> 添加项目</button>
     </div>
     <div class="workspace-body" id="projectWorkspaceBody" style="flex:1;padding-top: 0px">
       <div class="projects-shell">
         <div id="projectShelfView">
+          <div class="project-shelf-toolbar" id="projectShelfToolbar">
+            <div class="project-tag-filters" id="projectTagFilters" aria-label="按标签筛选项目"></div>
+            <div class="project-shelf-tools">
+              <label class="project-shelf-search" aria-label="搜索项目">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                <input id="projectShelfSearch" type="search" placeholder="搜索项目..." autocomplete="off" oninput="setProjectShelfSearch(this.value)">
+              </label>
+              <button class="project-manager-button" id="projectManagerButton" type="button" onclick="openProjectManager()" aria-label="管理项目" title="管理项目">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4L14 12l-2-2z"/></svg>
+              </button>
+            </div>
+          </div>
           <div class="project-shelf" id="projectShelf"></div>
           <div class="empty-state" id="projectEmptyState" style="display:none;">
             <div class="empty-state-icon">&#128196;</div>
@@ -3338,17 +3473,22 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <div class="project-book-view" id="projectBookView">
           <div class="project-book-spread" id="projectBookSpread">
             <section class="project-left-page">
-              <div class="project-title-kicker">PROJECT OVERVIEW</div>
-              <h3 class="project-book-title" id="projectBookTitle"></h3>
-              <p class="project-book-summary" id="projectBookSummary"></p>
-              <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整简介和标题索引的边界"></div>
+              <nav class="project-page-manager" aria-label="页面管理">
+                <div class="project-page-find" id="projectFindBar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+                  <input type="text" id="projectFindInput" placeholder="查找项目中的内容" aria-label="查找项目内容" autocomplete="off" oninput="updateProjectFind(this.value)">
+                  <span class="project-page-find-count" id="projectFindCount" aria-live="polite">0/0</span>
+                  <button type="button" aria-label="上一个匹配项" title="上一个匹配项" onclick="moveProjectFind(-1)">&#8249;</button>
+                  <button type="button" aria-label="下一个匹配项" title="下一个匹配项" onclick="moveProjectFind(1)">&#8250;</button>
+                </div>
+                <div class="project-panel-heading"><span>页面</span><button class="project-panel-add" type="button" onclick="addProjectPage()" aria-label="新增页面" title="新增页面">+</button></div>
+                <div class="project-page-tabs" id="projectPageTabs" aria-label="项目页面"></div>
+              </nav>
+              <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整页面管理和本页大纲的高度" aria-label="调整面板高度"></div>
               <nav class="project-outline" aria-label="项目标题索引">
-                <div class="project-outline-title">大纲</div>
+                <div class="project-outline-title">本页大纲</div>
                 <div class="project-outline-list" id="projectOutlineList"></div>
               </nav>
-              <div class="project-book-return-bar project-book-return-bar-summary">
-                <button class="btn btn-secondary btn-sm project-book-return" onclick="closeProjectBook()">返回书架</button>
-              </div>
             </section>
 
             <section class="project-right-page">
@@ -3361,17 +3501,6 @@ body[data-theme="dark"] .project-book-card.drag-over {
                   spellcheck="false"
                   oninput="handleProjectSourceInput(this.value)"
                 ></textarea>
-                <div class="project-page-find" id="projectFindBar">
-                  <input type="text" id="projectFindInput" placeholder="查找当前项目页..." autocomplete="off" oninput="updateProjectFind(this.value)">
-                  <span class="project-page-find-count" id="projectFindCount">0/0</span>
-                  <button type="button" title="上一个" onclick="moveProjectFind(-1)">&#8249;</button>
-                  <button type="button" title="下一个" onclick="moveProjectFind(1)">&#8250;</button>
-                  <button type="button" title="关闭" onclick="closeProjectFind()">×</button>
-                </div>
-              </div>
-
-              <div class="project-page-footer">
-                <div class="project-page-tabs" id="projectPageTabs" aria-label="项目页码"></div>
               </div>
             </section>
           </div>
@@ -3495,36 +3624,6 @@ body[data-theme="dark"] .project-book-card.drag-over {
         </div>
         </div>
       </section>
-    </div>
-  </div>
-
-  <div class="page" id="page-bot-todo">
-    <div class="workspace-header">
-      <div class="bot-todo-title-group">
-        <h2>TODO in Grok Bot</h2>
-      </div>
-      <div class="bot-todo-header-actions">
-        <button class="btn btn-primary" id="botTodoUpdateBtn" type="button" onclick="updateBotTodo()"><svg class="bot-todo-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>更新</button>
-      </div>
-    </div>
-    <div class="workspace-body bot-todo-body">
-      <div class="bot-todo-islands">
-        <section class="bot-todo-island" aria-label="待办">
-          <div class="bot-todo-island-heading"><h3>待办</h3></div>
-          <div class="bot-todo-markdown" id="botTodoTodos"></div>
-        </section>
-        <section class="bot-todo-island" aria-label="日程">
-          <div class="bot-todo-island-heading"><h3>日程</h3></div>
-          <div class="bot-todo-markdown" id="botTodoSchedule"></div>
-        </section>
-      </div>
-      <form class="bot-todo-composer" onsubmit="sendBotTodoMessage(event)">
-        <svg class="bot-todo-compose-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l4.4-1 10.8-10.8a2.8 2.8 0 0 0-4-4L4.4 15 4 20Z"/><path d="M4 20h16"/></svg>
-        <input class="bot-todo-input" id="botTodoInput" type="text" placeholder="发给 Grok Bot" autocomplete="off" enterkeyhint="send">
-        <button class="bot-todo-send" id="botTodoSendBtn" type="submit" aria-label="发送">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.8 11.6L19.6 4.4l-6.6 15.2-.9-6.1-7.3-1.9z"></path><path d="M12.1 13.5L19.6 4.4"></path></svg>
-        </button>
-      </form>
     </div>
   </div>
 
@@ -3658,6 +3757,18 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <input type="text" class="form-input" id="projectTitle" placeholder="输入项目名称..." maxlength="60">
       </div>
       <div class="form-group">
+        <label>标签</label>
+        <div class="project-tag-selection" id="projectTagSelection" role="group" aria-label="项目标签"></div>
+        <div class="project-tag-entry">
+          <input type="text" class="form-input" id="projectNewTagInput" placeholder="添加标签" maxlength="24" onkeydown="handleProjectTagInput(event)">
+          <button class="btn btn-secondary" type="button" onclick="addProjectTagInput()">添加</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>封面</label>
+        <div class="project-cover-picker" id="projectCoverPicker" role="group" aria-label="选择项目封面"></div>
+      </div>
+      <div class="form-group">
         <label>项目简介</label>
         <textarea class="form-input project-summary-input" id="projectSummary" placeholder="输入项目简介..."></textarea>
       </div>
@@ -3666,6 +3777,18 @@ body[data-theme="dark"] .project-book-card.drag-over {
       <button class="btn btn-danger-solid project-editor-delete-btn" id="projectDeleteBtn" type="button" onclick="deleteEditedProject()">删除</button>
       <button class="btn btn-secondary" onclick="closeProjectEditor()">取消</button>
       <button class="btn btn-primary" onclick="saveProject()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="projectManagerModal" onclick="if(event.target===this)closeProjectManager()">
+  <div class="modal project-manager-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>项目管理</h3>
+      <button class="modal-close" type="button" onclick="closeProjectManager()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="project-manager-list" id="projectManagerList"></div>
     </div>
   </div>
 </div>
@@ -3707,7 +3830,9 @@ body[data-theme="dark"] .project-book-card.drag-over {
             <div class="form-row">
               <label>软件皮肤</label>
               <div class="radio-group display-theme-options">
-                <label><input type="radio" name="appTheme" value="light" onchange="setTheme(this.value)"> 浅色</label>
+                <label><input type="radio" name="appTheme" value="light" onchange="setTheme(this.value)"> 浅绿</label>
+                <label><input type="radio" name="appTheme" value="paper" onchange="setTheme(this.value)"> 纸白</label>
+                <label><input type="radio" name="appTheme" value="mist" onchange="setTheme(this.value)"> 雾蓝</label>
                 <label><input type="radio" name="appTheme" value="dark" onchange="setTheme(this.value)"> 深色</label>
               </div>
             </div>
@@ -3756,35 +3881,6 @@ body[data-theme="dark"] .project-book-card.drag-over {
             <button class="btn btn-secondary" onclick="exportDataFile()">导出</button>
             <button class="btn btn-secondary" onclick="openTrashRestore()">恢复</button>
             <button class="btn btn-danger-solid" onclick="askClearTrash()">清空回收站</button>
-          </div>
-        </section>
-
-        <section class="settings-card">
-          <h4>Grok Bot</h4>
-          <p>Webhook URL、Webhook key、Authorization 都可以分别保存。请求由本地服务转发。</p>
-          <div class="settings-form">
-            <div class="form-row grok-bot-webhook-row">
-              <label for="botTodoEnabled">Bot TODO</label>
-              <label><input type="checkbox" id="botTodoEnabled" checked onchange="saveGrokBotSettings()"> 开启</label>
-            </div>
-            <div class="form-row grok-bot-webhook-row">
-              <label for="grokBotWebhookUrl">Webhook URL</label>
-              <input type="text" id="grokBotWebhookUrl" placeholder="https://example.com/webhook" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
-            </div>
-            <div class="form-row grok-bot-webhook-row">
-              <label for="grokBotWebhookKey">Webhook key</label>
-              <div class="input-with-toggle">
-                <input type="password" id="grokBotWebhookKey" placeholder="密钥" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrokBotSecret('grokBotWebhookKey', this)">显示</button>
-              </div>
-            </div>
-            <div class="form-row grok-bot-webhook-row">
-              <label for="grokBotWebhookAuthorization">Authorization</label>
-              <div class="input-with-toggle">
-                <input type="password" id="grokBotWebhookAuthorization" placeholder="整段粘贴，例如 Bearer …" spellcheck="false" autocomplete="off" oninput="saveGrokBotSettings()">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleGrokBotSecret('grokBotWebhookAuthorization', this)">显示</button>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -4227,7 +4323,11 @@ async function persistProject(project, revision = null) {
       item: { ...project, order: projects.findIndex(item => item.id === project.id) },
       baseRevision: project.revision || null
     });
-    if (result?.item) Object.assign(project, normalizeProject(result.item));
+    if (result?.item) {
+      const pages = project.pages;
+      const pageIds = project.pageIds;
+      Object.assign(project, normalizeProject(result.item), { pages, pageIds });
+    }
     if (revision !== null) markProjectSaved(revision);
     return project;
   } catch (error) {
@@ -4289,6 +4389,10 @@ async function deleteProjectRemote(projectId) {
 /* ==================== 初始化 ==================== */
 let editingInfoId = null;
 let editingProjectId = null;
+let projectShelfSearch = '';
+let editingProjectTags = [];
+let editingProjectCoverIndex = 0;
+const selectedProjectShelfTags = new Set();
 let pendingAction = null;
 let draggedId = null;
 const noteEditors = new Map();
@@ -4314,11 +4418,12 @@ let projectFindQuery = '';
 let pendingProjectOutlineTarget = null;
 let projectOutlineScrollRevision = 0;
 const projectOutlineCollapsedKeys = new Set();
-let projectSummaryHeight = null;
-const PROJECT_SUMMARY_MIN_HEIGHT = 72;
+let projectPageManagerHeight = null;
+const PROJECT_PAGE_MANAGER_MIN_HEIGHT = 112;
 const PROJECT_OUTLINE_MIN_HEIGHT = 96;
 const PROJECT_EDITOR_SCROLL_RETRY_DELAYS = [0, 80, 180, 320, 520, 800, 1200, 1700];
 const SIDEBAR_COLLAPSED_KEY = 'wb_sidebar_collapsed';
+const PROJECT_OUTLINE_HIDDEN_KEY = 'wb_project_outline_hidden';
 const SIDEBAR_TRANSITION_MS = 320;
 let sidebarToggleAnimating = false;
 let sidebarTransitionTimer = null;
@@ -4326,12 +4431,12 @@ let sidebarTransitionTimer = null;
 document.addEventListener('DOMContentLoaded', async () => {
   loadTheme();
   loadSidebarState();
+  bindSidebarNavigation();
   initWindowControls();
   await loadMarkdownFontSize();
   await loadMarkdownTableWidth();
   await loadMarkdownSpellcheck();
   await loadAISettings();
-  await loadGrokBotSettings();
   window.workwebDesktop?.onUpdateState?.(applyUpdateState);
   await loadAppVersion();
   try {
@@ -4356,16 +4461,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateDateDisplay();
   setInterval(updateDateDisplay, 60000);
   document.addEventListener('visibilitychange', refreshReminderDayIfNeeded);
-  document.addEventListener('visibilitychange', () => {
-    if (!botTodoPageActive()) return;
-    if (document.hidden) stopBotTodoPolling();
-    else startBotTodoPolling();
-  });
 });
 
 function normalizeTheme(theme) {
   if (theme === 'dark') return 'dark';
-  if (theme === 'light' || ['sage', 'sand', 'blue', 'stone'].includes(theme)) return 'light';
+  if (['light', 'sage', 'sand', 'blue', 'stone', 'rose'].includes(theme)) return 'light';
+  if (['paper', 'mist'].includes(theme)) return theme;
   return 'dark';
 }
 
@@ -4376,7 +4477,7 @@ function setTheme(theme) {
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
     radio.checked = radio.value === safeTheme;
   });
-  window.workwebDesktop?.setWindowTheme?.(safeTheme)?.catch?.(() => {});
+  window.workwebDesktop?.setWindowTheme?.(safeTheme === 'dark' ? 'dark' : 'light')?.catch?.(() => {});
 }
 
 function loadTheme() {
@@ -4433,6 +4534,49 @@ function toggleSidebar() {
 
 function loadSidebarState() {
   setSidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1', false);
+}
+
+function bindSidebarNavigation() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const label = item.textContent.trim();
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('aria-label', label);
+    item.setAttribute('aria-pressed', String(item.classList.contains('active')));
+    item.title = label;
+    item.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      switchPage(item.dataset.page);
+    });
+  });
+  const settings = document.getElementById('sidebarSettingsBtn');
+  settings?.setAttribute('aria-label', '设置');
+  if (settings) settings.title = '设置';
+}
+
+function syncProjectOutlineToggle() {
+  const hidden = localStorage.getItem(PROJECT_OUTLINE_HIDDEN_KEY) === '1';
+  const spread = document.getElementById('projectBookSpread');
+  const button = document.getElementById('projectOutlineToggle');
+  spread?.classList.toggle('project-left-hidden', hidden);
+  const panel = document.querySelector('.project-left-page');
+  if (panel) {
+    panel.setAttribute('aria-hidden', String(hidden));
+    panel.toggleAttribute('inert', hidden);
+  }
+  if (!button) return;
+  button.hidden = !(activeProjectId && !projectCloseTimer);
+  button.dataset.panelHidden = String(hidden);
+  button.setAttribute('aria-label', hidden ? '显示项目侧栏' : '隐藏项目侧栏');
+  button.setAttribute('title', hidden ? '显示项目侧栏' : '隐藏项目侧栏');
+  button.setAttribute('aria-pressed', String(hidden));
+}
+
+function toggleProjectOutline() {
+  const hidden = !document.getElementById('projectBookSpread')?.classList.contains('project-left-hidden');
+  localStorage.setItem(PROJECT_OUTLINE_HIDDEN_KEY, hidden ? '1' : '0');
+  syncProjectOutlineToggle();
 }
 
 function updateWindowMaximizeButton(maximized) {
@@ -4641,91 +4785,6 @@ function toggleApiKeyVisibility() {
   } else {
     input.type = 'password';
     btn.textContent = '显示';
-  }
-}
-
-/* ==================== Grok Bot ==================== */
-const GROK_BOT_WEBHOOK_URL_KEY = 'wb_grok_bot_webhook_url';
-const GROK_BOT_WEBHOOK_SECRET_KEY = 'wb_grok_bot_webhook_key';
-const GROK_BOT_WEBHOOK_AUTHORIZATION_KEY = 'wb_grok_bot_webhook_authorization';
-const BOT_TODO_ENABLED_KEY = 'wb_bot_todo_enabled';
-let grokBotWebhookUrl = '';
-let grokBotWebhookKey = '';
-let grokBotWebhookAuthorization = '';
-let botTodoEnabled = true;
-
-function getGrokBotWebhookUrl() {
-  return String(grokBotWebhookUrl || '').trim();
-}
-
-function toggleGrokBotSecret(inputId, button) {
-  const input = document.getElementById(inputId);
-  if (!input || !button) return;
-  const show = input.type === 'password';
-  input.type = show ? 'text' : 'password';
-  button.textContent = show ? '隐藏' : '显示';
-}
-
-function applyBotTodoModule() {
-  const nav = document.querySelector('.nav-item[data-page="bot-todo"]');
-  if (nav) nav.hidden = !botTodoEnabled;
-  const toggle = document.getElementById('botTodoEnabled');
-  if (toggle) toggle.checked = botTodoEnabled;
-  if (!botTodoEnabled) {
-    if (typeof stopBotTodoPolling === 'function') stopBotTodoPolling();
-    if (typeof botTodoPageActive === 'function' && botTodoPageActive() && typeof switchPage === 'function') {
-      switchPage('todo');
-    }
-  }
-}
-
-async function loadGrokBotSettings() {
-  const [url, key, authorization, enabled] = await Promise.all([
-    readPreference(GROK_BOT_WEBHOOK_URL_KEY, ''),
-    readPreference(GROK_BOT_WEBHOOK_SECRET_KEY, ''),
-    readPreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, ''),
-    readPreference(BOT_TODO_ENABLED_KEY, 'true')
-  ]);
-  grokBotWebhookUrl = String(url || '').trim();
-  grokBotWebhookKey = String(key || '');
-  grokBotWebhookAuthorization = String(authorization || '');
-  botTodoEnabled = String(enabled ?? 'true') !== 'false';
-  const urlInput = document.getElementById('grokBotWebhookUrl');
-  const keyInput = document.getElementById('grokBotWebhookKey');
-  const authorizationInput = document.getElementById('grokBotWebhookAuthorization');
-  if (urlInput) urlInput.value = grokBotWebhookUrl;
-  if (keyInput) keyInput.value = grokBotWebhookKey;
-  if (authorizationInput) authorizationInput.value = grokBotWebhookAuthorization;
-  applyBotTodoModule();
-  if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
-}
-
-function saveGrokBotSettings() {
-  grokBotWebhookUrl = String(document.getElementById('grokBotWebhookUrl')?.value || '').trim();
-  grokBotWebhookKey = String(document.getElementById('grokBotWebhookKey')?.value || '');
-  grokBotWebhookAuthorization = String(document.getElementById('grokBotWebhookAuthorization')?.value || '');
-  botTodoEnabled = Boolean(document.getElementById('botTodoEnabled')?.checked);
-  writePreference(GROK_BOT_WEBHOOK_URL_KEY, grokBotWebhookUrl);
-  writePreference(GROK_BOT_WEBHOOK_SECRET_KEY, grokBotWebhookKey);
-  writePreference(GROK_BOT_WEBHOOK_AUTHORIZATION_KEY, grokBotWebhookAuthorization);
-  writePreference(BOT_TODO_ENABLED_KEY, botTodoEnabled ? 'true' : 'false');
-  applyBotTodoModule();
-  if (typeof syncBotTodoActions === 'function') syncBotTodoActions();
-}
-
-function joinBotTodoPath(dataDir) {
-  const root = String(dataDir || '').trim().replace(/[\\/]+$/, '');
-  if (!root) return '';
-  const sep = root.includes('\\') ? '\\' : '/';
-  return `${root}${sep}bot-todo`;
-}
-
-async function getBotTodoPath() {
-  try {
-    const meta = await apiGet('data-dir');
-    return joinBotTodoPath(meta?.dataDir || '');
-  } catch {
-    return '';
   }
 }
 
@@ -5759,356 +5818,17 @@ function drawFitnessChart(svgId, series, options = {}) {
 
 /* ==================== 页面切换 ==================== */
 function switchPage(page) {
-  if (page === 'bot-todo' && !botTodoEnabled) page = 'todo';
   if (page !== 'progress') flushProjectPersist();
-  document.querySelectorAll('.nav-item').forEach(el =>
-    el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const active = el.dataset.page === page;
+    el.classList.toggle('active', active);
+    el.setAttribute('aria-pressed', String(active));
+  });
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
-  if (page === 'bot-todo') {
-    document.querySelectorAll('#page-bot-todo .bot-todo-island').forEach(playNoteEntrance);
-    startBotTodoPolling();
-  } else stopBotTodoPolling();
   if (page === 'progress') replayProjectShelfAnimation();
   if (page === 'fitness') renderFitnessPage();
   if (page === 'reminders') renderDailyReminders(null, null, null, true);
-}
-
-/* ==================== Bot TODO ==================== */
-const BOT_TODO_POLL_MS = 4000;
-const BOT_TODO_UPDATE_TEXT = '根据当前的日程和待办，更新本软件的数据';
-let botTodoPollTimer = null;
-let botTodoRequestSeq = 0;
-let botTodoWebhookBusy = false;
-let botTodoViewKey = '';
-
-function botTodoPageActive() {
-  return Boolean(document.getElementById('page-bot-todo')?.classList.contains('active'));
-}
-
-function syncBotTodoActions() {
-  const blocked = !getGrokBotWebhookUrl() || botTodoWebhookBusy;
-  ['botTodoUpdateBtn', 'botTodoSendBtn'].forEach(id => {
-    const button = document.getElementById(id);
-    if (!button) return;
-    button.classList.toggle('is-unavailable', blocked);
-    button.setAttribute('aria-disabled', blocked ? 'true' : 'false');
-  });
-}
-
-function botTodoHeadingKey(text) {
-  return String(text || '').trim().replace(/\s+/g, '').replace(/\//g, '');
-}
-
-function botTodoHiddenHeading(text) {
-  const key = botTodoHeadingKey(text);
-  if (['待办清单', '进行中', '已完成', '归档', '日程安排', '固定安排', '一次性改期', '一次性', '改期'].includes(key)) return true;
-  return key.includes('一次性') && key.includes('改期');
-}
-
-function botTodoSkippedSection(text) {
-  const key = botTodoHeadingKey(text);
-  return key === '已完成' || key === '归档';
-}
-
-function botTodoDateTitle(text) {
-  const match = String(text || '').trim().match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
-  if (!match) return '';
-  return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-}
-
-function botTodoCycleTitle(text) {
-  const value = String(text || '').trim();
-  if (!value || value.length > 16 || /\d{1,2}:\d{2}/.test(value)) return '';
-  if (/^每[天日]$/.test(value) || /^每周[一二三四五六日天](?:[、,，][一二三四五六日天])*$/.test(value)) return value;
-  if (/^每[周月]/.test(value)) return value;
-  return '';
-}
-
-function botTodoCleanLine(text) {
-  return String(text || '')
-    .replace(/^\s*[-*+]\s+/, '')
-    .replace(/^\s*\d+[.)]\s+/, '')
-    .replace(/^\s*\[[ xX]\]\s+/, '')
-    .trim();
-}
-
-function botTodoTodoText(line) {
-  const match = botTodoCleanLine(line).match(/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\s+(.+)$/);
-  return (match ? match[1] : botTodoCleanLine(line)).trim();
-}
-
-function botTodoSplitScheduleLine(line) {
-  const text = botTodoCleanLine(line);
-  const dateMatch = text.match(/^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})\s+(.+)$/);
-  if (dateMatch) {
-    return {
-      group: { kind: 'date', title: botTodoDateTitle(dateMatch[1]) },
-      text: dateMatch[2].trim()
-    };
-  }
-  const cycleMatch = text.match(/^(每[天日]|每周[一二三四五六日天](?:[、,，][一二三四五六日天])*)\s+(.+)$/);
-  if (cycleMatch) {
-    return { group: { kind: 'cycle', title: cycleMatch[1] }, text: cycleMatch[2].trim() };
-  }
-  return { group: null, text };
-}
-
-function botTodoCell(headers, row, names) {
-  const normalized = headers.map(header => String(header || '').replace(/\s+/g, ''));
-  for (const name of names) {
-    const index = normalized.indexOf(name);
-    if (index >= 0) return String(row?.[index]?.text || '').trim();
-  }
-  return '';
-}
-
-function botTodoItemColumn(headers) {
-  const normalized = headers.map(header => String(header || '').replace(/\s+/g, ''));
-  for (const name of ['待办', '事项', '内容']) {
-    const index = normalized.indexOf(name);
-    if (index >= 0) return index;
-  }
-  for (let index = headers.length - 1; index >= 0; index -= 1) {
-    if (!/日期|备注|周期|时间/.test(normalized[index])) return index;
-  }
-  return Math.max(0, headers.length - 1);
-}
-
-function botTodoAddSchedule(groups, group, text) {
-  const title = group?.title || '';
-  const kind = group?.kind || 'plain';
-  if (!text) return;
-  const key = `${kind}\0${title}`;
-  if (!groups.has(key)) groups.set(key, { kind, title, items: [] });
-  groups.get(key).items.push(text);
-}
-
-function botTodoPushScheduleLine(groups, line, headingGroup) {
-  const split = botTodoSplitScheduleLine(line);
-  botTodoAddSchedule(groups, split.group || headingGroup, split.text);
-}
-
-function botTodoRenderList(items, bulleted) {
-  if (!items.length) return '';
-  const cls = bulleted ? 'bot-todo-plain is-bulleted' : 'bot-todo-plain';
-  return `<ul class="${cls}">${items.map(item => {
-    if (bulleted) return `<li><span class="bot-todo-check" aria-hidden="true"></span><span>${escHtml(item)}</span></li>`;
-    const timeMatch = String(item).match(/^(\d{1,2}:\d{2})\s+(.+)$/);
-    const time = timeMatch ? `<span class="bot-todo-event-time">${escHtml(timeMatch[1])}</span>` : '';
-    const title = timeMatch ? timeMatch[2] : item;
-    return `<li class="bot-todo-event"><span class="bot-todo-event-marker" aria-hidden="true"></span>${time}<span class="bot-todo-event-title">${escHtml(title)}</span></li>`;
-  }).join('')}</ul>`;
-}
-
-function botTodoFormatDateTitle(title) {
-  const match = String(title || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return title;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return title;
-  return `${date.getMonth() + 1}月${date.getDate()}日 周${'日一二三四五六'[date.getDay()]}`;
-}
-
-function botTodoRenderSchedule(groups) {
-  const all = [...groups.values()];
-  const ordered = [
-    ...all.filter(group => group.kind === 'plain'),
-    ...all.filter(group => group.kind === 'cycle'),
-    ...all.filter(group => group.kind === 'date').sort((a, b) => a.title.localeCompare(b.title))
-  ];
-  return ordered.map(group => {
-    const title = group.title ? `<h3 class="bot-todo-day">${escHtml(botTodoFormatDateTitle(group.title))}</h3>` : '';
-    return `${title}${botTodoRenderList(group.items)}`;
-  }).join('');
-}
-
-function botTodoCollect(markdown, mode) {
-  const source = String(markdown || '');
-  const tokens = window.marked?.lexer ? marked.lexer(source, { gfm: true, breaks: true }) : [];
-  const todoItems = [];
-  const schedule = new Map();
-  let skip = false;
-  let headingGroup = null;
-  tokens.forEach(token => {
-    if (token.type === 'heading') {
-      const text = String(token.text || '').trim();
-      skip = botTodoSkippedSection(text);
-      if (mode === 'schedule' && !skip) {
-        const date = botTodoDateTitle(text);
-        const cycle = botTodoCycleTitle(text);
-        if (date) headingGroup = { kind: 'date', title: date };
-        else if (cycle) headingGroup = { kind: 'cycle', title: cycle };
-        else if (!botTodoHiddenHeading(text)) headingGroup = { kind: 'cycle', title: text };
-        else headingGroup = null;
-      }
-      return;
-    }
-    if (skip) return;
-    if (token.type === 'list') {
-      (token.items || []).forEach(item => {
-        String(item.text || '').split(/\n+/).forEach(line => {
-          const cleaned = botTodoCleanLine(line);
-          if (!cleaned) return;
-          if (mode === 'todo') todoItems.push(botTodoTodoText(cleaned));
-          else botTodoPushScheduleLine(schedule, cleaned, headingGroup);
-        });
-      });
-      return;
-    }
-    if (token.type === 'table') {
-      const headers = (token.header || []).map(cell => String(cell?.text || '').trim());
-      const itemIndex = botTodoItemColumn(headers);
-      (token.rows || []).forEach(row => {
-        if (mode === 'todo') {
-          const text = String(row?.[itemIndex]?.text || '').trim();
-          if (text) todoItems.push(text);
-          return;
-        }
-        const date = botTodoCell(headers, row, ['日期']);
-        const cycle = botTodoCell(headers, row, ['周期']);
-        const time = botTodoCell(headers, row, ['时间']);
-        const item = String(row?.[itemIndex]?.text || '').trim();
-        const text = [time, item].filter(Boolean).join(' ').trim();
-        const dateTitle = botTodoDateTitle(date);
-        const group = dateTitle
-          ? { kind: 'date', title: dateTitle }
-          : (cycle ? { kind: 'cycle', title: cycle } : headingGroup);
-        botTodoAddSchedule(schedule, group, text);
-      });
-      return;
-    }
-    if (token.type === 'paragraph' || token.type === 'text') {
-      String(token.text || '').split(/\n+/).forEach(line => {
-        const cleaned = botTodoCleanLine(line);
-        if (!cleaned) return;
-        if (mode === 'todo') todoItems.push(botTodoTodoText(cleaned));
-        else botTodoPushScheduleLine(schedule, cleaned, headingGroup);
-      });
-    }
-  });
-  if (mode === 'todo') return botTodoRenderList(todoItems.filter(Boolean), true);
-  return botTodoRenderSchedule(schedule);
-}
-
-function renderBotTodoIsland(id, markdown, emptyLabel, errorMessage) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const scrollTop = el.scrollTop;
-  const mode = id === 'botTodoSchedule' ? 'schedule' : 'todo';
-  let inner = '';
-  if (errorMessage) {
-    inner = `<p class="bot-todo-status is-error">${escHtml(errorMessage)}</p>`;
-  } else if (!String(markdown || '').trim()) {
-    inner = `<p class="bot-todo-status">${escHtml(emptyLabel)}</p>`;
-  } else {
-    try {
-      const html = botTodoCollect(markdown, mode);
-      inner = html.trim()
-        ? html
-        : `<p class="bot-todo-status">${escHtml(emptyLabel)}</p>`;
-    } catch (error) {
-      inner = `<p class="bot-todo-status is-error">${escHtml(error?.message || '内容无法显示')}</p>`;
-    }
-  }
-  el.innerHTML = `<div class="bot-todo-markdown-inner">${inner}</div>`;
-  el.scrollTop = scrollTop;
-}
-
-function applyBotTodoContent(todos, schedule, errorMessage) {
-  const key = JSON.stringify([todos, schedule, errorMessage || '']);
-  if (key === botTodoViewKey) return;
-  botTodoViewKey = key;
-  renderBotTodoIsland('botTodoTodos', todos, '暂无待办', errorMessage);
-  renderBotTodoIsland('botTodoSchedule', schedule, '暂无日程', errorMessage);
-}
-
-async function refreshBotTodo() {
-  if (!botTodoPageActive()) return;
-  const seq = ++botTodoRequestSeq;
-  try {
-    const res = await fetch(`/api/bot-todo?t=${Date.now()}`, { cache: 'no-store' });
-    const data = await res.json().catch(() => ({}));
-    if (seq !== botTodoRequestSeq || !botTodoPageActive()) return;
-    if (!res.ok) throw new Error(data?.error || '读取待办和日程失败');
-    applyBotTodoContent(String(data?.todos ?? ''), String(data?.schedule ?? ''), '');
-  } catch (error) {
-    if (seq !== botTodoRequestSeq || !botTodoPageActive()) return;
-    applyBotTodoContent('', '', error?.message || '读取待办和日程失败');
-  }
-}
-
-function stopBotTodoPolling() {
-  if (botTodoPollTimer) {
-    clearInterval(botTodoPollTimer);
-    botTodoPollTimer = null;
-  }
-}
-
-function startBotTodoPolling() {
-  if (!botTodoEnabled) {
-    stopBotTodoPolling();
-    return;
-  }
-  stopBotTodoPolling();
-  refreshBotTodo();
-  if (document.hidden) return;
-  botTodoPollTimer = setInterval(refreshBotTodo, BOT_TODO_POLL_MS);
-}
-
-async function postBotTodoWebhook(type, text) {
-  const webhookUrl = getGrokBotWebhookUrl();
-  if (!webhookUrl) {
-    showToast('请先在设置中配置 Grok Bot Webhook URL');
-    return false;
-  }
-  if (!botTodoEnabled || botTodoWebhookBusy) return false;
-  botTodoWebhookBusy = true;
-  syncBotTodoActions();
-  try {
-    const botTodoPath = await getBotTodoPath();
-    const platform = window.workwebDesktop?.platform || '';
-    const res = await fetch('/api/bot-todo/webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type,
-        text,
-        webhookUrl,
-        webhookKey: grokBotWebhookKey,
-        authorization: grokBotWebhookAuthorization,
-        botTodoPath,
-        ...(platform ? { platform } : {})
-      })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.error || '发送失败');
-    return true;
-  } catch (error) {
-    showToast(error?.message || '发送失败');
-    return false;
-  } finally {
-    botTodoWebhookBusy = false;
-    syncBotTodoActions();
-  }
-}
-
-async function updateBotTodo() {
-  const ok = await postBotTodoWebhook('update', BOT_TODO_UPDATE_TEXT);
-  if (ok) showToast('已发送更新请求');
-}
-
-async function sendBotTodoMessage(event) {
-  event?.preventDefault();
-  const input = document.getElementById('botTodoInput');
-  const text = input?.value ?? '';
-  if (!String(text).trim()) return;
-  const ok = await postBotTodoWebhook('message', text);
-  if (!ok || !input) return;
-  input.value = '';
-  showToast('消息已发送');
 }
 
 /* ==================== 通用工具 ==================== */
@@ -6176,17 +5896,22 @@ function normalizeProject(project) {
   const pageRevisions = project.pageRevisions && typeof project.pageRevisions === 'object'
     ? { ...project.pageRevisions }
     : {};
+  const order = Number.isFinite(Number(project.order)) ? Number(project.order) : 0;
+  const requestedCoverIndex = Number(project.coverIndex);
   return {
     id: project.id || genId('p'),
     title: String(project.title || ''),
     summary: String(project.summary || ''),
-    tags: normalizeTags(project.tags || project.tag || ''),
+    tags: normalizeTags(project.tags?.length ? project.tags : project.tag || ''),
+    coverIndex: Number.isInteger(requestedCoverIndex) && requestedCoverIndex >= 0 && requestedCoverIndex < 20
+      ? requestedCoverIndex
+      : Math.abs(order) % 20,
     pages,
     pageIds,
     pageRevisions,
     createdAt: project.createdAt || Date.now(),
     updatedAt: project.updatedAt || Date.now(),
-    order: Number.isFinite(Number(project.order)) ? Number(project.order) : 0,
+    order,
     revision: Number(project.revision) || 0
   };
 }
@@ -7133,34 +6858,100 @@ function replayProjectShelfAnimation() {
   });
 }
 
+function toggleProjectSwitcher() {
+  const menu = document.getElementById('projectSwitcherMenu');
+  const button = document.getElementById('projectBookTitle');
+  const open = !menu?.classList.contains('active');
+  menu?.classList.toggle('active', open);
+  button?.setAttribute('aria-expanded', String(open));
+}
+
+function closeProjectSwitcher() {
+  document.getElementById('projectSwitcherMenu')?.classList.remove('active');
+  document.getElementById('projectBookTitle')?.setAttribute('aria-expanded', 'false');
+}
+
+function switchProjectBook(id) {
+  closeProjectSwitcher();
+  if (id !== activeProjectId && getProjectById(id)) openProjectBook(id);
+}
+
+function projectCoverPositionStyle(coverIndex) {
+  const index = Number.isInteger(Number(coverIndex)) && Number(coverIndex) >= 0 && Number(coverIndex) < 20
+    ? Number(coverIndex)
+    : 0;
+  return `--cover-x:${(index % 4) * (100 / 3)}%;--cover-y:${Math.floor(index / 4) * 25}%`;
+}
+
+function getProjectTags() {
+  const tags = [...new Set(projects.flatMap(project => project.tags || []))];
+  for (const tag of selectedProjectShelfTags) {
+    if (!tags.includes(tag)) selectedProjectShelfTags.delete(tag);
+  }
+  return tags;
+}
+
+function renderProjectTagFilters() {
+  const filters = document.getElementById('projectTagFilters');
+  if (!filters) return;
+  const tags = getProjectTags();
+  filters.innerHTML = `
+    <button class="project-tag-filter" type="button" aria-pressed="${selectedProjectShelfTags.size === 0}" onclick="clearProjectShelfTags()">全部</button>
+    ${tags.map(tag => `
+      <button class="project-tag-filter" type="button" data-tag="${escAttr(tag)}" aria-pressed="${selectedProjectShelfTags.has(tag)}" onclick="toggleProjectShelfTag(this.dataset.tag)">${escHtml(tag)}</button>
+    `).join('')}
+  `;
+}
+
+function toggleProjectShelfTag(tag) {
+  if (!selectedProjectShelfTags.has(tag)) {
+    selectedProjectShelfTags.clear();
+    selectedProjectShelfTags.add(tag);
+  }
+  renderProjects();
+}
+
+function clearProjectShelfTags() {
+  selectedProjectShelfTags.clear();
+  renderProjects();
+}
+
+function setProjectShelfSearch(value) {
+  projectShelfSearch = String(value || '');
+  renderProjects();
+}
+
 function renderProjects() {
   const shelf = document.getElementById('projectShelf');
   const empty = document.getElementById('projectEmptyState');
   const shelfView = document.getElementById('projectShelfView');
   const projectWorkspaceBody = document.getElementById('projectWorkspaceBody');
+  const emptyTitle = empty.querySelector('h3');
+  const emptyDescription = empty.querySelector('p');
+  renderProjectTagFilters();
+  const query = projectShelfSearch.trim().toLocaleLowerCase();
+  const visibleProjects = projects.filter(project => {
+    const searchable = [project.title, project.summary, ...(project.tags || [])].join(' ').toLocaleLowerCase();
+    return (!query || searchable.includes(query))
+      && (!selectedProjectShelfTags.size || project.tags?.some(tag => selectedProjectShelfTags.has(tag)));
+  });
+  const isFiltered = Boolean(query || selectedProjectShelfTags.size);
 
-  if (!projects.length) {
-    shelf.innerHTML = '';
-    shelf.style.display = 'none';
-    empty.style.display = 'block';
-  } else {
-    shelf.style.display = 'flex';
-    empty.style.display = 'none';
-    shelf.innerHTML = projects.map((project, index) => `
+  shelf.classList.toggle('is-filtered', isFiltered);
+  shelf.innerHTML = visibleProjects.map((project, index) => {
+    const coverStyle = projectCoverPositionStyle(project.coverIndex);
+    return `
       <article class="project-book-card page-reveal" style="--project-enter-index:${index};" data-id="${escAttr(project.id)}" tabindex="0" aria-label="打开项目：${escAttr(project.title || '未命名项目')}" onclick="handleProjectBookClick(this.dataset.id)" onkeydown="handleProjectRowKeydown(event, this.dataset.id)">
-        <div class="project-row-content">
-          <div class="project-row-heading">
-            <h3 class="project-list-title">${escHtml(project.title || '未命名项目')}</h3>
-          </div>
-          <p class="project-list-summary">${escHtml(project.summary || '暂无项目简介')}</p>
-        </div>
-        <div class="project-book-actions">
-          <button class="btn btn-ghost btn-sm project-book-action-btn" type="button" title="编辑" aria-label="编辑项目" onclick="event.stopPropagation();openProjectEditor(this.closest('.project-book-card').dataset.id)">&#9998;</button>
-        </div>
+        <div class="project-book-cover" style="${coverStyle}" aria-hidden="true"></div>
+        <h3 class="project-list-title">${escHtml(project.title || '未命名项目')}</h3>
       </article>
-    `).join('');
-    bindProjectShelfDrag();
-  }
+    `;
+  }).join('');
+  shelf.style.display = visibleProjects.length ? 'grid' : 'none';
+  empty.style.display = visibleProjects.length ? 'none' : 'block';
+  emptyTitle.textContent = projects.length ? '没有匹配的项目' : '还没有项目';
+  emptyDescription.textContent = projects.length ? '没有符合条件的项目' : '点击右上角「添加项目」创建第一个项目';
+  if (visibleProjects.length && !isFiltered) bindProjectShelfDrag();
 
   if (activeProjectId && !getProjectById(activeProjectId)) {
     activeProjectId = null;
@@ -7168,8 +6959,43 @@ function renderProjects() {
   }
 
   projectWorkspaceBody?.classList.toggle('project-book-open', Boolean(activeProjectId || projectCloseTimer));
+  document.getElementById('projectAddButton').hidden = Boolean(activeProjectId || projectCloseTimer);
   shelfView.style.display = activeProjectId || projectCloseTimer ? 'none' : 'block';
+  if (document.getElementById('projectManagerModal').classList.contains('active')) renderProjectManager();
   renderProjectBook();
+}
+
+function openProjectManager() {
+  renderProjectManager();
+  document.getElementById('projectManagerModal').classList.add('active');
+}
+
+function closeProjectManager() {
+  document.getElementById('projectManagerModal').classList.remove('active');
+}
+
+function renderProjectManager() {
+  const list = document.getElementById('projectManagerList');
+  if (!list) return;
+  list.innerHTML = projects.length ? projects.map(project => `
+    <div class="project-manager-row" data-id="${escAttr(project.id)}">
+      <div class="project-manager-cover" style="${projectCoverPositionStyle(project.coverIndex)}" aria-hidden="true"></div>
+      <div class="project-manager-name">${escHtml(project.title || '未命名项目')}</div>
+      <div class="project-manager-actions">
+        <button class="project-manager-action" type="button" title="编辑标题、标签和封面" aria-label="编辑 ${escAttr(project.title || '未命名项目')}" onclick="editProjectFromManager(this.closest('.project-manager-row').dataset.id)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="project-manager-action project-manager-action-danger" type="button" title="删除项目" aria-label="删除 ${escAttr(project.title || '未命名项目')}" onclick="askDeleteProject(this.closest('.project-manager-row').dataset.id)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('') : '<div class="project-manager-empty">还没有项目</div>';
+}
+
+function editProjectFromManager(id) {
+  closeProjectManager();
+  openProjectEditor(id);
 }
 
 function handleProjectBookClick(id) {
@@ -7640,20 +7466,14 @@ function renderProjectOutline(project) {
     <div class="project-outline-row project-outline-level-${item.level}">
       <button
         type="button"
-        class="project-outline-toggle${item.hasChildren ? '' : ' is-placeholder'}"
-        data-outline-key="${escAttr(item.key)}"
-        aria-label="${item.collapsed ? '展开标题' : '收起标题'}"
-        aria-expanded="${item.hasChildren ? String(!item.collapsed) : 'false'}"
-        aria-hidden="${item.hasChildren ? 'false' : 'true'}"
-        tabindex="-1"
-      >${item.hasChildren ? (item.collapsed ? '▸' : '▾') : ''}</button>
-      <button
-        type="button"
         class="project-outline-item"
+        data-outline-key="${escAttr(item.key)}"
+        data-outline-has-children="${item.hasChildren}"
         data-outline-page-index="${item.pageIndex}"
         data-outline-heading-index="${item.headingIndex}"
-        title="第 ${item.pageIndex + 1} 页 · ${escAttr(item.text)}"
-        tabindex="-1"
+        aria-expanded="${item.hasChildren ? String(!item.collapsed) : 'false'}"
+        aria-label="第 ${item.pageIndex + 1} 页：${escAttr(item.text)}"
+        title="${item.hasChildren ? '点击标题跳转并展开或收起下级' : '点击跳转到标题'}"
       >
         <span class="project-outline-text">${escHtml(item.text)}</span>
       </button>
@@ -7664,11 +7484,11 @@ function renderProjectOutline(project) {
   requestAnimationFrame(() => { list.scrollTop = previousScrollTop; });
 }
 
-function applyProjectSummaryHeight(height) {
+function applyProjectPageManagerHeight(height) {
   const leftPage = document.querySelector('.project-left-page');
   if (!leftPage) return;
-  projectSummaryHeight = Math.round(height);
-  leftPage.style.setProperty('--project-summary-height', `${projectSummaryHeight}px`);
+  projectPageManagerHeight = Math.round(height);
+  leftPage.style.setProperty('--project-page-manager-height', `${projectPageManagerHeight}px`);
 }
 
 function bindProjectOutlineResizer() {
@@ -7679,23 +7499,23 @@ function bindProjectOutlineResizer() {
     if (event.button !== 0) return;
 
     const leftPage = document.querySelector('.project-left-page');
-    const summary = document.getElementById('projectBookSummary');
+    const pageManager = document.querySelector('.project-page-manager');
     const outline = document.querySelector('.project-outline');
-    if (!leftPage || !summary || !outline) return;
+    if (!leftPage || !pageManager || !outline) return;
 
     event.preventDefault();
     resizer.setPointerCapture?.(event.pointerId);
     leftPage.classList.add('resizing-outline');
 
     const startY = event.clientY;
-    const startHeight = summary.getBoundingClientRect().height;
+    const startHeight = pageManager.getBoundingClientRect().height;
     const availableHeight = startHeight + outline.getBoundingClientRect().height;
-    const minHeight = PROJECT_SUMMARY_MIN_HEIGHT;
+    const minHeight = PROJECT_PAGE_MANAGER_MIN_HEIGHT;
     const maxHeight = Math.max(minHeight, availableHeight - PROJECT_OUTLINE_MIN_HEIGHT);
 
     function handleMove(moveEvent) {
       const nextHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + moveEvent.clientY - startY));
-      applyProjectSummaryHeight(nextHeight);
+      applyProjectPageManagerHeight(nextHeight);
     }
 
     function handleUp() {
@@ -7716,14 +7536,9 @@ function bindProjectOutlineInteractions() {
   const list = document.getElementById('projectOutlineList');
   if (!list) return;
 
-  function getOutlineButton(event) {
+  function getOutlineItem(event) {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     return target?.closest?.('.project-outline-item') || null;
-  }
-
-  function getOutlineToggle(event) {
-    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-    return target?.closest?.('.project-outline-toggle') || null;
   }
 
   function keepOutlineScrollPosition(scrollTop) {
@@ -7733,49 +7548,57 @@ function bindProjectOutlineInteractions() {
     setTimeout(() => { list.scrollTop = scrollTop; }, 180);
   }
 
-  list.addEventListener('pointerdown', event => {
-    if (getOutlineButton(event) || getOutlineToggle(event)) event.preventDefault();
-  });
+  function toggleOutlineItem(button, scrollTop) {
+    const key = button.dataset.outlineKey;
+    if (projectOutlineCollapsedKeys.has(key)) projectOutlineCollapsedKeys.delete(key);
+    else projectOutlineCollapsedKeys.add(key);
+    renderProjectOutline(getProjectById(activeProjectId));
+    const nextButton = [...list.querySelectorAll('.project-outline-item')]
+      .find(item => item.dataset.outlineKey === key);
+    nextButton?.focus({ preventScroll: true });
+    keepOutlineScrollPosition(scrollTop);
+  }
 
   list.addEventListener('click', event => {
-    const outlineScrollTop = list.scrollTop;
-
-    const toggle = getOutlineToggle(event);
-    if (toggle && list.contains(toggle) && !toggle.classList.contains('is-placeholder')) {
-      event.preventDefault();
-      const key = toggle.dataset.outlineKey;
-      if (projectOutlineCollapsedKeys.has(key)) projectOutlineCollapsedKeys.delete(key);
-      else projectOutlineCollapsedKeys.add(key);
-      renderProjectOutline(getProjectById(activeProjectId));
-      keepOutlineScrollPosition(outlineScrollTop);
-      return;
-    }
-
-    const button = getOutlineButton(event);
+    const button = getOutlineItem(event);
     if (!button || !list.contains(button)) return;
+    const outlineScrollTop = list.scrollTop;
     event.preventDefault();
+    if (button.dataset.outlineHasChildren === 'true') toggleOutlineItem(button, outlineScrollTop);
     jumpToProjectOutlineHeading(button.dataset.outlinePageIndex, button.dataset.outlineHeadingIndex);
     keepOutlineScrollPosition(outlineScrollTop);
+  });
+
+  list.addEventListener('keydown', event => {
+    const button = getOutlineItem(event);
+    if (!button || button.dataset.outlineHasChildren !== 'true') return;
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    if ((event.key === 'ArrowLeft' && !expanded) || (event.key === 'ArrowRight' && expanded)) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    toggleOutlineItem(button, list.scrollTop);
   });
 }
 
 function openProjectFind() {
-  if (!activeProjectId) return;
-  const bar = document.getElementById('projectFindBar');
+  if (!activeProjectId || !document.getElementById('page-progress')?.classList.contains('active')) return;
+  if (document.getElementById('projectBookSpread')?.classList.contains('project-left-hidden')) {
+    localStorage.setItem(PROJECT_OUTLINE_HIDDEN_KEY, '0');
+    syncProjectOutlineToggle();
+  }
   const input = document.getElementById('projectFindInput');
-  bar?.classList.add('active');
-  if (input) input.value = '';
-  updateProjectFind('');
   input?.focus();
+  input?.select();
 }
 
 function closeProjectFind() {
-  document.getElementById('projectFindBar')?.classList.remove('active');
   projectFindResults = [];
   projectFindIndex = -1;
   projectFindQuery = '';
-  document.getElementById('projectFindCount').textContent = '0/0';
-  focusProjectEditor();
+  const input = document.getElementById('projectFindInput');
+  if (input) input.value = '';
+  const count = document.getElementById('projectFindCount');
+  if (count) count.textContent = '0/0';
 }
 
 function updateProjectFind(query) {
@@ -7877,9 +7700,13 @@ function goToProjectFindResult(options = {}) {
 function renderProjectBook() {
   const view = document.getElementById('projectBookView');
   const project = getProjectById(activeProjectId);
+  syncProjectOutlineToggle();
 
   if (!project) {
     if (!projectCloseTimer) view.classList.remove('active', 'opening', 'closing');
+    document.getElementById('projectTitleSeparator').hidden = true;
+    document.getElementById('projectSwitcherWrap').hidden = true;
+    closeProjectSwitcher();
     syncProjectSourceEditor('');
     clearProjectSaveHideTimer();
     projectSaveStatus = { text: '', visible: false, tone: '' };
@@ -7891,7 +7718,11 @@ function renderProjectBook() {
   activeProjectPageIndex = Math.max(0, Math.min(activeProjectPageIndex, pageCount - 1));
 
   document.getElementById('projectBookTitle').textContent = project.title || '未命名项目';
-  document.getElementById('projectBookSummary').textContent = project.summary || '';
+  document.getElementById('projectTitleSeparator').hidden = false;
+  document.getElementById('projectSwitcherWrap').hidden = false;
+  document.getElementById('projectSwitcherMenu').innerHTML = projects.map(item => `
+    <button class="project-switcher-option" type="button" role="option" data-project-id="${escAttr(item.id)}" aria-selected="${item.id === activeProjectId}" onclick="switchProjectBook(this.dataset.projectId)">${escHtml(item.title || '未命名项目')}</button>
+  `).join('');
   renderProjectOutline(project);
   renderProjectPageTabs();
 
@@ -7904,28 +7735,34 @@ function renderProjectBook() {
   scheduleProjectOutlineScroll();
 }
 
+function getProjectPageTitle(page) {
+  const firstLine = String(page ?? '').split(/\r?\n/).find(line => line.trim()) || '';
+  const doc = pageContentToDocument(firstLine);
+  const title = String(doc.body.firstElementChild?.textContent || doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+  return title || `未命名页面`;
+}
+
 function renderProjectPageTabs(previousRects = null, pageKeys = null) {
   const tabs = document.getElementById('projectPageTabs');
   const project = getProjectById(activeProjectId);
   if (!tabs || !project) return;
 
   const pages = project.pages.length ? project.pages : [''];
-  tabs.innerHTML = pages.map((_page, index) => `
+  tabs.innerHTML = pages.map((page, index) => {
+    const title = getProjectPageTitle(page);
+    return `
     <button
       class="btn btn-secondary btn-sm project-page-tab${index === activeProjectPageIndex ? ' active' : ''}"
       type="button"
       data-page-index="${index}"
       data-page-key="${pageKeys?.[index] ?? index}"
-      aria-label="第 ${index + 1} 页"
+      aria-label="第 ${index + 1} 页：${escAttr(title)}"
+      ${index === activeProjectPageIndex ? 'aria-current="page"' : ''}
+      title="${escAttr(title)}"
       onclick="switchProjectPage(${index})"
-    >${index + 1}</button>
-  `).join('') + `
-    <button
-      class="btn btn-secondary btn-sm project-page-tab project-page-add"
-      type="button"
-      aria-label="新增页面"
-      onclick="addProjectPage()"
-    >+</button>
+    ><span class="project-page-title">${escHtml(title)}</span><span class="project-page-number">${index + 1}</span></button>
+    `;
+  }).join('') + `
     <div
       class="project-page-delete-dropzone"
       id="projectPageDeleteDropzone"
@@ -7935,6 +7772,16 @@ function renderProjectPageTabs(previousRects = null, pageKeys = null) {
 
   bindProjectPageDrag();
   if (previousRects) animateProjectPageTabs(previousRects);
+}
+
+function updateProjectPageTabTitle(index) {
+  const project = getProjectById(activeProjectId);
+  const tab = document.querySelector(`#projectPageTabs [data-page-index="${index}"]`);
+  if (!project || !tab) return;
+  const title = getProjectPageTitle(project.pages[index]);
+  tab.querySelector('.project-page-title').textContent = title;
+  tab.title = title;
+  tab.setAttribute('aria-label', `第 ${index + 1} 页：${title}`);
 }
 
 function getProjectPageRects() {
@@ -7968,9 +7815,7 @@ function bindProjectPageDrag() {
   const tabs = document.getElementById('projectPageTabs');
   bindPointerSortable(tabs, '[data-page-index]', {
     getKey: item => Number(item.dataset.pageIndex),
-    excludedSelector: '.project-page-add',
     maxIndex: () => getProjectById(activeProjectId)?.pages.length ?? 0,
-    boundarySelector: '.project-page-add',
     placeholderClass: 'project-page-placeholder',
     onDragStart: () => updateProjectPageDeleteDropzone(true),
     onDragMove: event => updateProjectPageDeleteDropzone(true, isPointerOverProjectPageDeleteDropzone(event.clientX, event.clientY)),
@@ -7998,6 +7843,49 @@ function isPointerOverProjectPageDeleteDropzone(x, y) {
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
+function renderProjectCoverPicker() {
+  const picker = document.getElementById('projectCoverPicker');
+  picker.innerHTML = Array.from({ length: 20 }, (_item, index) => `
+    <button class="project-cover-option" type="button" style="${projectCoverPositionStyle(index)}" aria-label="封面 ${index + 1}" aria-pressed="${index === editingProjectCoverIndex}" onclick="selectProjectCover(${index})"></button>
+  `).join('');
+}
+
+function selectProjectCover(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= 20) return;
+  editingProjectCoverIndex = index;
+  renderProjectCoverPicker();
+}
+
+function renderProjectEditorTags() {
+  const container = document.getElementById('projectTagSelection');
+  const tags = [...new Set([...getProjectTags(), ...editingProjectTags])];
+  container.innerHTML = tags.map(tag => `
+    <button class="project-tag-option" type="button" data-tag="${escAttr(tag)}" aria-pressed="${editingProjectTags.includes(tag)}" onclick="toggleProjectEditorTag(this.dataset.tag)">${escHtml(tag)}</button>
+  `).join('');
+}
+
+function toggleProjectEditorTag(tag) {
+  editingProjectTags = editingProjectTags.includes(tag)
+    ? editingProjectTags.filter(item => item !== tag)
+    : [...editingProjectTags, tag];
+  renderProjectEditorTags();
+}
+
+function addProjectTagInput() {
+  const input = document.getElementById('projectNewTagInput');
+  const newTags = normalizeTags(input.value);
+  if (!newTags.length) return;
+  editingProjectTags = normalizeTags([...editingProjectTags, ...newTags]);
+  input.value = '';
+  renderProjectEditorTags();
+}
+
+function handleProjectTagInput(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  addProjectTagInput();
+}
+
 function openProjectEditor(id) {
   editingProjectId = id || null;
   const title = document.getElementById('projectTitle');
@@ -8010,15 +7898,22 @@ function openProjectEditor(id) {
     if (!project) return;
     title.value = project.title;
     summary.value = project.summary;
+    editingProjectTags = [...project.tags];
+    editingProjectCoverIndex = project.coverIndex;
     modalTitle.textContent = '编辑项目';
     deleteButton?.classList.add('is-visible');
   } else {
     title.value = '';
     summary.value = '';
+    editingProjectTags = [];
+    editingProjectCoverIndex = projects.length % 20;
     modalTitle.textContent = '添加项目';
     deleteButton?.classList.remove('is-visible');
   }
 
+  document.getElementById('projectNewTagInput').value = '';
+  renderProjectEditorTags();
+  renderProjectCoverPicker();
   document.getElementById('projectEditorModal').classList.add('active');
   setTimeout(() => title.focus(), 150);
 }
@@ -8047,6 +7942,8 @@ async function saveProject() {
     if (project) {
       project.title = title;
       project.summary = summary;
+      project.tags = [...editingProjectTags];
+      project.coverIndex = editingProjectCoverIndex;
       project.updatedAt = Date.now();
       try {
         await persistProject(project);
@@ -8058,7 +7955,8 @@ async function saveProject() {
     const project = normalizeProject({
       id: genId('p'),
       title,
-      tags: [],
+      tags: [...editingProjectTags],
+      coverIndex: editingProjectCoverIndex,
       summary,
       pages: [''],
       createdAt: Date.now(),
@@ -8108,6 +8006,11 @@ function openProjectBook(id) {
   const project = getProjectById(id);
   if (!project) return;
 
+  if (activeProjectId && activeProjectId !== id) {
+    flushProjectPersist();
+    closeProjectFind();
+  }
+
   if (projectCloseTimer) {
     clearTimeout(projectCloseTimer);
     projectCloseTimer = null;
@@ -8126,6 +8029,7 @@ function openProjectBook(id) {
 }
 
 function closeProjectBook() {
+  if (!activeProjectId && !projectCloseTimer) return;
   flushProjectPersist();
   closeProjectFind();
   if (projectCloseTimer) return;
@@ -8141,6 +8045,7 @@ function closeProjectBook() {
     view.classList.remove('active', 'closing');
     renderProjects();
   }, 340);
+  syncProjectOutlineToggle();
 }
 
 function ensureProjectEditor() {
@@ -8155,6 +8060,7 @@ function ensureProjectEditor() {
     sourceMode: projectSourceMode,
     spellcheck: markdownSpellcheckEnabled,
     saveStatus: projectSaveStatus,
+    onDeletePage: () => askDeleteProjectPage(activeProjectPageIndex),
     onImageUpload: uploadProjectImage,
     onToggleSourceMode: () => toggleProjectSourceMode(),
     aiConfig: getProjectAIConfig(),
@@ -8225,6 +8131,7 @@ function handleProjectPageInput(value) {
   project.pages[activeProjectPageIndex] = value;
   project.updatedAt = Date.now();
   if (projectSourceMode) syncProjectSourceEditor(value);
+  updateProjectPageTabTitle(activeProjectPageIndex);
   renderProjectOutline(project);
   markProjectDirty();
   queuePersistProjects();
@@ -8354,10 +8261,12 @@ async function addProjectPage() {
   if (!project) return;
 
   flushProjectPersist();
-  project.pages.push('');
-  project.pageIds = [...(project.pageIds || []), genId('pg')];
+  const insertIndex = Math.min(project.pages.length, Math.max(0, activeProjectPageIndex + 1));
+  project.pageIds = project.pages.map((_page, index) => project.pageIds?.[index] || genId('pg'));
+  project.pages.splice(insertIndex, 0, '');
+  project.pageIds.splice(insertIndex, 0, genId('pg'));
   project.updatedAt = Date.now();
-  activeProjectPageIndex = project.pages.length - 1;
+  activeProjectPageIndex = insertIndex;
   const revision = markProjectDirty();
   await persistProject(project, revision).catch(() => {});
   renderProjectBook();
@@ -8365,44 +8274,61 @@ async function addProjectPage() {
 }
 
 function askDeleteProjectPage(index) {
-  const project = getProjectById(activeProjectId);
+  const projectId = activeProjectId;
+  const project = getProjectById(projectId);
   const pageIndex = Number(index);
   if (!project || !Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= project.pages.length) return;
+  const pageId = project.pageIds?.[pageIndex];
+  if (!pageId) return;
+  const pageNumber = pageIndex + 1;
+  const message = project.pages.length === 1
+    ? '此项目仅有一页。确认后会清空页面内容并保留空白页。'
+    : `确定删除第 ${pageNumber} 页吗？此操作不可恢复。`;
 
-  openConfirm('页面删除不可恢复，是否确认删除？', async () => {
-    await deleteProjectPage(pageIndex);
+  openConfirm(message, async () => {
+    await deleteProjectPage(pageIndex, { projectId, pageId });
   });
 }
 
-async function deleteProjectPage(index) {
-  const project = getProjectById(activeProjectId);
-  if (!project || index < 0 || index >= project.pages.length) return;
+async function deleteProjectPage(index, target = {}) {
+  const projectId = target.projectId || activeProjectId;
+  const project = getProjectById(projectId);
+  let pageIndex = Number(index);
+  if (target.pageId) pageIndex = project?.pageIds?.indexOf(target.pageId) ?? -1;
+  if (!project || !Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= project.pages.length) return;
 
-  flushProjectPersist();
+  const isActiveProject = activeProjectId === projectId;
+  const activePageId = isActiveProject ? project.pageIds?.[activeProjectPageIndex] : null;
+  const deletingPageId = project.pageIds?.[pageIndex];
+  if (isActiveProject) flushProjectPersist();
   const clearedOnlyPage = project.pages.length <= 1;
   if (clearedOnlyPage) {
     project.pages = [''];
-    project.pageIds = project.pageIds?.length ? [project.pageIds[0]] : [genId('pg')];
-    activeProjectPageIndex = 0;
+    project.pageIds = deletingPageId ? [deletingPageId] : [genId('pg')];
+    if (isActiveProject) activeProjectPageIndex = 0;
   } else {
-    project.pages.splice(index, 1);
-    project.pageIds?.splice(index, 1);
-    if (activeProjectPageIndex === index) {
-      activeProjectPageIndex = Math.min(index, project.pages.length - 1);
-    } else if (activeProjectPageIndex > index) {
-      activeProjectPageIndex -= 1;
+    project.pages.splice(pageIndex, 1);
+    project.pageIds?.splice(pageIndex, 1);
+    if (deletingPageId && project.pageRevisions) delete project.pageRevisions[deletingPageId];
+    if (isActiveProject) {
+      const remainingActiveIndex = activePageId && activePageId !== deletingPageId
+        ? project.pageIds.indexOf(activePageId)
+        : -1;
+      activeProjectPageIndex = remainingActiveIndex >= 0
+        ? remainingActiveIndex
+        : Math.min(pageIndex, project.pages.length - 1);
     }
   }
 
   project.updatedAt = Date.now();
-  markProjectDirty();
+  const revision = isActiveProject ? markProjectDirty() : null;
   if (clearedOnlyPage) {
-    await persistProjectPageByIndex(project.id, 0, projectSaveRevision).catch(() => {});
+    await persistProjectPageByIndex(project.id, 0, revision).catch(() => {});
   } else {
-    await persistProject(project, projectSaveRevision).catch(() => {});
+    await persistProject(project, revision).catch(() => {});
   }
   renderProjectBook();
-  focusProjectEditor();
+  if (isActiveProject && document.getElementById('page-progress')?.classList.contains('active')) focusProjectEditor();
 }
 
 async function reorderProjectPages(fromIndex, toIndex) {
@@ -8436,6 +8362,7 @@ async function reorderProjectPages(fromIndex, toIndex) {
   project.updatedAt = Date.now();
   markProjectDirty();
   renderProjectPageTabs(previousRects, pageKeys);
+  renderProjectOutline(project);
   await persistProject(project, projectSaveRevision).catch(() => {});
 }
 
@@ -8857,6 +8784,7 @@ document.getElementById('confirmOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeConfirm();
 });
 document.addEventListener('click', e => {
+  if (!e.target.closest('.project-switcher-wrap')) closeProjectSwitcher();
   if (!e.target.closest('.form-group.with-suggestions')) hideInfoTagSuggestions();
   if (!e.target.closest('.reminder-actions')) closeReminderActions();
   if (!e.target.closest('.reminder-frequency-picker')) {
@@ -8892,10 +8820,8 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && activeProjectId) {
-    const target = e.target;
-    const inProjectEditor = target?.closest?.('#projectBookView');
-    if (inProjectEditor) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && activeProjectId && document.getElementById('page-progress')?.classList.contains('active')) {
+    if (!hasActiveBlockingOverlay()) {
       e.preventDefault();
       openProjectFind();
       return;
@@ -8903,14 +8829,18 @@ document.addEventListener('keydown', e => {
   }
 
   if (e.key === 'Escape') {
+    if (document.getElementById('projectSwitcherMenu')?.classList.contains('active')) {
+      closeProjectSwitcher();
+      document.getElementById('projectBookTitle')?.focus();
+      return;
+    }
     if (document.querySelector('.reminder-card.is-menu-open')) {
       closeReminderActions();
       return;
     }
-    const findBar = document.getElementById('projectFindBar');
-    if (findBar?.classList.contains('active')) {
+    if (e.target?.id === 'projectFindInput') {
       e.preventDefault();
-      closeProjectFind();
+      e.target.blur();
       return;
     }
 

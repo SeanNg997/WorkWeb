@@ -9,6 +9,7 @@
     "start": "node scripts/launch.js",
     "server": "node server.js",
     "desktop": "electron .",
+    "test:project-shelf": "electron scripts/test-project-shelf.cjs",
     "build:novel": "vite build --config vite.novel.config.mjs",
     "pack:win": "node scripts/build-win.js",
     "pack:mac": "node scripts/build-mac.js"
@@ -51,6 +52,7 @@
       "image/pic1.png",
       "image/pic2.png",
       "image/pic3.png",
+      "image/project-covers.png",
       "index.html",
       "server.js",
       "vendor/**/*",
