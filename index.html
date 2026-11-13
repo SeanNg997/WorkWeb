@@ -203,6 +203,13 @@ body.sidebar-collapsed .sidebar-settings > span:last-child { max-width: 0; opaci
 body.sidebar-collapsed .sidebar-toggle { opacity: 0; transform: translateY(5px); visibility: hidden; pointer-events: none; transition: opacity 0.14s ease, transform 0.32s ease, visibility 0s linear 0.32s; }
 body.sidebar-collapsed .sidebar-expand-toggle { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition: opacity 0.14s ease 0.1s, transform 0.32s ease, visibility 0s; }
 
+html.desktop-window.platform-darwin body.sidebar-collapsed #primarySidebar {
+  width: 0;
+  min-width: 0;
+  padding-bottom: 0;
+  border-right-width: 0;
+}
+
 .sidebar-header {
   --sidebar-header-top-padding: 22px;
   display: grid;
@@ -519,6 +526,11 @@ body.sidebar-collapsed .workspace-header { margin-left: 0; padding-left: 32px; }
   height: 42px;
   -webkit-app-region: drag;
 }
+
+html.desktop-window.platform-darwin .desktop-titlebar { display: block; height: 46px; }
+html.desktop-window.platform-darwin .windows-window-controls { display: none; }
+html.desktop-window.platform-darwin .desktop-titlebar .sidebar-expand-toggle { top: 5px; right: auto; left: 84px; }
+html.desktop-window.platform-darwin body.sidebar-collapsed .desktop-titlebar .sidebar-expand-toggle { display: grid !important; }
 
 .windows-window-controls {
   position: absolute;
@@ -4509,11 +4521,17 @@ function finalizeSidebarToggle(collapsed) {
     .filter(Boolean)
     .forEach(button => { button.disabled = false; });
   applySidebarToggleVisual(collapsed);
+  if (workwebDesktopPlatform === 'darwin') {
+    document.getElementById(collapsed ? 'sidebarExpandBtn' : 'sidebarToggleBtn')?.focus();
+  }
 }
 
 function setSidebarCollapsed(collapsed, persist = true, syncVisual = true) {
   const isCollapsed = Boolean(collapsed);
   document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+  if (workwebDesktopPlatform === 'darwin') {
+    document.getElementById('primarySidebar')?.toggleAttribute('inert', isCollapsed);
+  }
   if (syncVisual) applySidebarToggleVisual(isCollapsed);
   if (persist) localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isCollapsed ? '1' : '0');
 }
@@ -4605,6 +4623,16 @@ function bindDesktopWindowControl(buttonId, handler) {
 }
 
 async function initWindowControls() {
+  if (workwebDesktopPlatform === 'darwin') {
+    const expandButton = document.getElementById('sidebarExpandBtn');
+    const titlebar = document.querySelector('.desktop-titlebar');
+    if (expandButton && titlebar) {
+      titlebar.append(expandButton);
+      // Native drag regions follow DOM order, so keep the titlebar after the workspace.
+      document.querySelector('.workspace')?.after(titlebar);
+    }
+    return;
+  }
   if (workwebDesktopPlatform !== 'win32') return;
   document.querySelector('.desktop-titlebar')?.remove();
   bindDesktopWindowControl('windowMinimizeBtn', minimizeDesktopWindow);
