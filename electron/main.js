@@ -13,6 +13,7 @@ const PRELOAD_PATH = path.join(__dirname, 'preload.js');
 const ALLOWED_DESKTOP_SETTING_KEYS = new Set([
   'wb_markdown_size',
   'wb_markdown_spellcheck',
+  'wb_theme',
   'wb_ai_enabled',
   'wb_ai_protocol',
   'wb_ai_base_url',

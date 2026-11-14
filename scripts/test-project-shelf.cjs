@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const { createServer } = require('../server');
 
 const rootDir = path.resolve(__dirname, '..');
@@ -13,6 +13,34 @@ const electronTestDir = fs.mkdtempSync(path.join(os.tmpdir(), 'workweb-electron-
 let reportPath = '';
 app.setPath('userData', electronTestDir);
 app.disableHardwareAcceleration();
+const desktopMainSource = fs.readFileSync(path.join(rootDir, 'electron', 'main.js'), 'utf8');
+const allowedDesktopSettings = new Set([
+  ...[...(desktopMainSource.match(/const ALLOWED_DESKTOP_SETTING_KEYS = new Set\(\[([\s\S]*?)\]\);/)?.[1] || '')
+    .matchAll(/'([^']+)'/g)].map(([, key]) => key)
+]);
+const desktopSettingsPath = path.join(electronTestDir, 'desktop-settings.json');
+let lastDesktopThemeRead;
+const readTestDesktopSettings = () => {
+  try {
+    return JSON.parse(fs.readFileSync(desktopSettingsPath, 'utf8'));
+  } catch {
+    return {};
+  }
+};
+ipcMain.handle('workweb:getSetting', (_event, key) => {
+  const value = allowedDesktopSettings.has(key) ? readTestDesktopSettings()[key] : undefined;
+  if (key === 'wb_theme') lastDesktopThemeRead = value;
+  return value;
+});
+ipcMain.handle('workweb:setSetting', (_event, key, value) => {
+  if (!allowedDesktopSettings.has(key)) return undefined;
+  fs.writeFileSync(desktopSettingsPath, JSON.stringify({ ...readTestDesktopSettings(), [key]: value }));
+  return value;
+});
+ipcMain.handle('workweb:setWindowTheme', () => true);
+ipcMain.handle('workweb:isWindowMaximized', () => false);
+ipcMain.handle('workweb:checkLatestVersion', () => ({ hasUpdate: false }));
+ipcMain.handle('workweb:getUpdateState', () => ({ status: 'idle' }));
 
 async function startServer(dataDir) {
   const instance = createServer({ dataDir, host: '127.0.0.1', port: 0 });
@@ -80,6 +108,7 @@ async function run() {
   };
   log(`USERDATA ${electronTestDir}`);
   let httpServer;
+  let additionalHttpServer;
   let window;
   let origin;
 
@@ -126,7 +155,11 @@ async function run() {
       show: false,
       width: 1380,
       height: 900,
-      webPreferences: { backgroundThrottling: false, offscreen: true }
+      webPreferences: {
+        backgroundThrottling: false,
+        offscreen: true,
+        preload: path.join(rootDir, 'electron', 'preload.js')
+      }
     });
     log('START hidden shelf window');
     await withTimeout(window.loadURL(origin), 15000, 'Window load timed out');
@@ -134,6 +167,28 @@ async function run() {
     await waitFor(async () => evaluate(window,
       "document.querySelectorAll('#projectShelf .project-book-card').length === 2"
     ), 'project shelf render');
+
+    assert.ok(allowedDesktopSettings.has('wb_theme'), 'desktop setting allowlist must include theme');
+    for (const theme of ['light', 'paper', 'mist', 'dark']) {
+      await evaluate(window, `setTheme(${JSON.stringify(theme)})`);
+      await waitFor(async () => readTestDesktopSettings().wb_theme === theme, `desktop ${theme} theme setting write`);
+      const previousOrigin = origin;
+      const previousServer = httpServer;
+      const nextServer = await startServer(dataDir);
+      additionalHttpServer = nextServer.server;
+      assert.notEqual(nextServer.origin, previousOrigin, 'server restart should use a new origin');
+      await window.loadURL('about:blank');
+      await closeServer(previousServer);
+      httpServer = additionalHttpServer;
+      additionalHttpServer = null;
+      origin = nextServer.origin;
+      await withTimeout(window.loadURL(origin), 15000, 'Window reload timed out');
+      await window.webContents.insertCSS('* { animation: none !important; transition: none !important; }');
+      await waitFor(async () => lastDesktopThemeRead === theme && await evaluate(window,
+        `document.querySelectorAll('#projectShelf .project-book-card').length === 2 && document.body.dataset.theme === ${JSON.stringify(theme)}`
+      ), `${theme} theme restored from desktop settings at new origin`);
+    }
+    log('PASS all themes persist through desktop settings across separate new origins');
     await evaluate(window, "setTheme('light'); switchPage('progress')");
     log('PASS shelf rendered');
 
@@ -228,6 +283,7 @@ async function run() {
     log('PASS metadata edit retained page body');
 
     log('START project page tab stable styles');
+    window.setSize(1380, 900);
     await evaluate(window, "openProjectBook('p_beta')");
     await waitFor(async () => evaluate(window,
       "document.querySelector('#projectPageTabs .project-page-tab') && document.getElementById('projectBookView').classList.contains('active')"
@@ -236,6 +292,12 @@ async function run() {
     const pageTabState = await evaluate(window, `(() => {
       const tab = document.querySelector('#projectPageTabs .project-page-tab');
       const panel = document.querySelector('.project-left-page');
+      const manager = document.querySelector('.project-page-manager');
+      const outline = document.querySelector('.project-outline');
+      const managerTitle = document.querySelector('.project-panel-heading > span');
+      const outlineTitle = document.querySelector('.project-outline-title');
+      const managerTitleStyle = getComputedStyle(managerTitle);
+      const outlineTitleStyle = getComputedStyle(outlineTitle);
       const ancestors = [
         document.getElementById('projectBookView'),
         document.querySelector('.project-book-spread'),
@@ -248,13 +310,22 @@ async function run() {
         transform: getComputedStyle(tab).transform,
         parentTransforms: ancestors.map(element => getComputedStyle(element).transform),
         fontFamily: getComputedStyle(tab).fontFamily,
-        panelFontFamily: getComputedStyle(panel).fontFamily
+        panelFontFamily: getComputedStyle(panel).fontFamily,
+        title: managerTitle.textContent,
+        headingStyles: ['fontSize', 'fontWeight', 'fontFamily', 'letterSpacing'].map(key => managerTitleStyle[key]),
+        outlineStyles: ['fontSize', 'fontWeight', 'fontFamily', 'letterSpacing'].map(key => outlineTitleStyle[key]),
+        managerHeight: manager.getBoundingClientRect().height,
+        outlineHeight: outline.getBoundingClientRect().height
       };
     })()`);
     assert.equal(pageTabState.willChange, 'auto');
     assert.equal(pageTabState.transform, 'none');
     assert.ok(pageTabState.parentTransforms.every(value => value === 'none'), JSON.stringify(pageTabState.parentTransforms));
     assert.equal(pageTabState.fontFamily, pageTabState.panelFontFamily);
+    assert.equal(pageTabState.title, '页面管理');
+    assert.deepEqual(pageTabState.headingStyles, pageTabState.outlineStyles);
+    assert.ok(Math.abs(pageTabState.managerHeight / (pageTabState.managerHeight + pageTabState.outlineHeight) - 0.75) < 0.05,
+      `page manager should use about 75% of available height: ${JSON.stringify(pageTabState)}`);
     log(`PASS project page tab stable styles ${JSON.stringify(pageTabState)}`);
     await evaluate(window, 'closeProjectBook()');
     await waitFor(async () => evaluate(window, 'activeProjectId === null'), 'project book close');
@@ -309,6 +380,7 @@ async function run() {
     throw error;
   } finally {
     window?.destroy();
+    await closeServer(additionalHttpServer);
     await closeServer(httpServer);
     fs.rmSync(dataDir, { recursive: true, force: true });
   }

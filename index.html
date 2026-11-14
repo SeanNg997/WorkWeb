@@ -1460,7 +1460,7 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 }
 
 .project-left-page {
-  --project-page-manager-height: 42%;
+  --project-page-manager-height: calc(75% - 22.5px);
   background: linear-gradient(180deg, var(--project-left-start), var(--project-left-end));
   display: flex;
   flex-direction: column;
@@ -1469,7 +1469,7 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 }
 
 .project-page-manager { display: flex; flex: 0 0 var(--project-page-manager-height); flex-direction: column; min-height: 112px; overflow: hidden; }
-.project-panel-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text); font-size: 15px; font-weight: 700; }
+.project-panel-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text); font-size: 17px; font-weight: 800; letter-spacing: 1px; }
 .project-panel-heading .project-panel-add { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--text-light); font-size: 20px; cursor: pointer; transition: background var(--transition), color var(--transition); }
 .project-panel-heading .project-panel-add:hover { background: var(--surface-muted); color: var(--accent-hover); }
 
@@ -3493,7 +3493,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
                   <button type="button" aria-label="上一个匹配项" title="上一个匹配项" onclick="moveProjectFind(-1)">&#8249;</button>
                   <button type="button" aria-label="下一个匹配项" title="下一个匹配项" onclick="moveProjectFind(1)">&#8250;</button>
                 </div>
-                <div class="project-panel-heading"><span>页面</span><button class="project-panel-add" type="button" onclick="addProjectPage()" aria-label="新增页面" title="新增页面">+</button></div>
+                <div class="project-panel-heading"><span>页面管理</span><button class="project-panel-add" type="button" onclick="addProjectPage()" aria-label="新增页面" title="新增页面">+</button></div>
                 <div class="project-page-tabs" id="projectPageTabs" aria-label="项目页面"></div>
               </nav>
               <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整页面管理和本页大纲的高度" aria-label="调整面板高度"></div>
@@ -4441,7 +4441,7 @@ let sidebarToggleAnimating = false;
 let sidebarTransitionTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  loadTheme();
+  await loadTheme();
   loadSidebarState();
   bindSidebarNavigation();
   initWindowControls();
@@ -4485,15 +4485,15 @@ function normalizeTheme(theme) {
 function setTheme(theme) {
   const safeTheme = normalizeTheme(theme);
   document.body.dataset.theme = safeTheme;
-  localStorage.setItem('wb_theme', safeTheme);
+  writePreference('wb_theme', safeTheme);
   document.querySelectorAll('input[name="appTheme"]').forEach(radio => {
     radio.checked = radio.value === safeTheme;
   });
   window.workwebDesktop?.setWindowTheme?.(safeTheme === 'dark' ? 'dark' : 'light')?.catch?.(() => {});
 }
 
-function loadTheme() {
-  setTheme(localStorage.getItem('wb_theme') || 'dark');
+async function loadTheme() {
+  setTheme(await readPreference('wb_theme', localStorage.getItem('wb_theme') || 'dark'));
 }
 
 function applySidebarToggleVisual(collapsed) {
