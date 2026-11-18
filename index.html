@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>个人工作面板</title>
 <link rel="stylesheet" href="vendor/workweb.css">
+<link rel="stylesheet" href="vendor/novel-project-editor.css">
 <link rel="icon" type="image/x-icon" sizes="32x32" href="image/icon_32.ico">
 <link rel="icon" type="image/x-icon" sizes="64x64" href="image/icon_64.ico">
 <link rel="shortcut icon" href="image/icon.ico">
@@ -312,6 +313,21 @@ html.desktop-window.platform-darwin body.sidebar-collapsed #primarySidebar {
   box-shadow: none;
   transition: border-radius 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.data-load-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 12px 20px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+.data-load-error[hidden] { display: none; }
+.data-load-error-message { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.data-load-error button { flex: 0 0 auto; }
 
 body.sidebar-collapsed .workspace {
   border-radius: 0;
@@ -911,6 +927,8 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 
 .note-save-status,
 .project-page-editor .novel-save-status {
+  appearance: none;
+  font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -928,6 +946,9 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
   pointer-events: none;
   transition: opacity 0.24s ease, transform 0.24s ease, color 0.24s ease, border-color 0.24s ease;
 }
+
+.note-save-status.conflict { pointer-events: auto; cursor: pointer; }
+.note-save-status.conflict:disabled { cursor: default; }
 
 .note-save-status.visible,
 .project-page-editor .novel-save-status.visible {
@@ -1680,7 +1701,7 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 .project-editor-wrap.source-mode .project-page-editor .novel-project-editor-content {
   min-height: 0;
   height: auto;
-  overflow: hidden;
+  overflow: visible;
   border-bottom: none;
   border-radius: 18px 18px 0 0;
 }
@@ -1703,6 +1724,11 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
   flex: 1;
   border-top: none;
   border-radius: 0 0 18px 18px;
+}
+
+.project-editor-wrap.source-mode .project-source-editor:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .project-page-editor .novel-project-editor-content {
@@ -1844,6 +1870,23 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
   min-width: 210px;
 }
 
+.project-page-editor .novel-table-menu { max-height: min(64vh, 460px); overflow-y: auto; }
+.project-page-editor .novel-table-module {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 6px;
+}
+.project-page-editor .novel-table-create { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.project-page-editor .novel-table-module + .novel-table-module {
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid var(--line);
+}
+.project-page-editor .novel-table-add-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.project-page-editor .novel-table-add-actions .novel-toolbar-button { grid-column: span 2; min-width: 0; }
+.project-page-editor .novel-table-add-actions .novel-toolbar-button:first-child,
+.project-page-editor .novel-table-add-actions .novel-toolbar-button:last-child { grid-column: 2 / 4; }
+
 .project-page-editor .novel-table-menu label {
   display: grid;
   gap: 4px;
@@ -1865,9 +1908,10 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 }
 
 .project-page-editor .novel-table-menu .novel-toolbar-button {
-  grid-column: 1 / -1;
   justify-content: center;
 }
+.project-page-editor .novel-table-create > .novel-toolbar-button { grid-column: 1 / -1; }
+
 
 .project-page-editor .novel-table-menu .novel-toolbar-button:disabled {
   cursor: not-allowed;
@@ -2128,6 +2172,26 @@ body[data-markdown-table-width="auto"] .project-page-editor .novel-project-edito
   border-radius: 5px;
   background: var(--surface-muted);
 }
+
+.project-page-editor .novel-math-inline { display: inline-block; max-width: 100%; vertical-align: middle; cursor: pointer; }
+.project-page-editor .novel-math-display { max-width: 100%; overflow-x: auto; padding: 4px 0; text-align: center; cursor: pointer; }
+.novel-math-dialog {
+  width: min(520px, calc(100vw - 32px));
+  max-width: 520px;
+  margin: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+.novel-math-dialog::backdrop { background: rgba(15, 24, 19, 0.45); }
+.novel-math-dialog form, .novel-math-dialog label { display: grid; gap: 12px; }
+.novel-math-dialog label { color: var(--text-light); font-size: 13px; font-weight: 600; }
+.novel-math-dialog textarea { width: 100%; min-height: 120px; padding: 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: 14px/1.5 Consolas, monospace; resize: vertical; }
+.novel-math-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.novel-math-dialog-actions button { min-height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--card-bg); color: var(--text); font: inherit; cursor: pointer; }
+.novel-math-dialog-actions button[type="submit"] { border-color: var(--accent); background: var(--accent); color: white; }
 
 .project-page-tabs {
   display: flex;
@@ -2675,6 +2739,53 @@ textarea.form-input {
 .confirm-box h4 { font-size: 16px; margin-bottom: 8px; }
 .confirm-box p { font-size: 14px; color: var(--text-light); margin-bottom: 20px; }
 .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+.note-conflict-dialog {
+  width: min(940px, calc(100vw - 32px));
+  max-height: min(90vh, 820px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  box-shadow: 0 18px 54px rgba(35,45,41,0.22);
+}
+
+.note-conflict-dialog::backdrop { background: rgba(18,25,22,0.46); }
+.note-conflict-header,
+.note-conflict-footer { display: flex; align-items: center; gap: 8px; padding: 14px 18px; }
+.note-conflict-header { justify-content: space-between; border-bottom: 1px solid var(--line); }
+.note-conflict-header h2 { margin: 0; font-size: 18px; }
+.note-conflict-close { width: 32px; height: 32px; padding: 0; }
+.note-conflict-state,
+.note-conflict-status { margin: 0; padding: 12px 18px 0; color: var(--text-light); font-size: 13px; }
+.note-conflict-status { min-height: 36px; }
+.note-conflict-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 12px 18px; }
+.note-conflict-candidate { min-width: 0; display: grid; align-content: start; gap: 8px; }
+.note-conflict-candidate h3 { margin: 0; font-size: 14px; }
+.note-conflict-candidate label { display: grid; gap: 5px; color: var(--text-light); font-size: 12px; }
+.note-conflict-candidate select,
+.note-conflict-candidate input,
+.note-conflict-candidate textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 5px;
+  padding: 8px; background: var(--surface); color: var(--text); font: inherit;
+}
+.note-conflict-candidate textarea { min-height: 190px; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+.note-conflict-candidate input[readonly],
+.note-conflict-candidate textarea[readonly] { background: var(--surface-muted); }
+.note-conflict-footer { flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--line); }
+.note-conflict-footer .note-conflict-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-right: auto; }
+
+@media (max-width: 640px) {
+  .note-conflict-columns { grid-template-columns: 1fr; }
+  .note-conflict-candidate textarea { min-height: 120px; }
+  .note-conflict-footer { justify-content: stretch; }
+  .note-conflict-footer .note-conflict-actions { width: 100%; margin: 0; }
+  .note-conflict-footer .note-conflict-actions .btn,
+  .note-conflict-footer > .btn { flex: 1; }
+}
 
 .update-modal {
   width: 420px;
@@ -3424,6 +3535,10 @@ body[data-theme="dark"] .project-book-card.drag-over {
 
 <!-- 工作区 -->
 <main class="workspace">
+  <div class="data-load-error" id="dataLoadError" role="alert" aria-live="assertive" hidden>
+    <span class="data-load-error-message" id="dataLoadErrorMessage"></span>
+    <button class="btn btn-secondary btn-sm" type="button" onclick="retryLoadData()">重试读取</button>
+  </div>
   <!-- TODO -->
   <div class="page active" id="page-todo">
     <div class="workspace-header">
@@ -3988,6 +4103,49 @@ body[data-theme="dark"] .project-book-card.drag-over {
   </div>
 </div>
 
+<dialog class="note-conflict-dialog" id="noteConflictDialog" aria-labelledby="noteConflictTitle">
+  <header class="note-conflict-header">
+    <h2 id="noteConflictTitle">处理便笺冲突</h2>
+    <button type="button" class="btn btn-secondary note-conflict-close" aria-label="关闭" onclick="closeNoteConflictDialog()">×</button>
+  </header>
+  <p class="note-conflict-state" id="noteConflictState" role="status"></p>
+  <p class="note-conflict-status" id="noteConflictStatus" aria-live="polite"></p>
+  <div class="note-conflict-columns">
+    <section class="note-conflict-candidate" aria-labelledby="noteConflictDiskHeading">
+      <h3 id="noteConflictDiskHeading">磁盘版本</h3>
+      <label for="noteConflictDiskSelect">选择版本
+        <select id="noteConflictDiskSelect" onchange="updateNoteConflictPreview('disk')"></select>
+      </label>
+      <label for="noteConflictDiskTitle">标题
+        <input id="noteConflictDiskTitle" type="text" readonly>
+      </label>
+      <label for="noteConflictDiskBody">正文
+        <textarea id="noteConflictDiskBody" readonly></textarea>
+      </label>
+    </section>
+    <section class="note-conflict-candidate" aria-labelledby="noteConflictLocalHeading">
+      <h3 id="noteConflictLocalHeading">本地稿</h3>
+      <label for="noteConflictLocalSelect">选择版本
+        <select id="noteConflictLocalSelect" onchange="updateNoteConflictPreview('local')"></select>
+      </label>
+      <label for="noteConflictLocalTitle">标题
+        <input id="noteConflictLocalTitle" type="text" readonly>
+      </label>
+      <label for="noteConflictLocalBody">正文
+        <textarea id="noteConflictLocalBody" readonly></textarea>
+      </label>
+    </section>
+  </div>
+  <footer class="note-conflict-footer">
+    <div class="note-conflict-actions">
+      <button type="button" class="btn btn-secondary" id="noteConflictChooseDisk" onclick="resolveNoteConflictFromDialog('disk')">保留磁盘</button>
+      <button type="button" class="btn btn-primary" id="noteConflictChooseLocal" onclick="resolveNoteConflictFromDialog('local')">保留本地</button>
+      <button type="button" class="btn btn-secondary" id="noteConflictChooseCopy" onclick="resolveNoteConflictFromDialog('copy')">另存为副本</button>
+    </div>
+    <button type="button" class="btn btn-secondary" id="noteConflictCancel" onclick="closeNoteConflictDialog()">取消</button>
+  </footer>
+</dialog>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -4007,6 +4165,19 @@ let projects = [];
 let fitnessRecords = [];
 let reminders = [];
 let serverOnline = false;
+let dataLoadErrorMessage = '';
+let dataLoadFailed = false;
+let todoInputLockCount = 0;
+let projectEditorState = (() => {
+  try {
+    const value = JSON.parse(localStorage.getItem('wb_project_editor_state') || '{}');
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+})();
+let projectEditorStateRequest = null;
+const projectEditorStateWriteTimes = new Map();
 let selectedNextDataDir = '';
 let updateState = { supported: false, status: 'idle', message: '尚未检查更新', progress: 0 };
 let lastPersistWarningAt = 0;
@@ -4036,8 +4207,20 @@ let markdownSpellcheckEnabled = true;
 
 async function apiGet(key) {
   const res = await fetch(`/api/${key}`);
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json();
+  let body;
+  try {
+    body = await res.json();
+  } catch (error) {
+    if (res.ok) throw new Error(`GET ${key} 返回了无效 JSON: ${error.message}`);
+    body = {};
+  }
+  if (!res.ok) {
+    const error = new Error(body?.error || res.statusText);
+    error.status = res.status;
+    error.body = body;
+    throw error;
+  }
+  return body;
 }
 
 async function apiPost(key, data = {}) {
@@ -4047,7 +4230,12 @@ async function apiPost(key, data = {}) {
     body: JSON.stringify(data)
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body?.error || res.statusText);
+  if (!res.ok) {
+    const error = new Error(body?.error || res.statusText);
+    error.status = res.status;
+    error.body = body;
+    throw error;
+  }
   return body;
 }
 
@@ -4067,8 +4255,14 @@ async function apiPut(key, data = {}) {
   return body;
 }
 
-async function apiDelete(key) {
-  const res = await fetch(`/api/${key}`, { method: 'DELETE' });
+async function apiDelete(key, data) {
+  const res = await fetch(`/api/${key}`, {
+    method: 'DELETE',
+    ...(data === undefined ? {} : {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+  });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const error = new Error(body?.error || res.statusText);
@@ -4231,23 +4425,125 @@ async function ensureStorageReady() {
   modal?.classList.remove('active');
 }
 
-async function loadData() {
+function syncDataPageInertState() {
+  document.querySelectorAll('.page').forEach(page => {
+    page.inert = dataLoadFailed || (page.id === 'page-todo' && todoInputLockCount > 0);
+  });
+}
+
+function setDataPagesInert(inert) {
+  dataLoadFailed = Boolean(inert);
+  syncDataPageInertState();
+}
+
+function refreshNoteEditorLocks() {
+  document.querySelectorAll('.note-card[data-id]').forEach(card => setNoteEditorLocked(card.dataset.id));
+}
+
+function acquireTodoInputLock() {
+  todoInputLockCount += 1;
+  syncDataPageInertState();
+  refreshNoteEditorLocks();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    todoInputLockCount = Math.max(0, todoInputLockCount - 1);
+    syncDataPageInertState();
+    refreshNoteEditorLocks();
+  };
+}
+
+async function withTodoInputLock(action) {
+  const release = acquireTodoInputLock();
   try {
-    notes = await apiGet('notes');
-    infoPanels = await apiGet('info');
-    projects = normalizeProjectList(await apiGet('projects'));
-    fitnessRecords = normalizeFitnessRecords(await apiGet('fitness'));
-    reminders = normalizeReminders(await apiGet('reminders'));
-    serverOnline = true;
-  } catch {
-    serverOnline = false;
-    // 离线回退到 localStorage
-    try { notes = JSON.parse(localStorage.getItem('wb_notes') || '[]'); } catch { notes = []; }
-    try { infoPanels = JSON.parse(localStorage.getItem('wb_info') || '[]'); } catch { infoPanels = []; }
-    try { projects = normalizeProjectList(JSON.parse(localStorage.getItem('wb_projects') || '[]')); } catch { projects = []; }
-    try { fitnessRecords = normalizeFitnessRecords(JSON.parse(localStorage.getItem('wb_fitness') || '[]')); } catch { fitnessRecords = []; }
-    try { reminders = normalizeReminders(JSON.parse(localStorage.getItem('wb_reminders') || '[]')); } catch { reminders = []; }
+    return await action();
+  } finally {
+    release();
   }
+}
+
+function showDataLoadError(error) {
+  dataLoadErrorMessage = String(error?.message || error || '读取服务器数据失败');
+  const message = document.getElementById('dataLoadErrorMessage');
+  if (message) message.textContent = `读取服务器数据失败：${dataLoadErrorMessage}`;
+  const alert = document.getElementById('dataLoadError');
+  if (alert) alert.hidden = false;
+}
+
+function clearDataLoadError() {
+  dataLoadErrorMessage = '';
+  const alert = document.getElementById('dataLoadError');
+  if (alert) alert.hidden = true;
+}
+
+async function loadData() {
+  const editorStateRequest = apiGet('projects/editor-state').catch(() => null);
+  try {
+    const [loadedNotes, loadedInfo, loadedProjects, loadedFitness, loadedReminders] = await Promise.all([
+      apiGet('notes'),
+      apiGet('info'),
+      apiGet('projects'),
+      apiGet('fitness'),
+      apiGet('reminders')
+    ]);
+    const loadedCollections = [
+      ['notes', loadedNotes], ['info', loadedInfo], ['projects', loadedProjects],
+      ['fitness', loadedFitness], ['reminders', loadedReminders]
+    ];
+    const invalidCollection = loadedCollections.find(([, value]) => !Array.isArray(value));
+    if (invalidCollection) throw new Error(`服务器返回的 ${invalidCollection[0]} 数据格式不正确，预期为数组`);
+
+    const nextProjects = normalizeProjectList(loadedProjects);
+    const nextFitnessRecords = normalizeFitnessRecords(loadedFitness);
+    const nextReminders = normalizeReminders(loadedReminders);
+    const editorState = await editorStateRequest;
+
+    notes = loadedNotes;
+    infoPanels = loadedInfo;
+    projects = nextProjects;
+    fitnessRecords = nextFitnessRecords;
+    reminders = nextReminders;
+    noteDraftTimers.forEach(timer => clearTimeout(timer));
+    noteDraftTimers.clear();
+    noteSaveStates.forEach(state => { if (state.hideTimer) clearTimeout(state.hideTimer); });
+    noteSaveStates.clear();
+    noteSyncStates.clear();
+
+    if (editorState && typeof editorState === 'object' && !Array.isArray(editorState)) {
+      Object.entries(editorState).forEach(([projectId, record]) => {
+        if (record && typeof record === 'object'
+          && (!projectEditorState[projectId] || Number(record.updatedAt) >= Number(projectEditorState[projectId].updatedAt))) {
+          projectEditorState[projectId] = record;
+        }
+      });
+      cacheProjectEditorState();
+    }
+    serverOnline = true;
+    clearDataLoadError();
+    setDataPagesInert(false);
+    return true;
+  } catch (error) {
+    serverOnline = false;
+    setDataPagesInert(true);
+    showDataLoadError(error);
+    return false;
+  }
+}
+
+async function retryLoadData() {
+  if (!await loadData()) return false;
+  renderNotes();
+  renderProjects();
+  renderInfoPanels();
+  renderFitnessPage();
+  reminderDayKey = getReminderDayKey();
+  renderDailyReminders();
+  return true;
+}
+
+function requireServerData() {
+  if (!serverOnline) throw new Error(dataLoadErrorMessage || '服务器数据不可用，请先重试读取');
 }
 
 function saveLocalData(storageKey, data) {
@@ -4288,20 +4584,448 @@ function handlePersistError(error, fallbackKey, fallbackData) {
 async function persistNote(noteId) {
   const note = notes.find(item => item.id === noteId);
   if (!note) return null;
-  try {
-    if (!serverOnline) {
-      saveLocalData('wb_notes', notes);
-      return note;
+  const state = getNoteSyncState(noteId, note);
+  if (state.deleted) return null;
+  if (state.conflict) throw new Error('便笺存在待处理冲突');
+  if (state.promise) return state.promise;
+
+  const savePromise = (async () => {
+    while (true) {
+      const current = notes.find(item => item.id === noteId);
+      if (!current) return null;
+      if (state.conflict) throw state.conflict;
+
+      const signature = noteSyncSignature(current);
+      if (signature === state.savedSignature) return current;
+      if (!serverOnline) {
+        try { saveLocalData('wb_notes', notes); } catch {}
+        throw new Error('服务器不可用，便笺尚未写入服务器');
+      }
+
+      const revision = noteSaveStates.get(noteId)?.revision || 0;
+      const baseRevision = current.revision || null;
+      const baseToken = current.syncToken || null;
+      const item = { ...current, order: notes.findIndex(entry => entry.id === noteId) };
+      try {
+        const result = await apiPut(`notes/${encodeURIComponent(noteId)}`, {
+          item,
+          baseRevision,
+          baseToken
+        });
+        if (!result?.item || result.item.id !== noteId || !result.item.syncToken) {
+          throw new Error('服务器便笺保存响应无效');
+        }
+        const latest = notes.find(item => item.id === noteId);
+        if (result?.item?.syncConflict) {
+          applyNoteSyncMetadata(latest, result.item);
+          const error = new Error('便笺存在待处理冲突');
+          error.status = 409;
+          error.body = { conflict: result.item.syncConflict };
+          throw error;
+        }
+        if (!result?.item || result.item.id !== noteId || !result.item.syncToken) {
+          throw new Error('服务器便笺保存响应无效');
+        }
+        if (latest && result?.item) {
+          applyNoteSyncMetadata(latest, result.item);
+        }
+        state.savedSignature = signature;
+        if (latest && noteSyncSignature(latest) === signature) {
+          if ((noteSaveStates.get(noteId)?.revision || 0) === revision) markNoteSaved(noteId, revision);
+          return latest;
+        }
+      } catch (error) {
+        if (error?.status === 409) {
+          await protectNoteConflictDraft(noteId, {
+            details: error.body?.conflict,
+            baseRevision,
+            baseToken,
+            supersedesDraftId: error.body?.draft?.draftId || null,
+            serverDraftId: error.body?.draft?.draftId || null
+          });
+        } else {
+          handlePersistError(error, 'wb_notes', notes);
+        }
+        throw error;
+      }
     }
-    const result = await apiPut(`notes/${encodeURIComponent(note.id)}`, {
-      item: { ...note, order: notes.findIndex(item => item.id === note.id) },
-      baseRevision: note.revision || null
-    });
-    if (result?.item) Object.assign(note, result.item);
-    return note;
+  })();
+
+  state.promise = savePromise;
+  try {
+    return await savePromise;
+  } finally {
+    if (state.promise === savePromise) state.promise = null;
+  }
+}
+
+function noteSyncSignature(note) {
+  return JSON.stringify([String(note.title || ''), String(note.content || ''), Number(note.span) || 1]);
+}
+
+function noteRequestItem(noteId, note = notes.find(item => item.id === noteId)) {
+  return note ? { ...note, order: notes.findIndex(item => item.id === noteId) } : null;
+}
+
+function applyNoteSyncMetadata(note, item) {
+  if (!note || !item) return;
+  if (item.revision !== undefined) note.revision = item.revision;
+  if (item.syncToken !== undefined) note.syncToken = item.syncToken;
+  if (item.syncConflict) note.syncConflict = item.syncConflict;
+  else delete note.syncConflict;
+}
+
+function getNoteSyncState(noteId, note = notes.find(item => item.id === noteId)) {
+  let state = noteSyncStates.get(noteId);
+  if (!state) {
+    state = {
+      savedSignature: note?.revision ? noteSyncSignature(note) : null,
+      promise: null,
+      conflict: note?.syncConflict ? {
+        details: note.syncConflict,
+        latestItem: noteRequestItem(noteId, note),
+        baseRevision: note.revision || null,
+        baseToken: note.syncToken || null,
+        supersedesDraftId: null,
+        draftId: note.syncConflict.localDrafts?.at(-1)?.draftId || null,
+        durable: true,
+        protectionPromise: null
+      } : null,
+      deleting: false,
+      deleted: false
+    };
+    noteSyncStates.set(noteId, state);
+  }
+  return state;
+}
+
+function setNoteEditorLocked(noteId) {
+  const card = document.querySelector(`.note-card[data-id="${noteId}"]`);
+  const state = noteSyncStates.get(noteId);
+  const locked = Boolean(state?.conflict || state?.deleting || state?.deleted
+    || todoInputLockCount > 0 || dataLoadFailed || !serverOnline);
+  const title = card?.querySelector('.note-title-input');
+  const editorHost = card?.querySelector('.note-content-editor-host');
+  if (title) title.disabled = locked;
+  if (editorHost) {
+    editorHost.inert = locked;
+    editorHost.setAttribute('aria-disabled', String(locked));
+  }
+}
+
+function setNoteConflictBadge(noteId) {
+  const conflict = noteSyncStates.get(noteId)?.conflict;
+  if (!conflict) return;
+  setNoteSaveBadge(
+    noteId,
+    conflict.durable ? '待处理冲突' : conflict.protecting ? '正在保护现场' : '重试草稿保护',
+    'error',
+    true,
+    { conflict: true, retryDraft: !conflict.durable && !conflict.protecting }
+  );
+}
+
+function beginNoteConflict(noteId, options = {}) {
+  const note = notes.find(item => item.id === noteId);
+  const state = getNoteSyncState(noteId, note);
+  const prior = state.conflict;
+  state.conflict = prior || {
+    details: null,
+    latestItem: null,
+    baseRevision: null,
+    baseToken: null,
+    supersedesDraftId: null,
+    draftId: null,
+    durable: false,
+    protecting: false,
+    protectionPromise: null
+  };
+  const conflict = state.conflict;
+  if (options.details) conflict.details = options.details;
+  if (options.baseRevision !== undefined) conflict.baseRevision = options.baseRevision;
+  else if (conflict.baseRevision == null) conflict.baseRevision = note?.revision || null;
+  if (options.baseToken !== undefined) conflict.baseToken = options.baseToken;
+  else if (conflict.baseToken == null) conflict.baseToken = note?.syncToken || null;
+  if (options.supersedesDraftId !== undefined) conflict.supersedesDraftId = options.supersedesDraftId;
+  if (options.serverDraftId !== undefined) conflict.serverDraftId = options.serverDraftId;
+  if (options.serverDraftId) conflict.draftId = options.serverDraftId;
+  conflict.latestItem = noteRequestItem(noteId, note);
+  setNoteEditorLocked(noteId);
+  setNoteConflictBadge(noteId);
+  return conflict;
+}
+
+async function protectNoteConflictDraft(noteId, options = {}) {
+  const note = notes.find(item => item.id === noteId);
+  if (!note) return false;
+  const conflict = noteSyncStates.get(noteId)?.conflict || beginNoteConflict(noteId, options);
+  if (options.details) conflict.details = options.details;
+  if (options.baseRevision !== undefined) conflict.baseRevision = options.baseRevision;
+  if (options.baseToken !== undefined) conflict.baseToken = options.baseToken;
+  if (options.supersedesDraftId !== undefined) conflict.supersedesDraftId = options.supersedesDraftId;
+  if (conflict.durable) {
+    setNoteConflictBadge(noteId);
+    return true;
+  }
+  if (conflict.protectionPromise) return conflict.protectionPromise;
+
+  conflict.latestItem = noteRequestItem(noteId, note);
+  conflict.protecting = true;
+  setNoteEditorLocked(noteId);
+  setNoteConflictBadge(noteId);
+  const protectionPromise = (async () => {
+    try {
+      const result = await apiPost(`notes/${encodeURIComponent(noteId)}/draft`, {
+        item: conflict.latestItem,
+        baseRevision: conflict.baseRevision,
+        baseToken: conflict.baseToken,
+        ...(conflict.supersedesDraftId ? { supersedesDraftId: conflict.supersedesDraftId } : {})
+      });
+      if (!result?.draft?.draftId) throw new Error('服务器草稿保护响应缺少 draftId');
+      conflict.draftId = result?.draft?.draftId || conflict.draftId;
+      if (result?.conflict) conflict.details = result.conflict;
+      if (result?.conflict) note.syncConflict = result.conflict;
+      conflict.durable = true;
+      conflict.protectionError = null;
+      return true;
+    } catch (error) {
+      conflict.durable = false;
+      conflict.protectionError = error;
+      try { saveLocalData('wb_notes', notes); } catch {}
+      return false;
+    } finally {
+      conflict.protecting = false;
+      setNoteEditorLocked(noteId);
+      setNoteConflictBadge(noteId);
+    }
+  })();
+  conflict.protectionPromise = protectionPromise;
+  try {
+    return await protectionPromise;
+  } finally {
+    if (conflict.protectionPromise === protectionPromise) conflict.protectionPromise = null;
+  }
+}
+
+function getNoteConflictDialogChoices(noteId) {
+  const conflict = noteSyncStates.get(noteId)?.conflict;
+  const details = conflict?.details || {};
+  const variants = Array.isArray(details.variants) ? details.variants : [];
+  const drafts = Array.isArray(details.localDrafts)
+    ? details.localDrafts.filter(draft => draft?.item && typeof draft.item === 'object')
+    : [];
+  const currentItem = conflict?.latestItem || noteRequestItem(noteId) || { id: noteId, title: '', content: '' };
+  const local = drafts.length
+    ? drafts.map((draft, index) => ({
+      value: String(draft.draftId || `draft-${index}`),
+      draftId: draft.draftId || null,
+      item: draft.item,
+      label: `本地稿 ${index + 1}：${draft.item.title || '无标题'}`
+    }))
+    : [{ value: 'current', draftId: null, item: currentItem, label: '当前显示的便笺' }];
+  return { conflict, details, variants, local };
+}
+
+function fillNoteConflictSelect(select, choices, placeholder) {
+  select.replaceChildren();
+  if (!choices.length) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = placeholder;
+    select.appendChild(option);
+    return;
+  }
+  choices.forEach(choice => {
+    const option = document.createElement('option');
+    option.value = choice.value;
+    option.textContent = choice.label;
+    select.appendChild(option);
+  });
+}
+
+function updateNoteConflictPreview(side) {
+  const noteId = noteConflictDialogNoteId;
+  if (!noteId) return;
+  const { variants, local } = getNoteConflictDialogChoices(noteId);
+  const diskSelect = document.getElementById('noteConflictDiskSelect');
+  const localSelect = document.getElementById('noteConflictLocalSelect');
+  const diskChoice = variants.find((variant, index) => String(variant.key || `variant-${index}`) === diskSelect.value);
+  const localChoice = local.find(choice => choice.value === localSelect.value);
+  const selected = side === 'disk' ? diskChoice?.item : localChoice?.item;
+  if (!selected) return;
+  document.getElementById(side === 'disk' ? 'noteConflictDiskTitle' : 'noteConflictLocalTitle').value = String(selected.title || '');
+  document.getElementById(side === 'disk' ? 'noteConflictDiskBody' : 'noteConflictLocalBody').value = String(selected.content || '');
+}
+
+function setNoteConflictDialogBusy(busy) {
+  const dialog = document.getElementById('noteConflictDialog');
+  dialog.querySelectorAll('button').forEach(button => {
+    button.disabled = busy || button.dataset.conflictUnavailable === 'true';
+  });
+  dialog.querySelectorAll('select').forEach(select => {
+    select.disabled = busy || select.dataset.conflictUnavailable === 'true';
+  });
+}
+
+function renderNoteConflictDialog(noteId, statusText = '') {
+  const { conflict, details, variants, local } = getNoteConflictDialogChoices(noteId);
+  const diskSelect = document.getElementById('noteConflictDiskSelect');
+  const localSelect = document.getElementById('noteConflictLocalSelect');
+  const deleted = Boolean(details.deleted);
+  const missing = Boolean(details.missing);
+
+  fillNoteConflictSelect(diskSelect, variants.map((variant, index) => ({
+    value: String(variant.key || `variant-${index}`),
+    label: `版本 ${index + 1}：${variant.item?.title || variant.file || '无标题'}`
+  })), deleted ? '便笺已删除' : missing ? '磁盘无记录' : '无磁盘版本');
+  fillNoteConflictSelect(localSelect, local, '无本地稿');
+  const preferredLocal = local.find(choice => choice.draftId && choice.draftId === conflict?.draftId) || local[local.length - 1];
+  if (preferredLocal) localSelect.value = preferredLocal.value;
+  if (variants.length) diskSelect.value = String(variants[0].key || 'variant-0');
+
+  document.getElementById('noteConflictState').textContent = deleted
+    ? '服务器记录已删除。保留本地或另存会创建新 ID，不会恢复已删除的便笺。'
+    : missing
+      ? '服务器没有该便笺记录。保留本地或另存会创建新 ID。'
+      : '比较磁盘版本和本地草稿，再选择要保留的内容。';
+  document.getElementById('noteConflictStatus').textContent = statusText || '';
+
+  diskSelect.dataset.conflictUnavailable = String(variants.length === 0);
+  localSelect.dataset.conflictUnavailable = String(local.length === 0);
+  const diskButton = document.getElementById('noteConflictChooseDisk');
+  const localButton = document.getElementById('noteConflictChooseLocal');
+  const copyButton = document.getElementById('noteConflictChooseCopy');
+  diskButton.textContent = deleted ? '接受删除状态' : missing ? '接受磁盘缺失' : '保留磁盘';
+  diskButton.dataset.conflictUnavailable = String(variants.length === 0 && !deleted && !missing);
+  localButton.dataset.conflictUnavailable = String(local.length === 0);
+  copyButton.dataset.conflictUnavailable = String(local.length === 0);
+  document.getElementById('noteConflictCancel').dataset.conflictUnavailable = 'false';
+  document.querySelector('.note-conflict-close').dataset.conflictUnavailable = 'false';
+
+  document.getElementById('noteConflictDiskTitle').value = '';
+  document.getElementById('noteConflictDiskBody').value = '';
+  document.getElementById('noteConflictLocalTitle').value = '';
+  document.getElementById('noteConflictLocalBody').value = '';
+  updateNoteConflictPreview('disk');
+  updateNoteConflictPreview('local');
+  setNoteConflictDialogBusy(noteConflictDialogSubmitting);
+}
+
+async function showNoteConflictToast(noteId) {
+  let conflict = noteSyncStates.get(noteId)?.conflict;
+  if (!conflict) return;
+  if (!conflict.durable) {
+    const protectedLatest = await protectNoteConflictDraft(noteId);
+    if (!protectedLatest) {
+      showToast('冲突现场稿保护失败，请重试草稿保护');
+      return;
+    }
+    conflict = noteSyncStates.get(noteId)?.conflict;
+  }
+  const dialog = document.getElementById('noteConflictDialog');
+  noteConflictDialogNoteId = noteId;
+  noteConflictDialogSubmitting = false;
+  renderNoteConflictDialog(noteId);
+  if (!dialog.open) dialog.showModal();
+  document.getElementById('noteConflictLocalSelect').focus();
+}
+
+function closeNoteConflictDialog() {
+  const dialog = document.getElementById('noteConflictDialog');
+  if (noteConflictDialogSubmitting || !dialog.open) return;
+  dialog.close();
+}
+
+function updateNotesAfterConflictResolution(noteId, result) {
+  const priorStatus = noteSaveStates.get(noteId);
+  if (priorStatus?.hideTimer) clearTimeout(priorStatus.hideTimer);
+  noteSaveStates.delete(noteId);
+  noteSyncStates.delete(noteId);
+
+  const currentIndex = notes.findIndex(note => note.id === noteId);
+  if (result.item) {
+    if (currentIndex >= 0) notes[currentIndex] = result.item;
+    else notes.push(result.item);
+    getNoteSyncState(result.item.id, result.item);
+  } else if (currentIndex >= 0) {
+    notes.splice(currentIndex, 1);
+  }
+
+  if (result.copiedItem) {
+    const copiedIndex = notes.findIndex(note => note.id === result.copiedItem.id);
+    if (copiedIndex >= 0) notes[copiedIndex] = result.copiedItem;
+    else notes.push(result.copiedItem);
+    noteSyncStates.delete(result.copiedItem.id);
+    noteSaveStates.delete(result.copiedItem.id);
+    getNoteSyncState(result.copiedItem.id, result.copiedItem);
+  }
+  renderNotes();
+}
+
+async function resolveNoteConflictFromDialog(choice) {
+  const noteId = noteConflictDialogNoteId;
+  const state = noteSyncStates.get(noteId);
+  const conflict = state?.conflict;
+  if (!noteId || !conflict) return;
+  if (!conflict.durable) {
+    document.getElementById('noteConflictStatus').textContent = '正在保护最新现场稿...';
+    if (!await protectNoteConflictDraft(noteId)) {
+      document.getElementById('noteConflictStatus').textContent = '现场稿保护失败，请重试后再处理冲突。';
+      return;
+    }
+    renderNoteConflictDialog(noteId);
+    return;
+  }
+
+  const { details, variants, local } = getNoteConflictDialogChoices(noteId);
+  const diskSelect = document.getElementById('noteConflictDiskSelect');
+  const localSelect = document.getElementById('noteConflictLocalSelect');
+  const selectedVariant = variants.find((variant, index) => String(variant.key || `variant-${index}`) === diskSelect.value);
+  const selectedLocal = local.find(candidate => candidate.value === localSelect.value);
+  if (!details.token) {
+    document.getElementById('noteConflictStatus').textContent = '冲突状态缺少版本标记，无法安全提交。';
+    return;
+  }
+  if (choice === 'disk' && !details.deleted && !details.missing && !selectedVariant) {
+    document.getElementById('noteConflictStatus').textContent = '请选择一个磁盘版本。';
+    return;
+  }
+  if (['local', 'copy'].includes(choice) && !selectedLocal?.item) {
+    document.getElementById('noteConflictStatus').textContent = '请选择一个本地稿。';
+    return;
+  }
+
+  const body = { choice, token: details.token };
+  if (selectedVariant?.key) body.variantKey = selectedVariant.key;
+  if (selectedLocal?.draftId) body.draftId = selectedLocal.draftId;
+  if (selectedLocal?.item) body.item = { ...selectedLocal.item, id: noteId };
+  noteConflictDialogSubmitting = true;
+  setNoteConflictDialogBusy(true);
+  document.getElementById('noteConflictStatus').textContent = '正在保存选择...';
+  try {
+    const result = await apiPost(`notes/${encodeURIComponent(noteId)}/resolve`, body);
+    if (!result || result.ok !== true || !Object.hasOwn(result, 'item')
+      || (result.item != null && result.item.id !== noteId)
+      || (result.copiedItem != null && (!/^[A-Za-z0-9_-]{1,128}$/.test(String(result.copiedItem.id || ''))
+        || result.copiedItem.id === noteId))) {
+      throw new Error('服务器冲突处理响应无效，便笺仍保持待处理状态');
+    }
+    updateNotesAfterConflictResolution(noteId, result);
+    document.getElementById('noteConflictDialog').close();
   } catch (error) {
-    handlePersistError(error, 'wb_notes', notes);
-    throw error;
+    if (error?.status === 409 && error.body?.conflict) {
+      conflict.details = error.body.conflict;
+      conflict.durable = true;
+      const note = notes.find(item => item.id === noteId);
+      if (note) note.syncConflict = error.body.conflict;
+      setNoteConflictBadge(noteId);
+      renderNoteConflictDialog(noteId, '冲突状态已变化，版本和草稿已刷新。请重新选择后再次提交。');
+    } else {
+      document.getElementById('noteConflictStatus').textContent = error?.message || '保存冲突处理失败，请重试。';
+    }
+  } finally {
+    noteConflictDialogSubmitting = false;
+    if (document.getElementById('noteConflictDialog').open) setNoteConflictDialogBusy(false);
   }
 }
 
@@ -4315,11 +5039,87 @@ async function persistNoteOrder() {
 }
 
 async function deleteNoteRemote(noteId) {
+  const note = notes.find(item => item.id === noteId);
+  if (!note) return false;
+  const state = getNoteSyncState(noteId, note);
+  if (state.conflict) throw new Error('便笺存在待处理冲突');
+  const baseRevision = note.revision || null;
+  const baseToken = note.syncToken || null;
   try {
-    if (serverOnline) await apiDelete(`notes/${encodeURIComponent(noteId)}`);
-    else saveLocalData('wb_notes', notes);
+    if (!serverOnline) {
+      try { saveLocalData('wb_notes', notes); } catch {}
+      throw new Error('服务器不可用，便笺尚未从服务器删除');
+    }
+    await apiDelete(`notes/${encodeURIComponent(noteId)}`, {
+      item: noteRequestItem(noteId, note),
+      baseRevision,
+      baseToken
+    });
+    state.deleted = true;
+    return true;
   } catch (error) {
-    handlePersistError(error, 'wb_notes', notes);
+    if (error?.status === 409) {
+      await protectNoteConflictDraft(noteId, {
+        details: error.body?.conflict,
+        baseRevision,
+        baseToken,
+        supersedesDraftId: error.body?.draft?.draftId || null,
+        serverDraftId: error.body?.draft?.draftId || null
+      });
+    } else {
+      handlePersistError(error, 'wb_notes', notes);
+    }
+    throw error;
+  }
+}
+
+async function flushNotePersists({ allowConflicts = false } = {}) {
+  while (true) {
+    const pending = [];
+    let blockedConflict = null;
+    for (const note of notes) {
+      const state = getNoteSyncState(note.id, note);
+      const hadTimer = noteDraftTimers.has(note.id);
+      clearTimeout(noteDraftTimers.get(note.id));
+      noteDraftTimers.delete(note.id);
+
+      if (state.conflict) {
+        if (!state.conflict.durable) pending.push({ noteId: note.id, promise: protectNoteConflictDraft(note.id) });
+        else if (!allowConflicts && !blockedConflict) blockedConflict = new Error(`便笺 ${note.id} 存在待处理冲突`);
+        continue;
+      }
+
+      if (state.promise || hadTimer || noteSyncSignature(note) !== state.savedSignature) {
+        pending.push({ noteId: note.id, promise: persistNote(note.id) });
+      }
+    }
+
+    const results = await Promise.allSettled(pending.map(item => item.promise));
+    for (const [index, result] of results.entries()) {
+      const state = noteSyncStates.get(pending[index].noteId);
+      if (result.status === 'rejected') {
+        if (!allowConflicts || !state?.conflict?.durable) throw result.reason;
+      }
+      if (result.status === 'fulfilled' && result.value === false && !state?.conflict?.durable) {
+        if (!blockedConflict) blockedConflict = new Error('便笺现场稿未能保存到冲突草稿');
+      }
+    }
+
+    for (const note of notes) {
+      const state = getNoteSyncState(note.id, note);
+      if (state.conflict && (!allowConflicts || !state.conflict.durable)) {
+        throw new Error(`便笺 ${note.id} 存在未保护的同步冲突`);
+      }
+    }
+    if (blockedConflict) throw blockedConflict;
+
+    const changedDuringFlush = notes.some(note => {
+      const state = getNoteSyncState(note.id, note);
+      return noteDraftTimers.has(note.id)
+        || Boolean(state.promise)
+        || (state.conflict ? !state.conflict.durable : noteSyncSignature(note) !== state.savedSignature);
+    });
+    if (!changedDuringFlush) return true;
   }
 }
 
@@ -4410,6 +5210,9 @@ let draggedId = null;
 const noteEditors = new Map();
 const noteDraftTimers = new Map();
 const noteSaveStates = new Map();
+const noteSyncStates = new Map();
+let noteConflictDialogNoteId = null;
+let noteConflictDialogSubmitting = false;
 let draggedInfoTag = null;
 let draggedInfoPanelId = null;
 let suppressProjectOpen = false;
@@ -5846,7 +6649,10 @@ function drawFitnessChart(svgId, series, options = {}) {
 
 /* ==================== 页面切换 ==================== */
 function switchPage(page) {
-  if (page !== 'progress') flushProjectPersist();
+  if (page !== 'progress') {
+    recordProjectEditorPage();
+    flushProjectPersist();
+  }
   document.querySelectorAll('.nav-item').forEach(el => {
     const active = el.dataset.page === page;
     el.classList.toggle('active', active);
@@ -5854,7 +6660,10 @@ function switchPage(page) {
   });
   document.querySelectorAll('.page').forEach(el =>
     el.classList.toggle('active', el.id === `page-${page}`));
-  if (page === 'progress') replayProjectShelfAnimation();
+  if (page === 'progress') {
+    replayProjectShelfAnimation();
+    refreshProjectEditorState();
+  }
   if (page === 'fitness') renderFitnessPage();
   if (page === 'reminders') renderDailyReminders(null, null, null, true);
 }
@@ -6011,9 +6820,13 @@ async function exportDataFile() {
 
   setSettingsMessage('正在导出数据...');
   try {
-    const result = await apiPost('export-data', { outputDir });
-    setSettingsMessage(`导出完成：${result.filePath || 'WorkWeb_data.workweb'}`);
-    showToast('导出完成');
+    await withTodoInputLock(async () => {
+      requireServerData();
+      await flushNotePersists({ allowConflicts: true });
+      const result = await apiPost('export-data', { outputDir });
+      setSettingsMessage(`导出完成：${result.filePath || 'WorkWeb_data.workweb'}`);
+      showToast('导出完成');
+    });
   } catch (error) {
     setSettingsMessage(error.message || '导出失败');
   }
@@ -6025,14 +6838,19 @@ async function importDataFile() {
 
   setSettingsMessage('正在导入数据...');
   try {
-    const result = await apiPost('import-data', { filePath });
-    await loadData();
-    renderNotes();
-    renderProjects();
-    renderInfoPanels();
-    renderDailyReminders();
-    setSettingsMessage(`导入完成，已合并 ${result.importedCount || 0} 项数据`);
-    showToast('导入完成');
+    await withTodoInputLock(async () => {
+      requireServerData();
+      await flushNotePersists();
+      const result = await apiPost('import-data', { filePath });
+      if (!await loadData()) throw new Error(dataLoadErrorMessage || '导入后读取数据失败');
+      renderNotes();
+      renderProjects();
+      renderInfoPanels();
+      renderFitnessPage();
+      renderDailyReminders();
+      setSettingsMessage(`导入完成，已合并 ${result.importedCount || 0} 项数据`);
+      showToast('导入完成');
+    });
   } catch (error) {
     setSettingsMessage(error.message || '导入失败');
   }
@@ -6066,17 +6884,22 @@ async function migrateDataDir() {
 
   setSettingsMessage('正在迁移数据...');
   try {
-    const result = await apiPost('data-dir', { targetDir: selectedNextDataDir });
-    await loadData();
-    renderNotes();
-    renderProjects();
-    renderInfoPanels();
-    renderDailyReminders();
-    selectedNextDataDir = '';
-    document.getElementById('nextDataDir').textContent = '未选择';
-    document.getElementById('currentDataDir').textContent = result.dataDir || '';
-    setSettingsMessage('数据目录已更改，数据已迁移');
-    showToast('数据目录已更改');
+    await withTodoInputLock(async () => {
+      requireServerData();
+      await flushNotePersists();
+      const result = await apiPost('data-dir', { targetDir: selectedNextDataDir });
+      if (!await loadData()) throw new Error(dataLoadErrorMessage || '切换目录后读取数据失败');
+      renderNotes();
+      renderProjects();
+      renderInfoPanels();
+      renderFitnessPage();
+      renderDailyReminders();
+      selectedNextDataDir = '';
+      document.getElementById('nextDataDir').textContent = '未选择';
+      document.getElementById('currentDataDir').textContent = result.dataDir || '';
+      setSettingsMessage('数据目录已更改，数据已迁移');
+      showToast('数据目录已更改');
+    });
   } catch (error) {
     setSettingsMessage(error.message || '更改数据目录失败');
   }
@@ -6131,13 +6954,19 @@ function closeTrashRestore() {
 
 async function restoreTrashItem(file) {
   try {
-    await apiPost('restore-trash', { file });
-    await loadData();
-    renderNotes();
-    renderProjects();
-    renderDailyReminders();
-    await openTrashRestore();
-    showToast('已恢复');
+    await withTodoInputLock(async () => {
+      requireServerData();
+      await flushNotePersists();
+      await apiPost('restore-trash', { file });
+      if (!await loadData()) throw new Error(dataLoadErrorMessage || '恢复后读取数据失败');
+      renderNotes();
+      renderProjects();
+      renderInfoPanels();
+      renderFitnessPage();
+      renderDailyReminders();
+      await openTrashRestore();
+      showToast('已恢复');
+    });
   } catch (error) {
     showToast(error.message || '恢复失败');
   }
@@ -6207,10 +7036,12 @@ function updateNoteSaveBadge(noteId) {
   const state = noteSaveStates.get(noteId);
   if (!badge || !state) return;
   badge.textContent = state.text || '';
-  badge.className = `note-save-status${state.visible ? ' visible' : ''}${state.tone ? ` ${state.tone}` : ''}`;
+  badge.className = `note-save-status${state.visible ? ' visible' : ''}${state.tone ? ` ${state.tone}` : ''}${state.conflict ? ' conflict' : ''}`;
+  badge.disabled = !state.conflict;
+  badge.title = state.conflict ? (state.retryDraft ? '重试草稿保护' : '待处理冲突') : '';
 }
 
-function setNoteSaveBadge(noteId, text = '', tone = '', visible = false) {
+function setNoteSaveBadge(noteId, text = '', tone = '', visible = false, options = {}) {
   const prev = noteSaveStates.get(noteId);
   if (prev?.hideTimer) clearTimeout(prev.hideTimer);
   const next = {
@@ -6218,7 +7049,9 @@ function setNoteSaveBadge(noteId, text = '', tone = '', visible = false) {
     tone,
     visible,
     revision: prev?.revision || 0,
-    hideTimer: null
+    hideTimer: null,
+    conflict: options.conflict ?? Boolean(noteSyncStates.get(noteId)?.conflict),
+    retryDraft: options.retryDraft ?? Boolean(noteSyncStates.get(noteId)?.conflict && !noteSyncStates.get(noteId).conflict.durable)
   };
   noteSaveStates.set(noteId, next);
   updateNoteSaveBadge(noteId);
@@ -6226,12 +7059,16 @@ function setNoteSaveBadge(noteId, text = '', tone = '', visible = false) {
 
 function markNoteDirty(noteId) {
   const prev = noteSaveStates.get(noteId);
+  const syncState = noteSyncStates.get(noteId);
+  if (syncState?.conflict || syncState?.deleting || syncState?.deleted) return prev?.revision || 0;
   const next = {
     text: '',
     tone: '',
     visible: false,
     revision: (prev?.revision || 0) + 1,
-    hideTimer: null
+    hideTimer: null,
+    conflict: false,
+    retryDraft: false
   };
   if (prev?.hideTimer) clearTimeout(prev.hideTimer);
   noteSaveStates.set(noteId, next);
@@ -6241,7 +7078,7 @@ function markNoteDirty(noteId) {
 
 function markNoteSaved(noteId, revision) {
   const state = noteSaveStates.get(noteId);
-  if (!state || state.revision !== revision) return;
+  if (!state || state.revision !== revision || noteSyncStates.get(noteId)?.conflict) return;
   state.text = '已保存';
   state.tone = 'saved';
   state.visible = true;
@@ -6531,6 +7368,9 @@ function destroyNoteEditors() {
 }
 
 function queueInlineNotePersist(noteId) {
+  const syncState = noteSyncStates.get(noteId);
+  if (todoInputLockCount > 0 || !serverOnline
+    || syncState?.conflict || syncState?.deleting || syncState?.deleted) return;
   clearTimeout(noteDraftTimers.get(noteId));
   noteDraftTimers.set(noteId, setTimeout(() => {
     persistInlineNote(noteId);
@@ -6540,6 +7380,7 @@ function queueInlineNotePersist(noteId) {
 async function persistInlineNote(noteId) {
   clearTimeout(noteDraftTimers.get(noteId));
   noteDraftTimers.delete(noteId);
+  if (todoInputLockCount > 0 || !serverOnline) return;
   const note = notes.find(n => n.id === noteId);
   if (!note) return;
   const revision = noteSaveStates.get(noteId)?.revision || 0;
@@ -6548,6 +7389,10 @@ async function persistInlineNote(noteId) {
     await persistNote(noteId);
     markNoteSaved(noteId, revision);
   } catch (error) {
+    if (noteSyncStates.get(noteId)?.conflict) {
+      setNoteConflictBadge(noteId);
+      return;
+    }
     setNoteSaveBadge(noteId, error?.status === 409 ? '保存冲突' : '保存失败', 'error', true);
   }
 }
@@ -6565,6 +7410,17 @@ function focusNote(noteId, target = 'title') {
 }
 
 async function createNote() {
+  try {
+    requireServerData();
+  } catch (error) {
+    showToast(error.message || '服务器数据不可用，无法新建便笺');
+    return;
+  }
+  if (todoInputLockCount > 0) {
+    showToast('正在保存便笺，请稍候');
+    return;
+  }
+
   const note = {
     id: genId('n'),
     title: '',
@@ -6576,7 +7432,7 @@ async function createNote() {
   notes.push(note);
   renderNotes();
   focusNote(note.id);
-  await persistNote(note.id).catch(() => {});
+  await persistInlineNote(note.id);
 }
 
 function bindInlineNoteEditor(card, note) {
@@ -6586,6 +7442,7 @@ function bindInlineNoteEditor(card, note) {
 
   const stopCardEvent = event => event.stopPropagation();
   const beginInlineEdit = () => {
+    if (noteSyncStates.get(note.id)?.conflict || noteSyncStates.get(note.id)?.deleting) return;
     card.draggable = false;
     card.classList.add('is-inline-editing');
   };
@@ -6594,6 +7451,7 @@ function bindInlineNoteEditor(card, note) {
       if (card.contains(document.activeElement)) return;
       card.draggable = true;
       card.classList.remove('is-inline-editing');
+      if (noteSyncStates.get(note.id)?.conflict || noteSyncStates.get(note.id)?.deleting) return;
       persistInlineNote(note.id);
     }, 0);
   };
@@ -6609,6 +7467,11 @@ function bindInlineNoteEditor(card, note) {
   card.addEventListener('focusout', endInlineEdit);
 
   titleInput.addEventListener('input', () => {
+    if (todoInputLockCount > 0 || !serverOnline
+      || noteSyncStates.get(note.id)?.conflict || noteSyncStates.get(note.id)?.deleting) {
+      titleInput.value = note.title || '';
+      return;
+    }
     note.title = titleInput.value.trim();
     note.updatedAt = Date.now();
     markNoteDirty(note.id);
@@ -6626,9 +7489,12 @@ function bindInlineNoteEditor(card, note) {
     placeholder: '直接输入正文...',
     showToolbar: false,
     showSourceToggle: false,
+    enableMath: false,
     spellcheck: markdownSpellcheckEnabled,
     aiConfig: { ...getAIConfig(), enabled: false },
     onChange: value => {
+      if (todoInputLockCount > 0 || !serverOnline
+        || noteSyncStates.get(note.id)?.conflict || noteSyncStates.get(note.id)?.deleting) return;
       note.content = value;
       note.updatedAt = Date.now();
       markNoteDirty(note.id);
@@ -6659,6 +7525,7 @@ function renderNotes() {
   grid.innerHTML = '';
 
   notes.forEach(note => {
+    getNoteSyncState(note.id, note);
     const span = note.span || 1;
     const card = document.createElement('div');
     card.className = 'note-card';
@@ -6680,7 +7547,7 @@ function renderNotes() {
           >
         </div>
         <div class="note-actions">
-          <span class="note-save-status" aria-live="polite"></span>
+          <button type="button" class="note-save-status" aria-live="polite" disabled onclick="event.stopPropagation();showNoteConflictToast('${note.id}')"></button>
           <button class="btn btn-danger" title="删除" onclick="event.stopPropagation();askDeleteNote('${note.id}')">&#10005;</button>
         </div>
       </div>
@@ -6725,6 +7592,9 @@ function renderNotes() {
     // 右边缘拖拽调整宽度
     const handle = card.querySelector('.note-resize-handle');
     handle.addEventListener('mousedown', e => {
+      const noteSyncState = noteSyncStates.get(note.id);
+      if (todoInputLockCount > 0 || !serverOnline
+        || noteSyncState?.conflict || noteSyncState?.deleting || noteSyncState?.deleted) return;
       e.preventDefault();
       e.stopPropagation();
       card.draggable = false;
@@ -6792,7 +7662,7 @@ function renderNotes() {
         card.dataset.span = finalSpan;
         indicator.textContent = `${Math.round(finalWidth)}px`;
 
-        setTimeout(() => {
+        const cleanupResizeStyles = () => {
           card.classList.remove('resizing-active');
           card.classList.remove('resize-snap');
           card.style.removeProperty('--resize-width');
@@ -6800,16 +7670,26 @@ function renderNotes() {
           card.style.removeProperty('--resize-max-width');
           card.style.removeProperty('--resize-grid-column');
           card.style.removeProperty('--resize-max-span');
-        }, 220);
+        };
+        const resizeCleanupTimer = setTimeout(cleanupResizeStyles, 220);
 
         card.draggable = true;
         delete card.dataset.snapSpan;
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
 
+        const latestSyncState = noteSyncStates.get(note.id);
+        if (latestSyncState?.conflict || latestSyncState?.deleting || latestSyncState?.deleted) {
+          clearTimeout(resizeCleanupTimer);
+          card.dataset.span = note.span || 1;
+          cleanupResizeStyles();
+          return;
+        }
+
         if (finalSpan !== (note.span || 1)) {
           note.span = finalSpan;
-          persistNote(note.id).catch(() => {});
+          markNoteDirty(note.id);
+          persistInlineNote(note.id);
         }
       }
 
@@ -6819,6 +7699,10 @@ function renderNotes() {
 
     grid.appendChild(card);
     bindInlineNoteEditor(card, note);
+    if (noteSyncStates.get(note.id)?.conflict) {
+      setNoteEditorLocked(note.id);
+      setNoteConflictBadge(note.id);
+    }
     updateNoteSaveBadge(note.id);
   });
 }
@@ -6835,15 +7719,50 @@ function reorderNotes(fromId, toId) {
 
 function askDeleteNote(id) {
   const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const state = getNoteSyncState(id, note);
+  if (state.conflict) {
+    showNoteConflictToast(id);
+    return;
+  }
+  if (state.deleting || state.deleted) return;
   openConfirm(
-    `确定要删除便笺「${note ? note.title || '无标题' : ''}」吗？`,
+    `确定要删除便笺「${note.title || '无标题'}」吗？`,
     async () => {
+      if (state.conflict) {
+        showNoteConflictToast(id);
+        return;
+      }
+      state.deleting = true;
+      setNoteEditorLocked(id);
+      setNoteSaveBadge(id, '正在保存并删除', '', true);
       clearTimeout(noteDraftTimers.get(id));
       noteDraftTimers.delete(id);
-      noteSaveStates.delete(id);
-      await deleteNoteRemote(id);
-      notes = notes.filter(n => n.id !== id);
-      renderNotes();
+      let deleteRequested = false;
+      let removed = false;
+      try {
+        await persistNote(id);
+        if (state.conflict) throw new Error('便笺存在待处理冲突');
+        deleteRequested = true;
+        await deleteNoteRemote(id);
+        state.deleted = true;
+        notes = notes.filter(item => item.id !== id);
+        noteSaveStates.delete(id);
+        noteDraftTimers.delete(id);
+        renderNotes();
+        removed = true;
+      } catch (error) {
+        if (state.conflict) {
+          showToast('此便笺存在待处理冲突，请先处理后再编辑或删除');
+        } else {
+          const message = deleteRequested ? '删除失败，便笺已保留' : '保存失败，便笺未删除';
+          setNoteSaveBadge(id, message, 'error', true);
+          showToast(message);
+        }
+      } finally {
+        state.deleting = false;
+        if (!removed) setNoteEditorLocked(id);
+      }
     }
   );
 }
@@ -6851,6 +7770,62 @@ function askDeleteNote(id) {
 /* ==================== 项目书架 ==================== */
 function getProjectById(id) {
   return projects.find(project => project.id === id) || null;
+}
+
+function getProjectEditorPageIndex(project) {
+  const record = projectEditorState[project?.id];
+  if (!record || !project?.pages?.length) return 0;
+  const pageIndex = project.pageIds?.indexOf(record.pageId) ?? -1;
+  return pageIndex >= 0
+    ? pageIndex
+    : Math.max(0, Math.min(Number(record.pageIndex) || 0, project.pages.length - 1));
+}
+
+function cacheProjectEditorState() {
+  try {
+    localStorage.setItem('wb_project_editor_state', JSON.stringify(projectEditorState));
+  } catch {}
+}
+
+function refreshProjectEditorState() {
+  if (!serverOnline || projectEditorStateRequest) return projectEditorStateRequest;
+  const request = apiGet('projects/editor-state').then(remote => {
+    if (!remote || typeof remote !== 'object' || Array.isArray(remote)) return;
+    Object.entries(remote).forEach(([projectId, record]) => {
+      if (!record || typeof record !== 'object') return;
+      const cached = projectEditorState[projectId];
+      if (!cached || Number(record.updatedAt) >= Number(cached.updatedAt)) projectEditorState[projectId] = record;
+    });
+    Object.entries(projectEditorState).forEach(([projectId, record]) => {
+      if (!remote[projectId] || Number(record.updatedAt) > Number(remote[projectId].updatedAt)) {
+        apiPost('projects/editor-state', { projectId, ...record }).catch(() => {});
+      }
+    });
+    cacheProjectEditorState();
+  }).catch(() => {}).finally(() => {
+    if (projectEditorStateRequest === request) projectEditorStateRequest = null;
+  });
+  projectEditorStateRequest = request;
+  return request;
+}
+
+function recordProjectEditorPage(project = getProjectById(activeProjectId), pageIndex = activeProjectPageIndex) {
+  if (!project || !Number.isInteger(pageIndex) || pageIndex < 0 || pageIndex >= project.pages.length) return;
+  const pageId = project.pageIds?.[pageIndex];
+  if (!pageId) return;
+  const previous = Number(projectEditorStateWriteTimes.get(project.id) || projectEditorState[project.id]?.updatedAt || 0);
+  const record = { pageId, pageIndex, updatedAt: Math.max(Date.now(), previous + 1) };
+  projectEditorStateWriteTimes.set(project.id, record.updatedAt);
+  projectEditorState[project.id] = record;
+  cacheProjectEditorState();
+  if (serverOnline) {
+    fetch('/api/projects/editor-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: project.id, ...record }),
+      keepalive: true
+    }).catch(() => {});
+  }
 }
 
 function queuePersistProjects() {
@@ -7196,7 +8171,11 @@ function setProjectSourceMode(nextMode, options = {}) {
     applyProjectEditorMode();
   } else {
     const sourceEditor = document.getElementById('projectSourceEditor');
-    const nextValue = sourceEditor ? sourceEditor.value : getActiveProjectPageContent();
+    let nextValue = sourceEditor ? sourceEditor.value : getActiveProjectPageContent();
+    if (/<table\b/i.test(nextValue)) {
+      nextValue = projectHtmlToMarkdown(nextValue);
+      handleProjectPageInput(nextValue);
+    }
     projectSourceMode = false;
     applyProjectEditorMode();
     setProjectEditorMarkdown(nextValue);
@@ -7222,7 +8201,7 @@ function looksLikeProjectHtml(value) {
 }
 
 function escapeProjectMarkdownText(value) {
-  const specialCharacters = new Set(['\\', String.fromCharCode(96), '*', '_', '{', '}', '[', ']', '(', ')', '#', '+', '-', '.', '!', '|', '<', '>', '~']);
+  const specialCharacters = new Set(['\\', String.fromCharCode(96), '*', '_', '{', '}', '[', ']', '(', ')', '#', '+', '-', '.', '!', '|', '<', '>', '~', '$']);
   return Array.from(String(value || ''), character =>
     specialCharacters.has(character) ? `\\${character}` : character
   ).join('');
@@ -7247,7 +8226,11 @@ function escapeProjectHtmlAttribute(value) {
 
 function projectHtmlToMarkdown(value) {
   const raw = String(value || '');
-  if (!looksLikeProjectHtml(raw)) return raw;
+  if (!looksLikeProjectHtml(raw)) {
+    if (!/<table\b/i.test(raw)) return raw;
+    return marked.lexer(raw).map(token => token.type === 'html' && /<table\b/i.test(token.raw)
+      ? projectHtmlToMarkdown('<div>' + token.raw + '</div>') + '\n\n' : token.raw).join('');
+  }
 
   const root = document.createElement('div');
   root.innerHTML = raw;
@@ -7257,6 +8240,9 @@ function projectHtmlToMarkdown(value) {
     if (node.nodeType !== Node.ELEMENT_NODE) return '';
 
     const tag = node.tagName.toLowerCase();
+    if (node.dataset.workwebMath === 'inline') {
+      return `$${node.getAttribute('data-latex') ?? node.textContent ?? ''}$`;
+    }
     const content = Array.from(node.childNodes, serializeInline).join('');
     if (tag === 'br') return '  \n';
     if (tag === 'strong' || tag === 'b') return `**${content}**`;
@@ -7329,6 +8315,9 @@ function projectHtmlToMarkdown(value) {
     if (node.nodeType !== Node.ELEMENT_NODE) return '';
 
     const tag = node.tagName.toLowerCase();
+    if (node.dataset.workwebMath === 'display') {
+      return `$$\n${node.getAttribute('data-latex') ?? node.textContent ?? ''}\n$$`;
+    }
     if (/^h[1-6]$/.test(tag)) {
       return `${'#'.repeat(Number(tag.slice(1)))} ${Array.from(node.childNodes, serializeInline).join('').trim()}`;
     }
@@ -7351,41 +8340,56 @@ function projectHtmlToMarkdown(value) {
       return quoted.split('\n').map(line => line ? `> ${line}` : '>').join('\n');
     }
     if (tag === 'table') {
-      const cells = Array.from(node.querySelectorAll('th, td'));
-      const firstRowCells = Array.from(node.querySelector('tr')?.children || [])
-        .filter(cell => ['th', 'td'].includes(cell.tagName.toLowerCase()));
-      if (!firstRowCells.length || firstRowCells.some(cell => cell.tagName.toLowerCase() !== 'th')) {
-        return node.outerHTML || '';
+      const tableRows = Array.from(node.rows);
+      const grid = tableRows.map(() => []);
+      function cellMarkdown(cell) {
+        const copy = cell.cloneNode(true);
+        copy.querySelectorAll('p, div, li, ul, ol, blockquote, pre, h1, h2, h3, h4, h5, h6, tr, td, th').forEach(block => {
+          block.prepend(document.createTextNode(' '));
+          block.append(document.createTextNode(' '));
+        });
+        copy.querySelectorAll('br, hr').forEach(br => br.replaceWith(document.createTextNode(' ')));
+        copy.querySelectorAll('u, sub, sup').forEach(element => element.replaceWith(...element.childNodes));
+        copy.querySelectorAll('img').forEach(image => {
+          const link = document.createElement('a');
+          link.textContent = image.getAttribute('alt') || image.getAttribute('src') || '';
+          if (image.getAttribute('src')) link.setAttribute('href', image.getAttribute('src'));
+          image.replaceWith(link);
+        });
+        copy.querySelectorAll('code').forEach(code => {
+          // A literal backslash beside a pipe inside code is ambiguous in pipe-table parsers.
+          if (code.textContent.includes('|')) code.replaceWith(document.createTextNode(code.textContent));
+        });
+        copy.querySelectorAll('[data-workweb-math]').forEach(math => {
+          if ((math.getAttribute('data-latex') || '').includes('|')) {
+            math.replaceWith(document.createTextNode('$' + math.getAttribute('data-latex') + '$'));
+          } else {
+            math.dataset.workwebMath = 'inline';
+          }
+        });
+        return Array.from(copy.childNodes, serializeInline).join('').replace(/\s+/g, ' ').trim()
+          .replace(/(\\*)\|/g, (match, slashes) => slashes.length % 2 ? match : slashes + '\\|');
       }
-      const tableRows = Array.from(node.querySelectorAll('tr'));
-      if (tableRows.slice(1).some(row => Array.from(row.children).some(cell => cell.tagName.toLowerCase() === 'th'))) {
-        return node.outerHTML || '';
-      }
-      if (cells.some(cell => {
-        const spansRows = Number(cell.getAttribute('rowspan') || 1) !== 1;
-        const spansColumns = Number(cell.getAttribute('colspan') || 1) !== 1;
-        const hasPipeAttribute = [cell, ...cell.querySelectorAll('*')].some(element =>
-          Array.from(element.attributes).some(attribute => attribute.value.includes('|'))
-        );
-        const hasMultipleBlocks = Array.from(cell.children).filter(child =>
-          ['p', 'ul', 'ol', 'blockquote', 'pre', 'table'].includes(child.tagName.toLowerCase())
-        ).length > 1;
-        return spansRows || spansColumns || hasPipeAttribute || hasMultipleBlocks
-          || cell.querySelector('br, h1, h2, h3, h4, h5, h6, hr, ul, ol, blockquote, pre, table')
-          || Array.from(cell.children).some(child => child.tagName.toLowerCase() === 'img')
-          || /[\r\n]/.test(cell.textContent || '')
-          || Array.from(cell.querySelectorAll('code')).some(code => code.textContent.includes('|'));
-      })) return node.outerHTML || '';
-
-      const rows = tableRows.map(row =>
-        Array.from(row.children)
-          .filter(cell => ['th', 'td'].includes(cell.tagName.toLowerCase()))
-          .map(cell => Array.from(cell.childNodes, serializeInline).join('').trim())
-      );
-      if (!rows.length || rows.some(row => row.length !== firstRowCells.length)) return node.outerHTML || '';
-      const columnCount = firstRowCells.length;
-      const renderRow = row => `| ${Array.from({ length: columnCount }, (_, index) => row[index] || '').join(' | ')} |`;
-      return [renderRow(rows[0]), renderRow(Array(columnCount).fill('---')), ...rows.slice(1).map(renderRow)].join('\n');
+      tableRows.forEach((row, rowIndex) => {
+        let column = 0;
+        Array.from(row.cells).forEach(cell => {
+          const width = cell.colSpan;
+          const height = Math.min(cell.rowSpan || tableRows.length - rowIndex, tableRows.length - rowIndex);
+          while (Array.from({ length: width }, (_, offset) => grid[rowIndex][column + offset])
+            .some(value => value !== undefined)) column += 1;
+          for (let r = rowIndex; r < rowIndex + height; r += 1) {
+            for (let c = column; c < column + width; c += 1) grid[r][c] = '';
+          }
+          grid[rowIndex][column] = cellMarkdown(cell);
+          column += width;
+        });
+      });
+      const width = Math.max(0, ...grid.map(row => row.length));
+      if (!width) return escapeProjectMarkdownText(node.textContent || '').trim();
+      const renderRow = row => '| ' + Array.from({ length: width }, (_, column) => row[column] || '').join(' | ') + ' |';
+      const table = [renderRow(grid[0]), renderRow(Array(width).fill('---')), ...grid.slice(1).map(renderRow)].join('\n');
+      const caption = node.caption ? Array.from(node.caption.childNodes, serializeInline).join('').trim() : '';
+      return caption ? `${caption}\n\n${table}` : table;
     }
     if (tag === 'hr') return '---';
     if (['html', 'body', 'div', 'section', 'article', 'aside', 'main', 'header', 'footer', 'nav'].includes(tag)) {
@@ -7756,7 +8760,11 @@ function renderProjectBook() {
 
   view.classList.add('active');
   if (projectEditor?.setAIConfig) projectEditor.setAIConfig(getProjectAIConfig(project));
-  const content = project.pages[activeProjectPageIndex] || '';
+  let content = project.pages[activeProjectPageIndex] || '';
+  if (/<table\b/i.test(content)) {
+    content = projectHtmlToMarkdown(content);
+    handleProjectPageInput(content);
+  }
   syncProjectSourceEditor(content);
   if (!projectSourceMode) setProjectEditorMarkdown(content);
   applyProjectEditorMode();
@@ -8035,6 +9043,7 @@ function openProjectBook(id) {
   if (!project) return;
 
   if (activeProjectId && activeProjectId !== id) {
+    recordProjectEditorPage();
     flushProjectPersist();
     closeProjectFind();
   }
@@ -8045,7 +9054,7 @@ function openProjectBook(id) {
   }
 
   activeProjectId = id;
-  activeProjectPageIndex = 0;
+  activeProjectPageIndex = getProjectEditorPageIndex(project);
   renderProjects();
 
   const view = document.getElementById('projectBookView');
@@ -8058,6 +9067,7 @@ function openProjectBook(id) {
 
 function closeProjectBook() {
   if (!activeProjectId && !projectCloseTimer) return;
+  recordProjectEditorPage();
   flushProjectPersist();
   closeProjectFind();
   if (projectCloseTimer) return;
@@ -8154,6 +9164,7 @@ function focusProjectEditor() {
 }
 
 function handleProjectPageInput(value) {
+  if (/<table\b/i.test(value)) value = projectHtmlToMarkdown(value);
   const project = getProjectById(activeProjectId);
   if (!project) return;
   project.pages[activeProjectPageIndex] = value;
@@ -8280,6 +9291,7 @@ function switchProjectPage(index, options = {}) {
   if (nextIndex === activeProjectPageIndex) return;
   flushProjectPersist();
   activeProjectPageIndex = nextIndex;
+  recordProjectEditorPage(project, nextIndex);
   renderProjectBook();
   if (focus) focusProjectEditor();
 }
@@ -8297,6 +9309,7 @@ async function addProjectPage() {
   activeProjectPageIndex = insertIndex;
   const revision = markProjectDirty();
   await persistProject(project, revision).catch(() => {});
+  recordProjectEditorPage(project, activeProjectPageIndex);
   renderProjectBook();
   focusProjectEditor();
 }
@@ -8355,6 +9368,7 @@ async function deleteProjectPage(index, target = {}) {
   } else {
     await persistProject(project, revision).catch(() => {});
   }
+  if (isActiveProject) recordProjectEditorPage(project, activeProjectPageIndex);
   renderProjectBook();
   if (isActiveProject && document.getElementById('page-progress')?.classList.contains('active')) focusProjectEditor();
 }
@@ -8392,6 +9406,7 @@ async function reorderProjectPages(fromIndex, toIndex) {
   renderProjectPageTabs(previousRects, pageKeys);
   renderProjectOutline(project);
   await persistProject(project, projectSaveRevision).catch(() => {});
+  recordProjectEditorPage(project, activeProjectPageIndex);
 }
 
 /* ==================== 常用个人信息 ==================== */
@@ -8825,7 +9840,13 @@ document.addEventListener('click', e => {
   }
 });
 
-window.addEventListener('beforeunload', flushProjectPersist);
+window.addEventListener('beforeunload', () => {
+  recordProjectEditorPage();
+  flushProjectPersist();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') recordProjectEditorPage();
+});
 
 /* ==================== 快捷键 ==================== */
 const ALT_PAGE_SHORTCUTS = {
@@ -8836,10 +9857,30 @@ const ALT_PAGE_SHORTCUTS = {
 };
 
 function hasActiveBlockingOverlay() {
-  return Boolean(document.querySelector('.modal-overlay.active, .confirm-overlay.active'));
+  return Boolean(document.getElementById('noteConflictDialog')?.open
+    || document.querySelector('.modal-overlay.active, .confirm-overlay.active'));
 }
 
+const noteConflictDialogElement = document.getElementById('noteConflictDialog');
+noteConflictDialogElement.addEventListener('cancel', event => {
+  if (noteConflictDialogSubmitting) event.preventDefault();
+});
+noteConflictDialogElement.addEventListener('close', () => {
+  if (noteConflictDialogElement.open) return;
+  const closedNoteId = noteConflictDialogNoteId;
+  noteConflictDialogNoteId = null;
+  noteConflictDialogSubmitting = false;
+  if (!closedNoteId) return;
+  requestAnimationFrame(() => {
+    const card = document.querySelector(`.note-card[data-id="${closedNoteId}"]`);
+    const badge = card?.querySelector('.note-save-status');
+    if (badge && !badge.disabled) badge.focus();
+    else card?.querySelector('.note-title-input')?.focus();
+  });
+});
+
 document.addEventListener('keydown', e => {
+  if (document.getElementById('noteConflictDialog')?.open) return;
   if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && ALT_PAGE_SHORTCUTS[e.key]) {
     if (!hasActiveBlockingOverlay()) {
       e.preventDefault();

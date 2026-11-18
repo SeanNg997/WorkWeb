@@ -8,11 +8,13 @@ export default defineConfig({
   },
   build: {
     emptyOutDir: false,
+    cssCodeSplit: false,
     lib: {
       entry: 'src/novel-project-editor.jsx',
       name: 'NovelProjectEditor',
       formats: ['iife'],
-      fileName: () => 'novel-project-editor.js'
+      fileName: () => 'novel-project-editor.js',
+      cssFileName: 'novel-project-editor'
     },
     outDir: 'vendor',
     rollupOptions: {

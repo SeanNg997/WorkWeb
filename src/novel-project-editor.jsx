@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorContent, EditorRoot, StarterKit, Placeholder, useEditor } from 'novel';
-import { Extension } from '@tiptap/core';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+import { Extension, InputRule, Node } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import Underline from '@tiptap/extension-underline';
-import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
+import { DOMParser as ProseMirrorDOMParser, DOMSerializer } from '@tiptap/pm/model';
 import { NodeSelection, TextSelection, Plugin, PluginKey } from '@tiptap/pm/state';
+import { isInTable } from '@tiptap/pm/tables';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 const mountedEditors = new Map();
@@ -262,21 +265,272 @@ function looksLikeHtml(value) {
     .test(String(value || '').trimStart());
 }
 
-function markdownToHtml(value) {
-  if (!value) return '';
-  if (looksLikeHtml(value)) return value;
-  if (window.marked?.parse) return window.marked.parse(value, { breaks: true });
-  return value
-    .split('\n')
-    .map(line => `<p>${line.replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    }[char]))}</p>`)
-    .join('');
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
 }
+
+let projectMarkdownParser = null;
+
+function getProjectMarkdownParser() {
+  if (projectMarkdownParser || !window.marked?.Marked) return projectMarkdownParser;
+  projectMarkdownParser = new window.marked.Marked({
+    breaks: true,
+    extensions: [
+      {
+        name: 'workwebMathBlock',
+        level: 'block',
+        start: source => source.indexOf('$$'),
+        tokenizer(source) {
+          const display = source.match(/^\$\$[ \t]*\r?\n([\s\S]+?)\r?\n\$\$[ \t]*(?:\r?\n|$)/);
+          const singleLine = source.match(/^\$\$([^\n]+?)\$\$[ \t]*(?:\r?\n|$)/);
+          const match = display || singleLine;
+          return match ? { type: 'workwebMathBlock', raw: match[0], latex: match[1].trim() } : undefined;
+        },
+        renderer: token => `<div data-workweb-math="display" data-latex="${escapeHtml(token.latex)}"></div>`
+      },
+      {
+        name: 'workwebMathInline',
+        level: 'inline',
+        start: source => source.indexOf('$'),
+        tokenizer(source) {
+          const match = source.match(/^\$(?!\$)((?:\\[^\n]|[^\\$\n])+?)\$(?![\d$])/);
+          return match && match[1] === match[1].trim()
+            ? { type: 'workwebMathInline', raw: match[0], latex: match[1] }
+            : undefined;
+        },
+        renderer: token => `<span data-workweb-math="inline" data-latex="${escapeHtml(token.latex)}"></span>`
+      }
+    ]
+  });
+  return projectMarkdownParser;
+}
+
+function markdownToHtml(value, enableMath = true, normalizeTables = true) {
+  if (!value) return '';
+  if (normalizeTables && /<table\b/i.test(value)) value = window.projectHtmlToMarkdown(value);
+  if (looksLikeHtml(value)) return value;
+  const parser = enableMath ? getProjectMarkdownParser() : null;
+  return parser ? parser.parse(value) : window.marked?.parse?.(value, { breaks: true }) || value;
+}
+
+const ProjectTable = Table.extend({
+  addCommands() {
+    return {
+      ...this.parent?.(),
+      mergeCells: () => () => false,
+      splitCell: () => () => false,
+      mergeOrSplit: () => () => false,
+      toggleHeaderRow: () => () => false,
+      toggleHeaderColumn: () => () => false,
+      toggleHeaderCell: () => () => false
+    };
+  },
+
+  addKeyboardShortcuts() {
+    const flattenBreak = () => isInTable(this.editor.state)
+      ? this.editor.commands.insertContent(' ') : false;
+    return { ...this.parent?.(), Enter: flattenBreak, 'Shift-Enter': flattenBreak };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      ...(this.parent?.() || []),
+      new Plugin({
+        appendTransaction(transactions, _oldState, state) {
+          if (!transactions.some(transaction => transaction.docChanged)) return null;
+          const tr = state.tr;
+          const tables = [];
+          state.doc.descendants((node, pos) => {
+            if (node.type.name !== 'table') return true;
+            tables.push({ node, pos });
+            return false;
+          });
+          // Work backwards so flattening an imported table leaves earlier positions intact.
+          for (const { node: table, pos } of tables.reverse()) {
+            let flatten = false;
+            table.descendants(cell => {
+              if (!['tableCell', 'tableHeader'].includes(cell.type.name)) return true;
+              flatten ||= cell.attrs.colspan !== 1 || cell.attrs.rowspan !== 1
+                || cell.childCount !== 1 || cell.firstChild.type.name !== 'paragraph';
+              cell.descendants(child => {
+                flatten ||= child.type.name === 'hardBreak'
+                  || child.marks.some(mark => mark.type.name === 'underline');
+              });
+              return false;
+            });
+            if (flatten) {
+              const dom = DOMSerializer.fromSchema(state.schema).serializeNode(table);
+              const container = document.createElement('div');
+              container.innerHTML = markdownToHtml(window.projectHtmlToMarkdown(dom.outerHTML));
+              const normalized = ProseMirrorDOMParser.fromSchema(state.schema).parse(container).firstChild;
+              if (normalized?.type.name === 'table' && !normalized.eq(table)) {
+                tr.replaceWith(pos, pos + table.nodeSize, normalized);
+              }
+              continue;
+            }
+            table.forEach((row, rowOffset, rowIndex) => row.forEach((cell, cellOffset) => {
+              const type = state.schema.nodes[rowIndex === 0 ? 'tableHeader' : 'tableCell'];
+              if (cell.type !== type || cell.attrs.colwidth) {
+                tr.setNodeMarkup(pos + 2 + rowOffset + cellOffset, type,
+                  { ...cell.attrs, colspan: 1, rowspan: 1, colwidth: null });
+              }
+            }));
+          }
+          return tr.docChanged ? tr : null;
+        }
+      })
+    ];
+  }
+}).configure({ resizable: false });
+
+function createMathNodeView({ editor, getPos, node }, displayMode) {
+  const element = document.createElement(displayMode ? 'div' : 'span');
+  element.className = displayMode ? 'novel-math-display' : 'novel-math-inline';
+  element.contentEditable = 'false';
+  element.tabIndex = 0;
+  element.setAttribute('role', 'button');
+  let currentNode = node;
+
+  function render() {
+    element.setAttribute('data-workweb-math', displayMode ? 'display' : 'inline');
+    element.setAttribute('data-latex', currentNode.attrs.latex || '');
+    element.setAttribute('aria-label', `${displayMode ? '块' : '行内'}公式，点击编辑 LaTeX`);
+    katex.render(currentNode.attrs.latex || '', element, { displayMode, throwOnError: false, trust: false });
+  }
+
+  function openEditor() {
+    const originalNode = currentNode;
+    const dialog = document.createElement('dialog');
+    dialog.className = 'novel-math-dialog';
+    dialog.setAttribute('aria-label', '编辑公式');
+    const form = document.createElement('form');
+    form.method = 'dialog';
+    const label = document.createElement('label');
+    label.textContent = 'LaTeX';
+    const textarea = document.createElement('textarea');
+    textarea.value = currentNode.attrs.latex || '';
+    textarea.setAttribute('aria-label', 'LaTeX');
+    const actions = document.createElement('div');
+    actions.className = 'novel-math-dialog-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = '取消';
+    cancel.addEventListener('click', () => dialog.close());
+    const save = document.createElement('button');
+    save.type = 'submit';
+    save.textContent = '保存';
+    actions.append(cancel, save);
+    label.append(textarea);
+    form.append(label, actions);
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (typeof getPos !== 'function') return;
+      let position;
+      try { position = getPos(); } catch { return; }
+      const existing = editor.state.doc.nodeAt(position);
+      if (existing?.type !== originalNode.type || existing.attrs.latex !== originalNode.attrs.latex) {
+        dialog.close();
+        return;
+      }
+      editor.view.dispatch(editor.state.tr.setNodeMarkup(position, existing.type, { ...existing.attrs, latex: textarea.value }));
+      dialog.close();
+      editor.view.focus();
+    });
+    textarea.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    dialog.addEventListener('close', () => dialog.remove(), { once: true });
+    dialog.append(form);
+    document.body.append(dialog);
+    dialog.showModal();
+    textarea.focus();
+  }
+
+  element.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    openEditor();
+  });
+  element.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openEditor();
+  });
+
+  render();
+  return {
+    dom: element,
+    update(nextNode) {
+      if (nextNode.type !== currentNode.type) return false;
+      currentNode = nextNode;
+      render();
+      return true;
+    },
+    ignoreMutation: () => true
+  };
+}
+
+function createMathExtension(displayMode = false) {
+  const name = displayMode ? 'mathDisplay' : 'mathInline';
+  const mathType = displayMode ? 'display' : 'inline';
+  return Node.create({
+    name,
+    group: displayMode ? 'block' : 'inline',
+    inline: !displayMode,
+    atom: true,
+    selectable: true,
+    marks: '',
+    addAttributes() {
+      return {
+        latex: {
+          default: '',
+          parseHTML: element => element.getAttribute('data-latex') || element.textContent || '',
+          renderHTML: attributes => ({ 'data-latex': attributes.latex })
+        }
+      };
+    },
+    parseHTML() {
+      return [{ tag: `[data-workweb-math="${mathType}"]` }];
+    },
+    renderHTML({ node, HTMLAttributes }) {
+      return [displayMode ? 'div' : 'span', { ...HTMLAttributes, 'data-workweb-math': mathType }, node.attrs.latex || ''];
+    },
+    addNodeView() {
+      return props => createMathNodeView(props, displayMode);
+    },
+    addInputRules() {
+      const formulaType = this.type;
+      const find = displayMode
+        ? /^\$\$([^\n]+)\$\$$/
+        : /(?<![\\$])\$(?!\$)((?:\\[^\n]|[^\\$\n])+?)\$$/;
+      return [new InputRule({
+        find,
+        handler: ({ state, range, match }) => {
+          const latex = match[1];
+          if (!displayMode && latex !== latex.trim()) return;
+          try {
+            katex.renderToString(latex, { displayMode, throwOnError: true, trust: false });
+          } catch {
+            return;
+          }
+          state.tr.replaceWith(range.from, range.to, formulaType.create({ latex }));
+        }
+      })];
+    }
+  });
+}
+
+const MathInline = createMathExtension();
+const MathDisplay = createMathExtension(true);
 
 function ToolbarButton({ active, children, onClick, title }) {
   return (
@@ -365,49 +619,105 @@ function ToolbarDropdown({ active, items, label, title }) {
 
 function ToolbarTablePicker({ editor }) {
   const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef(null);
   const [rows, setRows] = useState('3');
   const [columns, setColumns] = useState('3');
   const rowCount = Number(rows);
   const columnCount = Number(columns);
   const valid = Number.isSafeInteger(rowCount) && rowCount > 0 && rowCount <= 50
     && Number.isSafeInteger(columnCount) && columnCount > 0 && columnCount <= 50;
+  const inTable = editor.isActive('table');
+  const actionGroups = [
+    { className: 'novel-table-add-actions', label: '新增行列', actions: [
+      ['addRowBefore', '上方加行'],
+      ['addColumnBefore', '左侧加列'],
+      ['addColumnAfter', '右侧加列'],
+      ['addRowAfter', '下方加行']
+    ] },
+    { className: 'novel-table-delete-actions', label: '删减行列', actions: [
+      ['deleteRow', '删除行'],
+      ['deleteColumn', '删除列']
+    ] }
+  ];
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) return () => clearTimeout(closeTimerRef.current);
     const closeOnEscape = event => {
       if (event.key !== 'Escape') return;
+      clearTimeout(closeTimerRef.current);
       setOpen(false);
       editor.commands.focus();
     };
     document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      clearTimeout(closeTimerRef.current);
+    };
   }, [open, editor]);
+
+  function openMenu() {
+    clearTimeout(closeTimerRef.current);
+    setOpen(true);
+  }
+
+  function scheduleClose() {
+    clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => setOpen(false), 300);
+  }
 
   function createTable(event) {
     event.preventDefault();
-    if (!valid) return;
+    if (!valid || inTable) return;
     editor.chain().focus().insertTable({ rows: rowCount, cols: columnCount, withHeaderRow: true }).run();
     setOpen(false);
   }
 
+  function runTableCommand(command) {
+    editor.chain().focus()[command]().run();
+  }
+
   return (
-    <div className={`novel-toolbar-group${open ? ' open' : ''}`}>
+    <div
+      className={`novel-toolbar-group${open ? ' open' : ''}`}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
       <button
         type="button"
         className={`novel-toolbar-button novel-toolbar-trigger${open ? ' open' : ''}`}
         title="插入表格"
         aria-expanded={open}
         onMouseDown={event => event.preventDefault()}
-        onClick={() => setOpen(value => !value)}
+        onClick={() => {
+          clearTimeout(closeTimerRef.current);
+          setOpen(value => !value);
+        }}
       >
         <span>表格</span>
         <span className="novel-toolbar-caret" aria-hidden="true">▾</span>
       </button>
-      <form className={`novel-toolbar-menu novel-table-menu${open ? ' open' : ''}`} onSubmit={createTable}>
-        <label>行 (1-50)<input aria-label="行数" className="novel-table-input" type="number" min="1" max="50" step="1" value={rows} onChange={event => setRows(event.target.value)} /></label>
-        <label>列 (1-50)<input aria-label="列数" className="novel-table-input" type="number" min="1" max="50" step="1" value={columns} onChange={event => setColumns(event.target.value)} /></label>
-        <button type="submit" className="novel-toolbar-button" disabled={!valid}>创建</button>
-      </form>
+      <div className={`novel-toolbar-menu novel-table-menu${open ? ' open' : ''}`}>
+        <div className="novel-table-module novel-table-create" aria-label="创建表格">
+          <label>行<input aria-label="行数" className="novel-table-input" type="number" min="1" max="50" step="1" value={rows} onChange={event => setRows(event.target.value)} /></label>
+          <label>列<input aria-label="列数" className="novel-table-input" type="number" min="1" max="50" step="1" value={columns} onChange={event => setColumns(event.target.value)} /></label>
+          <button type="button" className="novel-toolbar-button" disabled={!valid || inTable} title={inTable ? '请在表格外创建新表格' : undefined} onMouseDown={event => event.preventDefault()} onClick={createTable}>创建表格</button>
+        </div>
+        {inTable && actionGroups.map(group => (
+          <div key={group.className} className={`novel-table-module ${group.className}`} aria-label={group.label}>
+            {group.actions.map(([command, label]) => (
+              <button
+                key={command}
+                type="button"
+                className="novel-toolbar-button"
+                disabled={!editor.can()[command]()}
+                title={label}
+                onMouseDown={event => event.preventDefault()}
+                onClick={() => runTableCommand(command)}
+              >{label}</button>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -543,6 +853,8 @@ function NovelToolbar({ sourceMode, onToggleSourceMode, showSourceToggle = true,
           ...(onImageUpload ? [{ key: 'image', title: '插入图片', label: '图片', active: false, onClick: () => fileInputRef.current?.click() }] : []),
           { key: 'blockquote', title: '引用', label: '引用', active: editor.isActive('blockquote'), onClick: () => editor.chain().focus().toggleBlockquote().run() },
           { key: 'code-block', title: '代码块', label: '代码块', active: editor.isActive('codeBlock'), onClick: () => editor.chain().focus().toggleCodeBlock().run() },
+          { key: 'math-inline', title: '行内公式', label: '行内公式', active: false, onClick: () => editor.chain().focus().insertContent({ type: 'mathInline', attrs: { latex: '\\text{点击写入LaTeX公式}' } }).run() },
+          { key: 'math-display', title: '公式块', label: '公式块', active: false, onClick: () => editor.chain().focus().insertContent({ type: 'mathDisplay', attrs: { latex: '\\text{点击写入LaTeX公式}' } }).run() },
           ...(showSourceToggle ? [{ key: 'source', title: sourceMode ? '返回可视编辑' : '切换源代码模式', label: '源代码模式', active: sourceMode, onClick: () => onToggleSourceMode?.() }] : []),
           { key: 'ai-completion', title: aiEnabled ? '关闭自动补全' : '开启自动补全', label: '自动补全', active: aiEnabled, onClick: toggleAI }
         ]}
@@ -599,9 +911,10 @@ function NovelProjectEditor({
   onEditorReady,
   onAIToggle,
   aiConfig,
-  spellcheck = true
+  spellcheck = true,
+  enableMath = true
 }) {
-  const initialContent = useMemo(() => markdownToHtml(value), []);
+  const initialContent = useMemo(() => markdownToHtml(value, enableMath, showToolbar), [enableMath, showToolbar]);
   const aiConfigRef = useRef(aiConfig || {});
 
   useEffect(() => {
@@ -613,7 +926,7 @@ function NovelProjectEditor({
   const extensions = useMemo(() => [
     StarterKit,
     Underline,
-    Table,
+    showToolbar ? ProjectTable : Table,
     TableRow,
     TableHeader,
     TableCell,
@@ -631,11 +944,12 @@ function NovelProjectEditor({
         };
       }
     }).configure({ inline: false, allowBase64: false }),
+    ...(enableMath ? [MathInline, MathDisplay] : []),
     Placeholder.configure({
       placeholder: placeholder || '输入项目内容...'
     }),
     aiExtension
-  ], [placeholder]);
+  ], [placeholder, enableMath, showToolbar]);
 
   function focusEndWhenClickingBlankSpace(view, event) {
     const target = event.target;
@@ -666,6 +980,7 @@ function NovelProjectEditor({
         initialContent={initialContent}
         extensions={extensions}
         editorProps={{
+          transformPastedHTML: html => /<table\b/i.test(html) ? markdownToHtml(html, enableMath, showToolbar) : html,
           attributes: {
             class: 'novel-project-editor-prose',
             spellcheck: String(spellcheck)
@@ -674,6 +989,8 @@ function NovelProjectEditor({
             .textBetween(0, slice.content.size, '\n', node => {
               if (node.type.name === 'hardBreak') return '\n';
               if (node.type.name === 'image') return node.attrs.alt || '';
+            if (node.type.name === 'mathInline') return `$${node.attrs.latex}$`;
+            if (node.type.name === 'mathDisplay') return `$$\n${node.attrs.latex}\n$$`;
               return '';
             })
             .replace(/\n{2,}/g, '\n'),
@@ -683,8 +1000,8 @@ function NovelProjectEditor({
             const plainText = clipboard?.getData('text/plain') || '';
             const clipboardHtml = clipboard?.getData('text/html') || '';
             if (!/<table\b/i.test(clipboardHtml)) {
-              const pastedHtml = markdownToHtml(plainText);
-              if (/<table\b/i.test(pastedHtml)) {
+              const pastedHtml = markdownToHtml(plainText, enableMath, showToolbar);
+              if (/<table\b|data-workweb-math=/i.test(pastedHtml)) {
                 event.preventDefault();
                 const container = document.createElement('div');
                 container.innerHTML = pastedHtml;
@@ -826,6 +1143,7 @@ function mountNovelProjectEditor(el, options = {}) {
     onAIToggle: options.onAIToggle,
     aiConfig: options.aiConfig || null,
     spellcheck: options.spellcheck !== false,
+    enableMath: options.enableMath !== false,
     editor: null,
     version: 0
   };
@@ -915,6 +1233,7 @@ function mountNovelProjectEditor(el, options = {}) {
         onAIToggle={state.onAIToggle}
         aiConfig={state.aiConfig}
         spellcheck={state.spellcheck}
+        enableMath={state.enableMath}
       />
     );
   }

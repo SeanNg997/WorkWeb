@@ -1,6 +1,6 @@
 {
   "name": "workweb",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "本地个人工作面板桌面应用",
   "author": "Xiaoran",
   "private": true,
@@ -23,6 +23,7 @@
     "@tiptap/extension-table-header": "^2.27.3",
     "@tiptap/extension-table-row": "^2.27.3",
     "@tiptap/starter-kit": "^2.27.1",
+    "katex": "^0.16.45",
     "@vitejs/plugin-react": "^5.1.2",
     "electron": "^37.2.0",
     "electron-builder": "^26.0.12",

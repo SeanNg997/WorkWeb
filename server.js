@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -14,10 +15,12 @@ const INFO_FILE = 'info.json';
 const FITNESS_FILE = 'fitness.json';
 const REMINDERS_FILE = 'reminders.json';
 const STORAGE_META_FILE = 'storage-meta.json';
+const PROJECT_EDITOR_STATE_FILE = 'project-editor-state.json';
 const STORAGE_SCHEMA_VERSION = 2;
 const EXPORT_MAGIC = 'workweb-data-export';
 const EXPORT_FILE_NAME = 'WorkWeb_data.workweb';
 const TRASH_DIR = 'trash';
+const NOTE_DELETIONS_DIR = path.join('deletions', 'notes');
 const FIGURES_DIR = path.join('projects', 'figures');
 const PROJECT_ITEMS_DIR = path.join('projects', 'items');
 const BACKUP_DIR = 'backups';
@@ -41,10 +44,15 @@ const LEGACY_COLLECTION_FILES = {
 };
 
 class ConflictError extends Error {
-  constructor(message, current) {
+  constructor(message, current, details = {}) {
     super(message);
     this.name = 'ConflictError';
     this.current = current;
+    this.token = details.token || current?.syncToken || '';
+    this.variants = details.variants || current?.syncConflict?.variants || [];
+    this.draft = details.draft || null;
+    this.deleted = details.deleted === true;
+    this.conflict = details.conflict || null;
   }
 }
 
@@ -55,8 +63,11 @@ function ensureDir(dirPath) {
 
 function ensureDataFile(dataDir, file, fallback = []) {
   const filePath = path.join(dataDir, file);
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(fallback, null, 2), 'utf-8');
+  try {
+    fs.accessSync(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw jsonFileError('读取', filePath, error);
+    writeAtomicJSONFile(filePath, fallback);
   }
   return filePath;
 }
@@ -73,29 +84,120 @@ function ensureTrashDir(dataDir, key = '') {
   return ensureDir(path.join(dataDir, TRASH_DIR, key));
 }
 
+function jsonFileError(operation, filePath, error) {
+  const wrapped = new Error(operation + 'JSON失败：' + filePath + '：' + (error?.message || String(error)));
+  if (error?.code) wrapped.code = error.code;
+  return wrapped;
+}
+
 function readJSON(dataDir, file, fallback = null) {
   const filePath = ensureDataFile(dataDir, file, fallback ?? []);
-  try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); }
-  catch { return fallback; }
+  return readOptionalJSON(filePath, fallback);
 }
 
 function writeJSON(dataDir, file, data) {
   const filePath = ensureDataFile(dataDir, file);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  readOptionalJSON(filePath, null);
+  writeAtomicJSONFile(filePath, data);
 }
 
 function readOptionalJSON(filePath, fallback = null) {
   try {
-    if (!fs.existsSync(filePath)) return fallback;
     return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  } catch {
-    return fallback;
+  } catch (error) {
+    if (error.code === 'ENOENT') return fallback;
+    throw jsonFileError('读取', filePath, error);
   }
 }
 
 function writeJSONFile(filePath, data) {
-  ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  readOptionalJSON(filePath, null);
+  writeAtomicJSONFile(filePath, data);
+}
+
+function writeAtomicJSONFile(filePath, data) {
+  const directory = ensureDir(path.dirname(filePath));
+  const tempPath = path.join(directory, '.workweb-' + crypto.randomUUID() + '.tmp');
+  let descriptor = null;
+  let ownsTemp = false;
+  let failure = null;
+  try {
+    const content = JSON.stringify(data, null, 2);
+    if (content === undefined) throw new Error('无法序列化 JSON 数据');
+    descriptor = fs.openSync(tempPath, 'wx');
+    ownsTemp = true;
+    fs.writeFileSync(descriptor, content, 'utf-8');
+    fs.fsyncSync(descriptor);
+    fs.closeSync(descriptor);
+    descriptor = null;
+    fs.renameSync(tempPath, filePath);
+  } catch (error) {
+    failure = jsonFileError('写入', filePath, error);
+    throw failure;
+  } finally {
+    if (descriptor !== null) {
+      try { fs.closeSync(descriptor); } catch {}
+    }
+    if (ownsTemp) {
+      try {
+        fs.unlinkSync(tempPath);
+      } catch (error) {
+        if (error.code !== 'ENOENT' && !failure) throw jsonFileError('清理临时', tempPath, error);
+      }
+    }
+  }
+}
+
+function isAtomicJSONTempFile(filePath) {
+  return /^\.workweb-[\w-]+\.tmp$/i.test(path.basename(filePath));
+}
+
+function readProjectEditorState(dataDir) {
+  const filePath = path.join(dataDir, PROJECT_EDITOR_STATE_FILE);
+  const raw = readOptionalJSON(filePath, {});
+  const records = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const normalized = {};
+  Object.entries(records).forEach(([projectId, record]) => {
+    if (!/^[\w-]{1,128}$/.test(projectId) || !record || typeof record !== 'object'
+      || !/^[\w-]{1,128}$/.test(String(record.pageId || ''))
+      || !Number.isSafeInteger(record.pageIndex) || record.pageIndex < 0) return;
+    normalized[projectId] = {
+      pageId: record.pageId,
+      pageIndex: record.pageIndex,
+      updatedAt: Number.isSafeInteger(record.updatedAt) && record.updatedAt > 0 ? record.updatedAt : 0
+    };
+  });
+
+  if (!fs.existsSync(filePath) || JSON.stringify(normalized) !== JSON.stringify(raw)) {
+    writeAtomicJSONFile(filePath, normalized);
+  }
+  return normalized;
+}
+
+function saveProjectEditorState(dataDir, data) {
+  const { projectId, pageId, pageIndex, updatedAt } = data || {};
+  if (typeof projectId !== 'string' || !/^[\w-]{1,128}$/.test(projectId)
+    || typeof pageId !== 'string' || !/^[\w-]{1,128}$/.test(pageId)
+    || !Number.isSafeInteger(pageIndex) || pageIndex < 0
+    || !Number.isSafeInteger(updatedAt) || updatedAt <= 0) {
+    const error = new Error('项目页面记录无效');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const projectMeta = readOptionalJSON(getProjectMetaPath(dataDir, projectId), null);
+  if (!projectMeta || projectMeta.pageOrder?.[pageIndex] !== pageId) {
+    const error = new Error('项目页面不存在');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const state = readProjectEditorState(dataDir);
+  if ((state[projectId]?.updatedAt || 0) < updatedAt) {
+    state[projectId] = { pageId, pageIndex, updatedAt };
+    writeAtomicJSONFile(path.join(dataDir, PROJECT_EDITOR_STATE_FILE), state);
+  }
+  return state[projectId] || null;
 }
 
 function nextRevision(previousRevision = 0) {
@@ -159,14 +261,14 @@ function collectFiles(root, shouldInclude = () => true) {
 function listCollectionFiles(dataDir, key) {
   const dir = ensureCollectionDir(dataDir, key);
   return fs.readdirSync(dir, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
+    .filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
     .map(entry => path.join(dir, entry.name));
 }
 
 function listLegacyProjectFiles(dataDir) {
   const dir = ensureCollectionDir(dataDir, 'projects');
   return fs.readdirSync(dir, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
+    .filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
     .map(entry => path.join(dir, entry.name));
 }
 
@@ -183,34 +285,335 @@ function sanitizeEntityId(id, fallbackPrefix) {
   return `${fallbackPrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function newNoteId(dataDir, reservedIds = new Set()) {
+  let id = sanitizeEntityId('', 'n');
+  while (reservedIds.has(id) || hasNoteDeletion(dataDir, id)) id = sanitizeEntityId('', 'n');
+  return id;
+}
+
 function sanitizePageId(id) {
   return sanitizeEntityId(id, 'pg');
 }
 
+function stripNoteTransport(item = {}) {
+  const { syncToken, syncConflict, ...stored } = item || {};
+  return stored;
+}
+
 function normalizeNoteItem(item = {}, index = 0) {
-  const id = sanitizeEntityId(item.id, 'n');
-  const updatedAt = Number(item.updatedAt) || Date.now();
+  const stored = stripNoteTransport(item);
+  const id = sanitizeEntityId(stored.id, 'n');
+  const updatedAt = Number(stored.updatedAt) || Date.now();
   return {
-    ...item,
+    ...stored,
     id,
-    title: String(item.title || ''),
-    content: String(item.content || ''),
-    span: Math.max(1, Math.min(3, Number(item.span) || 1)),
-    createdAt: Number(item.createdAt) || updatedAt,
+    title: String(stored.title || ''),
+    content: String(stored.content || ''),
+    span: Math.max(1, Math.min(3, Number(stored.span) || 1)),
+    createdAt: Number(stored.createdAt) || updatedAt,
     updatedAt,
-    order: Number.isFinite(Number(item.order)) ? Number(item.order) : index,
-    revision: Number(item.revision) || updatedAt
+    order: Number.isFinite(Number(stored.order)) ? Number(stored.order) : index,
+    revision: Number(stored.revision) || updatedAt
+  };
+}
+
+const NOTE_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+const NOTE_DRAFT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const NOTE_BUSINESS_IGNORED_FIELDS = new Set([
+  'revision', 'updatedAt', 'createdAt', 'order', 'syncToken', 'syncConflict'
+]);
+
+function stableJSON(value) {
+  if (Array.isArray(value)) return '[' + value.map(stableJSON).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + stableJSON(value[key])).join(',') + '}';
+  }
+  return JSON.stringify(value);
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function noteBusinessValue(item) {
+  return Object.fromEntries(Object.entries(stripNoteTransport(item))
+    .filter(([key]) => !NOTE_BUSINESS_IGNORED_FIELDS.has(key)));
+}
+
+function noteBusinessHash(item) {
+  return sha256(stableJSON(noteBusinessValue(item)));
+}
+
+function noteCandidateSyncValue(candidate) {
+  return {
+    file: candidate.file,
+    revision: Number(candidate.item.revision) || 0,
+    updatedAt: Number(candidate.item.updatedAt) || 0,
+    business: noteBusinessValue(candidate.item)
+  };
+}
+
+function readNoteCandidateFiles(dataDir) {
+  return listCollectionFiles(dataDir, 'notes')
+    .sort((a, b) => path.basename(a).localeCompare(path.basename(b)))
+    .map((filePath, index) => {
+    let rawBytes;
+    let item;
+    try {
+      rawBytes = fs.readFileSync(filePath);
+      item = JSON.parse(rawBytes.toString('utf-8'));
+    } catch (error) {
+      if (error.code === 'ENOENT') return null;
+      throw jsonFileError('读取', filePath, error);
+    }
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw jsonFileError('读取', filePath, new Error('便笺 JSON 内容必须为对象'));
+    }
+    if (typeof item.id !== 'string' || !NOTE_ID_PATTERN.test(item.id)) {
+      throw jsonFileError('读取', filePath, new Error('便笺 JSON 必须包含合法内部 ID'));
+    }
+    const file = path.basename(filePath);
+    const rawText = rawBytes.toString('utf-8');
+    const rawHash = sha256(rawBytes);
+    return {
+      id: item.id,
+      file,
+      rawBytes,
+      rawText,
+      rawHash,
+      key: sha256(stableJSON(noteCandidateSyncValue({ file, item }))),
+      index,
+      item
+    };
+  }).filter(Boolean);
+}
+
+function orderNoteCandidates(candidates, id) {
+  const canonicalFile = id + '.json';
+  return [...candidates].sort((a, b) => {
+    const aCanonical = a.file === canonicalFile;
+    const bCanonical = b.file === canonicalFile;
+    if (aCanonical !== bCanonical) return aCanonical ? -1 : 1;
+    return a.file.localeCompare(b.file);
+  });
+}
+
+function noteSyncToken(candidates) {
+  const snapshot = [...candidates]
+    .sort((a, b) => a.file.localeCompare(b.file))
+    .map(noteCandidateSyncValue);
+  return sha256(stableJSON(snapshot));
+}
+
+function readNoteDeletionMarkers(dataDir) {
+  const directory = path.join(dataDir, NOTE_DELETIONS_DIR);
+  let entries;
+  try {
+    entries = fs.readdirSync(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw jsonFileError('读取', directory, error);
+  }
+
+  return entries
+    .filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
+    .map(entry => {
+      const filePath = path.join(directory, entry.name);
+      const missing = Symbol('missing-note-deletion-marker');
+      const marker = readOptionalJSON(filePath, missing);
+      if (marker === missing) return null;
+      if (!marker || typeof marker !== 'object' || Array.isArray(marker)
+        || typeof marker.id !== 'string' || !NOTE_ID_PATTERN.test(marker.id)) {
+        throw jsonFileError('读取', filePath, new Error('便笺删除标记 JSON 内容无效'));
+      }
+      return { file: entry.name, marker };
+    })
+    .filter(Boolean);
+}
+
+function noteDeletionIds(dataDir) {
+  return new Set(readNoteDeletionMarkers(dataDir).map(entry => entry.marker.id));
+}
+
+function hasNoteDeletion(dataDir, id) {
+  return noteDeletionIds(dataDir).has(id);
+}
+
+function noteStateToken(deleted, candidates) {
+  return sha256(stableJSON({ deleted, candidates: noteSyncToken(candidates) }));
+}
+
+function writeNoteDeletionMarker(dataDir, marker) {
+  if (!marker || typeof marker.id !== 'string' || !NOTE_ID_PATTERN.test(marker.id)) {
+    throw new Error('便笺删除标记 ID 无效');
+  }
+  const directory = ensureDir(path.join(dataDir, NOTE_DELETIONS_DIR));
+  const filePath = path.join(directory, `${marker.id}_${crypto.randomUUID()}.json`);
+  writeJSONFile(filePath, marker);
+  return filePath;
+}
+
+function noteVariant(candidate) {
+  return {
+    key: candidate.key,
+    file: candidate.file,
+    item: normalizeNoteItem(candidate.item, candidate.index)
+  };
+}
+
+function readResolvedNoteDraftIds(dataDir, id) {
+  const resolvedDir = path.join(dataDir, 'resolved-drafts', 'notes', id);
+  let entries;
+  try {
+    entries = fs.readdirSync(resolvedDir, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return new Set();
+    throw jsonFileError('读取', resolvedDir, error);
+  }
+
+  const resolved = new Set();
+  entries.filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
+    .forEach(entry => {
+      const filePath = path.join(resolvedDir, entry.name);
+      const missing = Symbol('missing-resolved-note-draft');
+      const marker = readOptionalJSON(filePath, missing);
+      if (marker === missing) return;
+      if (!marker || typeof marker !== 'object' || Array.isArray(marker) || marker.id !== id
+        || !NOTE_DRAFT_ID_PATTERN.test(String(marker.draftId || ''))) {
+        throw jsonFileError('读取', filePath, new Error('便笺草稿解决标记 JSON 内容无效'));
+      }
+      resolved.add(marker.draftId);
+    });
+  return resolved;
+}
+
+function readNoteDrafts(dataDir, id) {
+  const draftDir = path.join(dataDir, 'conflict-drafts', 'notes', id);
+  let entries;
+  try {
+    entries = fs.readdirSync(draftDir, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw jsonFileError('读取', draftDir, error);
+  }
+
+  const resolvedIds = readResolvedNoteDraftIds(dataDir, id);
+  const uniqueDrafts = new Map();
+  entries
+    .filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(entry => {
+      const filePath = path.join(draftDir, entry.name);
+      const missing = Symbol('missing-note-draft');
+      const draft = readOptionalJSON(filePath, missing);
+      if (draft === missing) return;
+      if (!draft || typeof draft !== 'object' || Array.isArray(draft) || draft.id !== id
+        || !draft.item || typeof draft.item !== 'object' || Array.isArray(draft.item)
+        || !NOTE_DRAFT_ID_PATTERN.test(String(draft.draftId || ''))) {
+        throw jsonFileError('读取', filePath, new Error('便笺草稿 JSON 内容无效'));
+      }
+      if (draft.status === 'resolved' || resolvedIds.has(draft.draftId)) return;
+      const item = { ...stripNoteTransport(draft.item), id };
+      const contentKey = `${draft.draftId}:${sha256(stableJSON(item))}`;
+      if (uniqueDrafts.has(contentKey)) return;
+      uniqueDrafts.set(contentKey, {
+        draftId: draft.draftId,
+        file: entry.name,
+        createdAt: draft.createdAt,
+        baseRevision: draft.baseRevision ?? null,
+        baseToken: draft.baseToken || '',
+        item
+      });
+    })
+  return Array.from(uniqueDrafts.values());
+}
+
+function noteFromCandidates(dataDir, candidates, id, localDrafts = readNoteDrafts(dataDir, id)) {
+  const ordered = orderNoteCandidates(candidates, id);
+  const primary = ordered[0];
+  const note = normalizeNoteItem(primary.item, primary.index);
+  const token = noteSyncToken(ordered);
+  note.syncToken = token;
+  const differentContent = new Set(ordered.map(candidate => noteBusinessHash(candidate.item))).size > 1;
+  if (differentContent || localDrafts.length) {
+    note.syncConflict = {
+      token,
+      deleted: false,
+      missing: false,
+      variants: ordered.map(noteVariant),
+      ...(localDrafts.length ? { localDrafts } : {})
+    };
+  }
+  return note;
+}
+
+function listNoteDraftIds(dataDir) {
+  const draftRoot = path.join(dataDir, 'conflict-drafts', 'notes');
+  let entries;
+  try {
+    entries = fs.readdirSync(draftRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw jsonFileError('读取', draftRoot, error);
+  }
+  return entries.filter(entry => entry.isDirectory() && NOTE_ID_PATTERN.test(entry.name))
+    .map(entry => entry.name);
+}
+
+function readNoteConflictState(dataDir, id, options = {}) {
+  const safeId = sanitizeEntityId(id, 'n');
+  if (!NOTE_ID_PATTERN.test(safeId)) throw new Error('便笺 ID 无效');
+  const allCandidates = options.allCandidates || readNoteCandidateFiles(dataDir);
+  const candidates = orderNoteCandidates(allCandidates.filter(candidate => candidate.id === safeId), safeId);
+  const deletedIds = options.deletedIds || noteDeletionIds(dataDir);
+  const deleted = deletedIds.has(safeId);
+  const missing = !deleted && candidates.length === 0;
+  const localDrafts = readNoteDrafts(dataDir, safeId);
+  const token = deleted || missing ? noteStateToken(deleted, candidates) : noteSyncToken(candidates);
+  const current = deleted || missing ? null : noteFromCandidates(dataDir, candidates, safeId, localDrafts);
+  const variants = candidates.map(noteVariant);
+  return { id: safeId, candidates, deleted, missing, localDrafts, token, current, variants };
+}
+
+function noteConflictStatePayload(state) {
+  return {
+    token: state.token,
+    deleted: state.deleted,
+    missing: state.missing,
+    variants: state.variants,
+    localDrafts: state.localDrafts
   };
 }
 
 function readNotes(dataDir) {
-  return listCollectionFiles(dataDir, 'notes')
-    .map(filePath => {
-      try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); }
-      catch { return null; }
-    })
-    .filter(item => item && typeof item === 'object')
-    .map((item, index) => normalizeNoteItem(item, index))
+  const deletedIds = noteDeletionIds(dataDir);
+  const allCandidates = readNoteCandidateFiles(dataDir);
+  const grouped = new Map();
+  allCandidates.forEach(candidate => {
+    if (!grouped.has(candidate.id)) grouped.set(candidate.id, []);
+    grouped.get(candidate.id).push(candidate);
+  });
+
+  const ids = new Set([...grouped.keys(), ...listNoteDraftIds(dataDir)]);
+  const notes = Array.from(ids, id => {
+    const state = readNoteConflictState(dataDir, id, { allCandidates, deletedIds });
+    if (state.current) return state.current;
+    if (!state.localDrafts.length) return null;
+
+    const latestDraft = [...state.localDrafts].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+    const preview = normalizeNoteItem({ ...latestDraft.item, id }, 0);
+    preview.syncToken = state.token;
+    preview.syncConflict = {
+      token: state.token,
+      deleted: state.deleted,
+      missing: state.missing,
+      variants: state.variants,
+      localDrafts: state.localDrafts
+    };
+    return preview;
+  }).filter(Boolean);
+
+  return notes
     .sort((a, b) => {
       const orderDiff = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER);
       if (orderDiff !== 0) return orderDiff;
@@ -220,41 +623,449 @@ function readNotes(dataDir) {
 
 function readNote(dataDir, id) {
   const safeId = sanitizeEntityId(id, 'n');
-  const filePath = path.join(ensureCollectionDir(dataDir, 'notes'), `${safeId}.json`);
-  const item = readOptionalJSON(filePath, null);
-  return item && typeof item === 'object' ? normalizeNoteItem(item) : null;
+  if (hasNoteDeletion(dataDir, safeId)) return null;
+  const candidates = readNoteCandidateFiles(dataDir).filter(candidate => candidate.id === safeId);
+  return candidates.length ? noteFromCandidates(dataDir, candidates, safeId) : null;
+}
+
+function saveNoteConflictDraft(dataDir, item, options = {}) {
+  const id = item.id;
+  if (!NOTE_ID_PATTERN.test(String(id || ''))) throw new Error('便笺 ID 无效');
+  const draftItem = { ...stripNoteTransport(item), id };
+  const existingDraft = readNoteDrafts(dataDir, id).find(draft =>
+    noteBusinessHash(draft.item) === noteBusinessHash(draftItem)
+    && String(draft.baseRevision ?? '') === String(options.baseRevision ?? '')
+    && String(draft.baseToken || '') === String(options.baseToken || ''));
+  if (existingDraft) return {
+    draftId: existingDraft.draftId,
+    file: existingDraft.file,
+    createdAt: existingDraft.createdAt,
+    baseRevision: existingDraft.baseRevision,
+    baseToken: existingDraft.baseToken
+  };
+
+  const draftId = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  const file = draftId + '.json';
+  const filePath = path.join(dataDir, 'conflict-drafts', 'notes', id, file);
+  writeJSONFile(filePath, {
+    id,
+    draftId,
+    createdAt,
+    status: 'unresolved',
+    baseRevision: options.baseRevision ?? null,
+    baseToken: options.baseToken || '',
+    item: draftItem
+  });
+  return {
+    draftId,
+    file,
+    createdAt,
+    baseRevision: options.baseRevision ?? null,
+    baseToken: options.baseToken || ''
+  };
+}
+
+function resolveNoteDraftMarker(dataDir, id, draftId, details = {}) {
+  if (!NOTE_DRAFT_ID_PATTERN.test(String(draftId || ''))) throw new Error('便笺草稿 ID 无效');
+  const draft = readNoteDrafts(dataDir, id).find(item => item.draftId === draftId);
+  if (!draft) {
+    const error = new Error('指定的本地草稿不存在或已解决');
+    error.statusCode = 404;
+    throw error;
+  }
+  const markerId = crypto.randomUUID();
+  const markerPath = path.join(dataDir, 'resolved-drafts', 'notes', id, `${markerId}.json`);
+  writeJSONFile(markerPath, {
+    id,
+    markerId,
+    draftId,
+    resolvedAt: new Date().toISOString(),
+    ...details
+  });
+  return draft;
+}
+
+function archiveNoteCandidates(dataDir, id, candidates) {
+  if (!candidates.length) return null;
+  const archiveId = crypto.randomUUID();
+  const filePath = path.join(dataDir, 'sync-history', 'notes', id, archiveId + '.json');
+  writeJSONFile(filePath, {
+    id,
+    archiveId,
+    archivedAt: new Date().toISOString(),
+    files: candidates.map(candidate => ({
+      file: candidate.file,
+      rawHash: candidate.rawHash,
+      rawText: candidate.rawText
+    }))
+  });
+  return archiveId;
+}
+
+function archiveNoteResolution(dataDir, id, state, details = {}) {
+  const archiveId = crypto.randomUUID();
+  const localDraft = details.draft
+    ? readOptionalJSON(path.join(dataDir, 'conflict-drafts', 'notes', id, details.draft.file), null)
+    : null;
+  const localDraftText = localDraft ? fs.readFileSync(path.join(dataDir, 'conflict-drafts', 'notes', id, details.draft.file), 'utf-8') : '';
+  const submittedItem = details.localItem ? stripNoteTransport(details.localItem) : null;
+  const submittedText = submittedItem ? stableJSON(submittedItem) : '';
+  writeJSONFile(path.join(dataDir, 'sync-history', 'notes', id, `resolve-${archiveId}.json`), {
+    id,
+    archiveId,
+    archivedAt: new Date().toISOString(),
+    action: 'resolve',
+    choice: details.choice,
+    variantKey: details.variantKey || '',
+    files: state.candidates.map(candidate => ({
+      file: candidate.file,
+      rawHash: candidate.rawHash,
+      rawText: candidate.rawText
+    })),
+    ...(localDraft ? {
+      selectedDraft: {
+        draftId: localDraft.draftId,
+        rawHash: sha256(localDraftText),
+        rawText: localDraftText
+      }
+    } : {}),
+    ...(submittedItem ? {
+      submittedItem: { rawHash: sha256(submittedText), rawText: submittedText }
+    } : {})
+  });
+  return archiveId;
+}
+
+function noteResolutionConflict(state, message) {
+  return new ConflictError(message, state.current, {
+    token: state.token,
+    variants: state.variants,
+    deleted: state.deleted,
+    conflict: noteConflictStatePayload(state)
+  });
+}
+
+function resolvedNoteItem(sourceItem, id, candidates, order) {
+  const now = Date.now();
+  const maxRevision = candidates.length
+    ? Math.max(...candidates.map(candidate => Number(candidate.item.revision) || Number(candidate.item.updatedAt) || 0))
+    : 0;
+  return normalizeNoteItem({
+    ...stripNoteTransport(sourceItem),
+    id,
+    order,
+    createdAt: Number(sourceItem.createdAt) || now,
+    updatedAt: now,
+    revision: nextRevision(maxRevision)
+  }, order);
+}
+
+function assertNoteCanonicalAvailable(dataDir, id, state) {
+  const filePath = path.join(ensureCollectionDir(dataDir, 'notes'), `${id}.json`);
+  const missing = Symbol('missing-note');
+  const item = readOptionalJSON(filePath, missing);
+  if (item !== missing && (!item || typeof item !== 'object' || Array.isArray(item))) {
+    throw jsonFileError('读取', filePath, new Error('便笺 JSON 内容必须为对象'));
+  }
+  if (item !== missing && item.id !== id) throw noteResolutionConflict(state, '目标便笺文件包含其他内部 ID，不能覆盖');
+}
+
+function assertNoteResolutionTokenCurrent(dataDir, id, expectedState) {
+  const latestState = readNoteConflictState(dataDir, id);
+  if (latestState.token !== expectedState.token) {
+    throw noteResolutionConflict(latestState, '冲突状态已变化，请刷新后重新选择');
+  }
+  return latestState;
+}
+
+function writeResolvedNote(dataDir, id, sourceItem, candidates, order, state) {
+  const latestState = assertNoteResolutionTokenCurrent(dataDir, id, state);
+  assertNoteCanonicalAvailable(dataDir, id, latestState);
+  const notesDir = ensureCollectionDir(dataDir, 'notes');
+  const canonicalFile = `${id}.json`;
+  const canonicalPath = path.join(notesDir, canonicalFile);
+  const note = resolvedNoteItem(sourceItem, id, candidates, order);
+  writeJSONFile(canonicalPath, note);
+  candidates.forEach(candidate => {
+    if (candidate.file === canonicalFile) return;
+    const sourcePath = path.join(notesDir, candidate.file);
+    let currentBytes;
+    try {
+      currentBytes = fs.readFileSync(sourcePath);
+    } catch (error) {
+      if (error.code === 'ENOENT') return;
+      throw error;
+    }
+    if (sha256(currentBytes) === candidate.rawHash) fs.unlinkSync(sourcePath);
+  });
+  return readNote(dataDir, id);
+}
+
+function resolveNoteConflict(dataDir, id, body = {}) {
+  const safeId = sanitizeEntityId(id, 'n');
+  if (!NOTE_ID_PATTERN.test(safeId)) throw new Error('便笺 ID 无效');
+  const state = readNoteConflictState(dataDir, safeId);
+  if (String(body.token || '') !== state.token) throw noteResolutionConflict(state, '冲突状态已变化，请刷新后重新选择');
+
+  const choice = String(body.choice || '');
+  if (!['disk', 'local', 'copy'].includes(choice)) throw new Error('冲突处理方式无效');
+  const variantKey = body.variantKey == null ? '' : String(body.variantKey);
+  const selectedVariant = variantKey ? state.candidates.find(candidate => candidate.key === variantKey) : null;
+  if (variantKey && !selectedVariant) throw noteResolutionConflict(state, '所选磁盘版本已变化，请刷新后重新选择');
+  const activeDisk = !state.deleted && !state.missing;
+  if (activeDisk && ['disk', 'copy'].includes(choice) && !selectedVariant) {
+    throw new Error('请选择一个磁盘版本');
+  }
+
+  let selectedDraft = null;
+  if (body.draftId != null) {
+    const draftId = String(body.draftId);
+    if (!NOTE_DRAFT_ID_PATTERN.test(draftId)) throw new Error('便笺草稿 ID 无效');
+    selectedDraft = state.localDrafts.find(draft => draft.draftId === draftId);
+    if (!selectedDraft) throw new Error('指定的本地草稿不存在或已解决');
+  }
+
+  let localItem = null;
+  if (['local', 'copy'].includes(choice)) {
+    if (body.item && typeof body.item === 'object' && !Array.isArray(body.item)) {
+      localItem = { ...stripNoteTransport(body.item), id: safeId };
+    } else if (selectedDraft) {
+      localItem = { ...selectedDraft.item, id: safeId };
+    } else {
+      throw new Error('请选择本地稿或指定本地草稿');
+    }
+  }
+
+  const order = Number.isFinite(Number(state.current?.order))
+    ? Number(state.current.order)
+    : Number.isFinite(Number(selectedDraft?.item.order))
+      ? Number(selectedDraft.item.order)
+      : Number.isFinite(Number(localItem?.order)) ? Number(localItem.order) : 0;
+
+  if (activeDisk) assertNoteCanonicalAvailable(dataDir, safeId, state);
+  archiveNoteResolution(dataDir, safeId, state, {
+    choice,
+    variantKey,
+    draft: selectedDraft,
+    localItem
+  });
+  assertNoteResolutionTokenCurrent(dataDir, safeId, state);
+
+  let item = null;
+  let copiedItem;
+  const markSelectedDraft = resolvedId => {
+    if (selectedDraft) resolveNoteDraftMarker(dataDir, safeId, selectedDraft.draftId, {
+      choice,
+      resolvedItemId: resolvedId || ''
+    });
+  };
+
+  if (!activeDisk) {
+    if (choice === 'disk') {
+      markSelectedDraft('');
+      const item = readNotes(dataDir).find(note => note.id === safeId) || null;
+      return { ok: true, item, deleted: state.deleted };
+    }
+    const reservedIds = new Set([safeId, ...readNotes(dataDir).map(note => note.id)]);
+    const newId = newNoteId(dataDir, reservedIds);
+    copiedItem = writeResolvedNote(dataDir, newId, localItem, [], order, readNoteConflictState(dataDir, newId));
+    assertNoteResolutionTokenCurrent(dataDir, safeId, state);
+    markSelectedDraft(newId);
+    const item = readNotes(dataDir).find(note => note.id === safeId) || null;
+    return { ok: true, item, copiedItem, deleted: state.deleted };
+  }
+
+  if (choice === 'disk') {
+    item = writeResolvedNote(dataDir, safeId, selectedVariant.item, state.candidates, order, state);
+  } else if (choice === 'local') {
+    item = writeResolvedNote(dataDir, safeId, localItem, state.candidates, order, state);
+  } else {
+    const reservedIds = new Set([safeId, ...readNotes(dataDir).map(note => note.id)]);
+    const newId = newNoteId(dataDir, reservedIds);
+    copiedItem = writeResolvedNote(dataDir, newId, localItem, [], order, readNoteConflictState(dataDir, newId));
+    item = writeResolvedNote(dataDir, safeId, selectedVariant.item, state.candidates, order, state);
+  }
+
+  markSelectedDraft(safeId);
+  item = readNote(dataDir, safeId);
+  return { ok: true, item, ...(copiedItem ? { copiedItem } : {}) };
 }
 
 function writeNote(dataDir, item, options = {}) {
-  const existing = item?.id ? readNote(dataDir, item.id) : null;
-  const baseRevision = options.baseRevision;
-  if (existing && baseRevision != null && Number(baseRevision) !== Number(existing.revision || 0)) {
-    throw new ConflictError('便笺已在其他设备更新', existing);
+  const id = sanitizeEntityId(item?.id, 'n');
+  if (!NOTE_ID_PATTERN.test(id)) throw new Error('便笺 ID 无效');
+  const notesDir = ensureCollectionDir(dataDir, 'notes');
+  const filePath = path.join(notesDir, id + '.json');
+  const state = readNoteConflictState(dataDir, id);
+  const candidates = state.candidates;
+  if (state.deleted) {
+    const draft = saveNoteConflictDraft(dataDir, { ...item, id }, options);
+    throw new ConflictError('便笺已删除，不能覆盖删除记录', null, {
+      token: state.token,
+      variants: state.variants,
+      draft,
+      deleted: true,
+      conflict: noteConflictStatePayload(state)
+    });
   }
 
-  const note = normalizeNoteItem(
-    {
-      ...existing,
-      ...item,
-      updatedAt: item?.updatedAt || Date.now(),
-      revision: nextRevision(existing?.revision)
-    },
-    Number(item?.order) || 0
-  );
-  const filePath = path.join(ensureCollectionDir(dataDir, 'notes'), `${note.id}.json`);
+  const missing = Symbol('missing-note');
+  const targetItem = readOptionalJSON(filePath, missing);
+  if (targetItem !== missing) {
+    if (!targetItem || typeof targetItem !== 'object' || Array.isArray(targetItem)) {
+      throw jsonFileError('读取', filePath, new Error('便笺 JSON 内容必须为对象'));
+    }
+    if (typeof targetItem.id !== 'string' || !NOTE_ID_PATTERN.test(targetItem.id)) {
+      throw jsonFileError('读取', filePath, new Error('便笺 JSON 必须包含合法内部 ID'));
+    }
+    if (targetItem.id !== id) {
+      const draft = saveNoteConflictDraft(dataDir, { ...item, id }, options);
+      throw new ConflictError('目标便笺文件包含其他内部 ID，不能覆盖', normalizeNoteItem(targetItem), {
+        token: state.token,
+        variants: state.variants,
+        draft,
+        deleted: false,
+        conflict: noteConflictStatePayload(state)
+      });
+    }
+  }
+
+  const existing = candidates[0]?.item || null;
+  const current = state.current;
+  if (current) {
+    const maxRevision = Math.max(...candidates.map(candidate => Number(candidate.item.revision) || Number(candidate.item.updatedAt) || 0));
+    const baseRevision = options.baseRevision;
+    const baseToken = options.baseToken;
+    const contentConflict = new Set(candidates.map(candidate => noteBusinessHash(candidate.item))).size > 1;
+    const pendingDrafts = Boolean(current.syncConflict?.localDrafts?.length);
+    if (baseRevision == null || !baseToken
+      || Number(baseRevision) !== Number(existing.revision || existing.updatedAt || 0)
+      || String(baseToken) !== current.syncToken
+      || contentConflict || pendingDrafts) {
+      const draft = saveNoteConflictDraft(dataDir, { ...item, id }, options);
+      throw new ConflictError('便笺已在其他设备更新，请先处理冲突', current, {
+        token: current.syncToken,
+        variants: state.variants,
+        draft,
+        deleted: false,
+        conflict: noteConflictStatePayload(state)
+      });
+    }
+  } else if (state.missing && (options.baseRevision != null || options.baseToken != null)) {
+    const draft = saveNoteConflictDraft(dataDir, { ...item, id }, options);
+    throw new ConflictError('便笺已不存在，请先处理本地草稿', null, {
+      token: state.token,
+      variants: [],
+      draft,
+      deleted: false,
+      conflict: noteConflictStatePayload(state)
+    });
+  }
+
+  const maxRevision = candidates.length
+    ? Math.max(...candidates.map(candidate => Number(candidate.item.revision) || Number(candidate.item.updatedAt) || 0))
+    : 0;
+  const order = existing
+    ? (Number.isFinite(Number(existing.order)) ? Number(existing.order) : 0)
+    : (Number.isFinite(Number(item.order)) ? Number(item.order) : 0);
+  const note = normalizeNoteItem({
+    ...existing,
+    ...stripNoteTransport(item),
+    id,
+    order,
+    createdAt: existing?.createdAt || item.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    revision: nextRevision(maxRevision)
+  }, order);
+
+  if (candidates.length > 1 || (candidates.length === 1 && candidates[0].file !== id + '.json')) {
+    archiveNoteCandidates(dataDir, id, candidates);
+  }
+
+  const latestState = readNoteConflictState(dataDir, id);
+  if (latestState.token !== state.token) {
+    const draft = saveNoteConflictDraft(dataDir, { ...item, id }, options);
+    const conflictState = readNoteConflictState(dataDir, id);
+    throw new ConflictError('便笺状态已在其他设备变化，请先处理冲突', conflictState.current, {
+      token: conflictState.token,
+      variants: conflictState.variants,
+      draft,
+      deleted: conflictState.deleted,
+      conflict: noteConflictStatePayload(conflictState)
+    });
+  }
+
   writeJSONFile(filePath, note);
-  return note;
+  const canonicalFile = id + '.json';
+  candidates.forEach(candidate => {
+    if (candidate.file === canonicalFile) return;
+    const duplicatePath = path.join(notesDir, candidate.file);
+    try {
+      if (sha256(fs.readFileSync(duplicatePath)) === candidate.rawHash) fs.unlinkSync(duplicatePath);
+    } catch (error) {
+      if (error.code !== 'ENOENT') return;
+    }
+  });
+  return readNote(dataDir, id);
 }
 
-function moveNoteToTrash(dataDir, id) {
-  const note = readNote(dataDir, id);
-  if (!note) return false;
+function moveNoteToTrash(dataDir, id, options = {}) {
+  const safeId = sanitizeEntityId(id, 'n');
+  if (!NOTE_ID_PATTERN.test(safeId)) throw new Error('便笺 ID 无效');
+  const state = readNoteConflictState(dataDir, safeId);
+  if (state.deleted) return true;
 
-  const sourcePath = path.join(ensureCollectionDir(dataDir, 'notes'), `${note.id}.json`);
+  const candidates = state.candidates;
+  if (state.missing) {
+    const error = new Error('便笺不存在');
+    error.statusCode = 404;
+    throw error;
+  }
+  const note = state.current;
+  const differentContent = new Set(candidates.map(candidate => noteBusinessHash(candidate.item))).size > 1;
+  const pendingDrafts = Boolean(note.syncConflict?.localDrafts?.length);
+  const baseMatches = options.baseRevision != null && options.baseToken
+    && Number(options.baseRevision) === Number(note.revision || 0)
+    && String(options.baseToken) === note.syncToken;
+  if (!baseMatches || differentContent || pendingDrafts) {
+    const draftItem = options.item && typeof options.item === 'object' ? options.item : note;
+    const draft = saveNoteConflictDraft(dataDir, { ...draftItem, id: safeId }, options);
+    throw new ConflictError('便笺已在其他设备更新，请先处理冲突', note, {
+      token: note.syncToken,
+      variants: state.variants,
+      draft,
+      deleted: false,
+      conflict: noteConflictStatePayload(state)
+    });
+  }
+
+  const archiveId = archiveNoteCandidates(dataDir, safeId, candidates);
   const trashDir = ensureTrashDir(dataDir, 'notes');
-  const trashPath = makeUniqueFilePath(path.join(trashDir, `${note.id}_${Date.now()}.json`));
-  writeJSONFile(trashPath, { ...note, deletedAt: new Date().toISOString() });
-  fs.unlinkSync(sourcePath);
+  const trashPath = makeUniqueFilePath(path.join(trashDir, `${safeId}_${Date.now()}.json`));
+  writeJSONFile(trashPath, { ...stripNoteTransport(note), deletedAt: new Date().toISOString() });
+
+  writeNoteDeletionMarker(dataDir, {
+    id: safeId,
+    deletionId: crypto.randomUUID(),
+    deletedAt: new Date().toISOString(),
+    archiveId,
+    syncToken: note.syncToken,
+    candidates: candidates.map(candidate => ({ file: candidate.file, rawHash: candidate.rawHash }))
+  });
+
+  const notesDir = ensureCollectionDir(dataDir, 'notes');
+  candidates.forEach(candidate => {
+    const sourcePath = path.join(notesDir, candidate.file);
+    let currentBytes;
+    try {
+      currentBytes = fs.readFileSync(sourcePath);
+    } catch (error) {
+      if (error.code === 'ENOENT') return;
+      throw error;
+    }
+    if (sha256(currentBytes) === candidate.rawHash) fs.unlinkSync(sourcePath);
+  });
   return true;
 }
 
@@ -307,19 +1118,21 @@ function getProjectPagePath(dataDir, projectId, pageId) {
 function readProjectPageFiles(dataDir, projectId) {
   const pagesDir = getProjectPagesDir(dataDir, projectId);
   return fs.readdirSync(pagesDir, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
+    .filter(entry => entry.isFile() && entry.name.endsWith('.json') && !entry.name.startsWith('._'))
     .map(entry => path.join(pagesDir, entry.name));
 }
 
 function readProject(dataDir, id) {
   const metaPath = getProjectMetaPath(dataDir, id);
   const meta = readOptionalJSON(metaPath, null);
-  if (!meta || typeof meta !== 'object') return null;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
 
   const pageMap = new Map();
   readProjectPageFiles(dataDir, meta.id || id).forEach(filePath => {
     const page = readOptionalJSON(filePath, null);
-    if (!page || typeof page !== 'object') return;
+    if (!page || typeof page !== 'object' || Array.isArray(page)) {
+      throw jsonFileError('读取', filePath, new Error('项目页面 JSON 内容必须为对象'));
+    }
     const pageId = sanitizePageId(page.id || path.basename(filePath, '.json'));
     pageMap.set(pageId, {
       ...page,
@@ -334,7 +1147,14 @@ function readProject(dataDir, id) {
     ? meta.pageOrder.map(sanitizePageId).filter(Boolean)
     : Array.from(pageMap.values()).sort((a, b) => a.order - b.order).map(page => page.id);
   const pageIds = orderedIds.length ? orderedIds : ['pg_1'];
-  const pages = pageIds.map(pageId => pageMap.get(pageId)?.content || '');
+  const pages = pageIds.map(pageId => {
+    const page = pageMap.get(pageId);
+    if (!page) {
+      const pagePath = path.join(getProjectDir(dataDir, meta.id || id), 'pages', `${pageId}.json`);
+      throw jsonFileError('读取', pagePath, new Error('项目元数据引用的页面文件不存在'));
+    }
+    return page.content;
+  });
   const pageRevisions = {};
   pageIds.forEach(pageId => { pageRevisions[pageId] = pageMap.get(pageId)?.revision || 0; });
   const order = Number.isFinite(Number(meta.order)) ? Number(meta.order) : Number.MAX_SAFE_INTEGER;
@@ -518,10 +1338,27 @@ function moveProjectToTrash(dataDir, id) {
 function updateCollectionOrder(dataDir, key, ids = []) {
   const safeIds = Array.isArray(ids) ? ids.map(id => sanitizeEntityId(id, key === 'notes' ? 'n' : 'p')) : [];
   if (key === 'notes') {
+    const deletedIds = noteDeletionIds(dataDir);
+    const candidatesById = new Map();
+    readNoteCandidateFiles(dataDir).forEach(candidate => {
+      if (!candidatesById.has(candidate.id)) candidatesById.set(candidate.id, []);
+      candidatesById.get(candidate.id).push(candidate);
+    });
+    const notesDir = ensureCollectionDir(dataDir, 'notes');
     safeIds.forEach((id, index) => {
-      const note = readNote(dataDir, id);
-      if (!note) return;
-      writeJSONFile(path.join(ensureCollectionDir(dataDir, 'notes'), `${id}.json`), { ...note, order: index });
+      if (deletedIds.has(id)) return;
+      (candidatesById.get(id) || []).forEach(candidate => {
+        const filePath = path.join(notesDir, candidate.file);
+        let currentBytes;
+        try {
+          currentBytes = fs.readFileSync(filePath);
+        } catch (error) {
+          if (error.code === 'ENOENT') return;
+          throw error;
+        }
+        if (sha256(currentBytes) !== candidate.rawHash) return;
+        writeJSONFile(filePath, { ...stripNoteTransport(candidate.item), order: index });
+      });
     });
     return;
   }
@@ -540,55 +1377,18 @@ function readCollection(dataDir, key) {
 
 function writeCollection(dataDir, key, items) {
   const nextItems = Array.isArray(items) ? items : [];
-  if (key === 'projects') {
-    const keepIds = new Set();
-    nextItems.forEach((item, index) => {
-      const project = writeProjectSnapshot(dataDir, item, index);
-      keepIds.add(project.id);
-    });
+  if (key !== 'projects') throw new Error('便笺不支持批量覆盖，请使用逐项保存');
 
-    listProjectDirs(dataDir).forEach(projectDir => {
-      const projectId = path.basename(projectDir);
-      if (keepIds.has(projectId)) return;
-      moveProjectToTrash(dataDir, projectId);
-    });
-    return;
-  }
-
-  const dir = ensureCollectionDir(dataDir, key);
-  const keepFiles = new Set();
-
+  const keepIds = new Set();
   nextItems.forEach((item, index) => {
-    if (!item || typeof item !== 'object') return;
-
-    const id = sanitizeEntityId(item.id, key === 'notes' ? 'n' : 'p');
-    const fileName = `${id}.json`;
-    const existing = readNote(dataDir, id);
-    const nextItem = normalizeNoteItem({
-      ...existing,
-      ...item,
-      id,
-      order: index,
-      revision: nextRevision(existing?.revision)
-    }, index);
-
-    keepFiles.add(fileName);
-    writeJSONFile(path.join(dir, fileName), nextItem);
+    const project = writeProjectSnapshot(dataDir, item, index);
+    keepIds.add(project.id);
   });
 
-  listCollectionFiles(dataDir, key).forEach(filePath => {
-    if (keepFiles.has(path.basename(filePath))) return;
-
-    const trashDir = ensureTrashDir(dataDir, key);
-    const item = (() => {
-      try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); }
-      catch { return {}; }
-    })();
-    const deletedAt = new Date().toISOString();
-    const baseName = path.basename(filePath, '.json');
-    const trashPath = makeUniqueFilePath(path.join(trashDir, `${baseName}_${Date.now()}.json`));
-    fs.writeFileSync(trashPath, JSON.stringify({ ...item, deletedAt }, null, 2), 'utf-8');
-    fs.unlinkSync(filePath);
+  listProjectDirs(dataDir).forEach(projectDir => {
+    const projectId = path.basename(projectDir);
+    if (keepIds.has(projectId)) return;
+    moveProjectToTrash(dataDir, projectId);
   });
 }
 
@@ -599,6 +1399,7 @@ function ensureBaseDataLayout(dataDir) {
   ensureDataFile(dataDir, REMINDERS_FILE, []);
   ensureCollectionDir(dataDir, 'notes');
   ensureCollectionDir(dataDir, 'projects');
+  ensureDir(path.join(dataDir, NOTE_DELETIONS_DIR));
   ensureProjectItemsDir(dataDir);
   ensureTrashDir(dataDir);
   ensureDir(path.join(dataDir, FIGURES_DIR));
@@ -645,16 +1446,19 @@ function upsertByUpdatedAt(map, item, fallbackPrefix) {
   if (!current || nextUpdatedAt >= currentUpdatedAt) map.set(id, { ...item, id });
 }
 
-function readLegacyNotesForMigration(dataDir) {
+function readLegacyNotesForMigration(dataDir, deletedIds = noteDeletionIds(dataDir)) {
   const notes = new Map();
   const legacyFile = path.join(dataDir, LEGACY_COLLECTION_FILES.notes);
   const legacyItems = readOptionalJSON(legacyFile, []);
   if (Array.isArray(legacyItems)) {
-    legacyItems.forEach(item => upsertByUpdatedAt(notes, item, 'n'));
+    legacyItems.forEach(item => {
+      if (!deletedIds.has(sanitizeEntityId(item?.id, 'n'))) upsertByUpdatedAt(notes, item, 'n');
+    });
   }
 
   listCollectionFiles(dataDir, 'notes').forEach(filePath => {
-    upsertByUpdatedAt(notes, readOptionalJSON(filePath, null), 'n');
+    const item = readOptionalJSON(filePath, null);
+    if (!deletedIds.has(sanitizeEntityId(item?.id, 'n'))) upsertByUpdatedAt(notes, item, 'n');
   });
 
   return Array.from(notes.values()).sort((a, b) => {
@@ -699,7 +1503,7 @@ function listBackupSourceFiles(dataDir, backupRoot) {
         walk(fullPath);
         return;
       }
-      if (entry.isFile()) files.push(fullPath);
+      if (entry.isFile() && !isAtomicJSONTempFile(fullPath)) files.push(fullPath);
     });
   }
 
@@ -754,7 +1558,8 @@ async function runStorageMigration(context) {
     updateMigrationState(state, 1, '准备升级数据结构...');
 
     const backupPath = await createPreMigrationBackup(context.dataDir, state);
-    const notes = readLegacyNotesForMigration(context.dataDir);
+    const deletedNoteIds = noteDeletionIds(context.dataDir);
+    const notes = readLegacyNotesForMigration(context.dataDir, deletedNoteIds);
     const projects = readLegacyProjectsForMigration(context.dataDir);
     const totalItems = Math.max(1, notes.length + projects.length);
     let doneItems = 0;
@@ -762,7 +1567,15 @@ async function runStorageMigration(context) {
     for (const [index, note] of notes.entries()) {
       const normalized = normalizeNoteItem(note, index);
       normalized.revision = Number(note.revision) || nextRevision(note.updatedAt);
-      writeJSONFile(path.join(ensureCollectionDir(context.dataDir, 'notes'), `${normalized.id}.json`), normalized);
+      const notesDir = ensureCollectionDir(context.dataDir, 'notes');
+      const canonicalPath = path.join(notesDir, `${normalized.id}.json`);
+      const canonical = readOptionalJSON(canonicalPath, null);
+      const canonicalMatches = canonical?.id === normalized.id
+        && noteBusinessHash(normalizeNoteItem(canonical, index)) === noteBusinessHash(normalized);
+      const targetPath = canonical && !canonicalMatches
+        ? makeUniqueFilePath(path.join(notesDir, `${normalized.id}_${crypto.randomUUID()}.json`))
+        : canonicalPath;
+      writeJSONFile(targetPath, normalized);
       doneItems += 1;
       updateMigrationState(state, 40 + (doneItems / totalItems) * 50, `正在升级便笺 ${index + 1}/${notes.length}`, { backupPath });
       if (index % 10 === 0) await yieldMigrationStep();
@@ -850,11 +1663,10 @@ function saveProjectFigure(dataDir, body = {}) {
 
 function listTrash(dataDir) {
   const root = path.join(dataDir, TRASH_DIR);
-  const files = collectFiles(root, filePath => filePath.endsWith('.json'));
+  const files = collectFiles(root, filePath => filePath.endsWith('.json') && !path.basename(filePath).startsWith('._'));
 
   return files.map(filePath => {
-    let item = {};
-    try { item = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+    const item = readOptionalJSON(filePath, {});
     const relativePath = path.relative(dataDir, filePath).replace(/\\/g, '/');
     const key = inferTrashCollection(relativePath, item);
     const stat = fs.statSync(filePath);
@@ -881,7 +1693,10 @@ function restoreTrashFile(dataDir, file) {
   const sourcePath = path.join(dataDir, relativePath);
   if (!sourcePath.startsWith(path.join(dataDir, TRASH_DIR)) || !fs.existsSync(sourcePath)) throw new Error('恢复项目不存在');
 
-  const item = JSON.parse(fs.readFileSync(sourcePath, 'utf-8'));
+  const item = readOptionalJSON(sourcePath, null);
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    throw jsonFileError('读取', sourcePath, new Error('回收站 JSON 内容必须为对象'));
+  }
   const key = inferTrashCollection(relativePath, item);
   if (!['notes', 'projects'].includes(key)) throw new Error('无效的恢复项目');
 
@@ -889,7 +1704,10 @@ function restoreTrashFile(dataDir, file) {
   const fallbackPrefix = key === 'notes' ? 'n' : 'p';
   const existingIds = new Set(readCollection(dataDir, key).map(entry => entry.id).filter(Boolean));
   const originalId = sanitizeEntityId(item.id, fallbackPrefix);
-  const id = existingIds.has(originalId) ? sanitizeEntityId('', fallbackPrefix) : originalId;
+  const noteIdBlocked = key === 'notes' && hasNoteDeletion(dataDir, originalId);
+  const id = existingIds.has(originalId) || noteIdBlocked
+    ? (key === 'notes' ? newNoteId(dataDir, existingIds) : sanitizeEntityId('', fallbackPrefix))
+    : originalId;
   const restored = { ...item, id, updatedAt: Date.now() };
   if (key === 'projects') {
     writeProjectSnapshot(dataDir, restored, readProjects(dataDir).length);
@@ -915,7 +1733,8 @@ function listTransferFiles(dataDir, excludedFile = '') {
     const sameAsExcluded = process.platform === 'win32'
       ? resolved.toLowerCase() === excludedFile.toLowerCase()
       : resolved === excludedFile;
-    return resolved !== backupRoot &&
+    return !isAtomicJSONTempFile(filePath) &&
+      resolved !== backupRoot &&
       !resolved.startsWith(`${backupRoot}${path.sep}`) &&
       (!excludedFile || !sameAsExcluded);
   });
@@ -1030,13 +1849,39 @@ function mergeRemindersFile(dataDir, content) {
   return additions.length;
 }
 
-function mergeCollectionItem(dataDir, key, item) {
+function archiveImportedNoteItem(dataDir, item, sourceFile, rawText) {
+  const id = typeof item?.id === 'string' ? item.id : '';
+  if (!NOTE_ID_PATTERN.test(id)) return;
+  const archiveId = crypto.randomUUID();
+  const text = rawText ?? JSON.stringify(item);
+  writeJSONFile(path.join(dataDir, 'sync-history', 'notes', id, `import-${archiveId}.json`), {
+    id,
+    archiveId,
+    archivedAt: new Date().toISOString(),
+    source: 'import',
+    files: [{ file: sourceFile || '', rawHash: sha256(text), rawText: text }]
+  });
+}
+
+function mergeCollectionItem(dataDir, key, item, options = {}) {
   if (!item || typeof item !== 'object') return 0;
 
   const fallbackPrefix = key === 'notes' ? 'n' : 'p';
+  const originalId = item.id ? sanitizeEntityId(item.id, fallbackPrefix) : '';
+  if (key === 'notes' && originalId && options.sourceDeletedIds?.has(originalId)) {
+    archiveImportedNoteItem(dataDir, item, options.sourceFile, options.rawText);
+    return 0;
+  }
   const existingIds = new Set(readCollection(dataDir, key).map(entry => entry.id).filter(Boolean));
   const nextItem = { ...item };
-  if (!nextItem.id || existingIds.has(nextItem.id)) nextItem.id = sanitizeEntityId('', fallbackPrefix);
+  const noteIdBlocked = key === 'notes' && originalId && hasNoteDeletion(dataDir, originalId);
+  if (!originalId || existingIds.has(originalId) || noteIdBlocked) {
+    nextItem.id = key === 'notes'
+      ? newNoteId(dataDir, existingIds)
+      : sanitizeEntityId('', fallbackPrefix);
+  } else {
+    nextItem.id = originalId;
+  }
 
   if (key === 'projects') {
     writeProjectSnapshot(dataDir, nextItem, readProjects(dataDir).length);
@@ -1047,36 +1892,92 @@ function mergeCollectionItem(dataDir, key, item) {
   return 1;
 }
 
-function mergeCollectionFile(dataDir, key, content) {
-  return mergeCollectionItem(dataDir, key, JSON.parse(content));
+function mergeCollectionFile(dataDir, key, content, options = {}) {
+  return mergeCollectionItem(dataDir, key, JSON.parse(content), { ...options, rawText: content });
 }
 
-function mergeLegacyCollectionFile(dataDir, key, content) {
+function mergeLegacyCollectionFile(dataDir, key, content, options = {}) {
   const items = JSON.parse(content);
   if (!Array.isArray(items)) return 0;
 
-  return items.reduce((count, item) => count + mergeCollectionItem(dataDir, key, item || {}), 0);
+  return items.reduce((count, item) => count + mergeCollectionItem(dataDir, key, item || {}, {
+    ...options,
+    rawText: JSON.stringify(item || {})
+  }), 0);
 }
 
-function writeImportedFile(dataDir, file) {
+function transferFileBytes(file) {
+  return Buffer.isBuffer(file.data)
+    ? file.data
+    : Buffer.from(String(file.data || ''), 'base64');
+}
+
+function isNoteDeletionTransferFile(file) {
+  const relativePath = safeRelativePath(file?.path).toLowerCase();
+  const directory = NOTE_DELETIONS_DIR.replace(/\\/g, '/').toLowerCase();
+  return relativePath.startsWith(`${directory}/`)
+    && relativePath.endsWith('.json')
+    && !path.posix.basename(relativePath).startsWith('._');
+}
+
+function noteDeletionIdsFromTransferFiles(files) {
+  return new Set(files.filter(isNoteDeletionTransferFile).map(file => {
+    const relativePath = safeRelativePath(file.path);
+    const filePath = path.join(NOTE_DELETIONS_DIR, path.posix.basename(relativePath));
+    const bytes = transferFileBytes(file);
+    let marker;
+    try {
+      marker = JSON.parse(bytes.toString('utf-8'));
+    } catch (error) {
+      throw jsonFileError('读取', filePath, error);
+    }
+    if (!marker || typeof marker !== 'object' || Array.isArray(marker)
+      || typeof marker.id !== 'string' || !NOTE_ID_PATTERN.test(marker.id)) {
+      throw jsonFileError('读取', filePath, new Error('便笺删除标记 JSON 内容无效'));
+    }
+    return marker.id;
+  }));
+}
+
+function orderTransferFiles(files) {
+  return files.map((file, index) => ({
+    file,
+    index,
+    priority: isNoteDeletionTransferFile(file) ? 0
+      : (safeRelativePath(file?.path).toLowerCase() === 'notes.json'
+        || safeRelativePath(file?.path).toLowerCase().startsWith('notes/')) ? 1 : 2
+  })).sort((a, b) => a.priority - b.priority || a.index - b.index).map(entry => entry.file);
+}
+
+function writeImportedFile(dataDir, file, options = {}) {
   const relativePath = safeRelativePath(file?.path);
   if (!relativePath) return 0;
 
   if (relativePath === STORAGE_META_FILE || relativePath.startsWith(`${BACKUP_DIR}/`)) return 0;
-  const bytes = Buffer.isBuffer(file.data)
-    ? file.data
-    : Buffer.from(String(file.data || ''), 'base64');
+  const bytes = transferFileBytes(file);
+  if (isNoteDeletionTransferFile(file)) {
+    const marker = JSON.parse(bytes.toString('utf-8'));
+    if (!marker || typeof marker !== 'object' || Array.isArray(marker)
+      || typeof marker.id !== 'string' || !NOTE_ID_PATTERN.test(marker.id)) {
+      throw new Error('便笺删除标记 JSON 内容无效');
+    }
+    writeNoteDeletionMarker(dataDir, marker);
+    return 1;
+  }
   if (relativePath === INFO_FILE) return mergeInfoFile(dataDir, bytes.toString('utf-8'));
   if (relativePath === REMINDERS_FILE) return mergeRemindersFile(dataDir, bytes.toString('utf-8'));
-  if (relativePath === 'notes.json') return mergeLegacyCollectionFile(dataDir, 'notes', bytes.toString('utf-8'));
+  if (relativePath === 'notes.json') return mergeLegacyCollectionFile(dataDir, 'notes', bytes.toString('utf-8'), {
+    ...options, sourceFile: relativePath
+  });
   if (relativePath === 'projects.json') return mergeLegacyCollectionFile(dataDir, 'projects', bytes.toString('utf-8'));
   if (relativePath.startsWith('notes/') && relativePath.endsWith('.json')) {
-    return mergeCollectionFile(dataDir, 'notes', bytes.toString('utf-8'));
+    return mergeCollectionFile(dataDir, 'notes', bytes.toString('utf-8'), {
+      ...options, sourceFile: relativePath
+    });
   }
   if (relativePath.startsWith(`${PROJECT_ITEMS_DIR.replace(/\\/g, '/')}/`) && relativePath.endsWith('.json')) {
     const targetPath = path.join(dataDir, relativePath);
-    ensureDir(path.dirname(targetPath));
-    fs.writeFileSync(targetPath, bytes);
+    writeJSONFile(targetPath, JSON.parse(bytes.toString('utf-8')));
     return 1;
   }
   if (relativePath.startsWith('projects/') && relativePath.endsWith('.json')) {
@@ -1085,23 +1986,31 @@ function writeImportedFile(dataDir, file) {
 
   const targetPath = makeUniqueFilePath(path.join(dataDir, relativePath));
   ensureDir(path.dirname(targetPath));
-  fs.writeFileSync(targetPath, bytes);
+  if (relativePath.endsWith('.json')) {
+    writeJSONFile(targetPath, JSON.parse(bytes.toString('utf-8')));
+  } else {
+    fs.writeFileSync(targetPath, bytes);
+  }
   return 1;
 }
 
 function importDataExport(dataDir, filePath) {
   const archive = readDataExport(filePath);
   initializeData(dataDir);
-  return archive.files.reduce((count, file) => count + writeImportedFile(dataDir, file), 0);
+  const options = { sourceDeletedIds: noteDeletionIdsFromTransferFiles(archive.files) };
+  return orderTransferFiles(archive.files)
+    .reduce((count, file) => count + writeImportedFile(dataDir, file, options), 0);
 }
 
 function mergeDataDirs(sourceDir, targetDir) {
   ensureDir(targetDir);
   const root = path.resolve(sourceDir);
-  return listTransferFiles(root).reduce((count, filePath) => count + writeImportedFile(targetDir, {
+  const files = listTransferFiles(root).map(filePath => ({
     path: path.relative(root, filePath).replace(/\\/g, '/'),
     data: fs.readFileSync(filePath)
-  }), 0);
+  }));
+  const options = { sourceDeletedIds: noteDeletionIdsFromTransferFiles(files) };
+  return orderTransferFiles(files).reduce((count, file) => count + writeImportedFile(targetDir, file, options), 0);
 }
 
 function createServerContext(options = {}) {
@@ -1160,7 +2069,12 @@ function ensureStorageReady(context, res) {
 function sendConflict(res, error) {
   sendJSON(res, 409, {
     error: error.message || '数据已在其他设备更新',
-    current: error.current || null
+    current: error.current || null,
+    token: error.token || error.current?.syncToken || '',
+    variants: error.variants || error.current?.syncConflict?.variants || [],
+    draft: error.draft || null,
+    deleted: error.deleted === true,
+    conflict: error.conflict || null
   });
 }
 
@@ -1202,6 +2116,7 @@ function createServer(options = {}) {
   const context = createServerContext(options);
 
   const server = http.createServer((req, res) => {
+    try {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -1330,12 +2245,78 @@ function createServer(options = {}) {
     }
 
     if (pathname === '/api/notes' && req.method === 'POST') {
-      handleJsonPost(req, res, body => writeCollection(context.dataDir, 'notes', body));
+      sendJSON(res, 400, { error: '便笺不支持批量覆盖，请使用逐项保存' });
       return;
     }
 
     if (pathname === '/api/notes/order' && req.method === 'POST') {
       handleJsonPost(req, res, body => updateCollectionOrder(context.dataDir, 'notes', body?.ids));
+      return;
+    }
+
+    const noteDraftMatch = pathname.match(/^\/api\/notes\/([^/]+)\/draft$/);
+    if (noteDraftMatch && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        let draft = null;
+        try {
+          const id = sanitizeEntityId(decodeURIComponent(noteDraftMatch[1]), 'n');
+          if (!body?.item || typeof body.item !== 'object' || Array.isArray(body.item)) {
+            sendJSON(res, 400, { error: '本地草稿内容无效' });
+            return;
+          }
+          const item = { ...stripNoteTransport(body.item), id };
+          draft = saveNoteConflictDraft(context.dataDir, item, {
+            baseRevision: body?.baseRevision,
+            baseToken: body?.baseToken
+          });
+
+          if (body?.supersedesDraftId != null) {
+            const supersedesDraftId = String(body.supersedesDraftId);
+            if (supersedesDraftId !== draft.draftId) {
+              if (!NOTE_DRAFT_ID_PATTERN.test(supersedesDraftId)) throw new Error('便笺草稿 ID 无效');
+              if (!readResolvedNoteDraftIds(context.dataDir, id).has(supersedesDraftId)) {
+                resolveNoteDraftMarker(context.dataDir, id, supersedesDraftId, {
+                  supersededBy: draft.draftId,
+                  reason: 'superseded'
+                });
+              }
+            }
+          }
+
+          const state = readNoteConflictState(context.dataDir, id);
+          sendJSON(res, 200, {
+            ok: true,
+            draft,
+            current: state.current,
+            token: state.token,
+            variants: state.variants,
+            deleted: state.deleted,
+            conflict: noteConflictStatePayload(state)
+          });
+        } catch (error) {
+          sendJSON(res, error.statusCode || (error.code ? 500 : 400), {
+            error: error instanceof Error ? error.message : '保存本地草稿失败',
+            ...(draft ? { draft } : {})
+          });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
+      return;
+    }
+
+    const noteResolveMatch = pathname.match(/^\/api\/notes\/([^/]+)\/resolve$/);
+    if (noteResolveMatch && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        try {
+          const result = resolveNoteConflict(context.dataDir, decodeURIComponent(noteResolveMatch[1]), body || {});
+          sendJSON(res, 200, result);
+        } catch (error) {
+          if (error instanceof ConflictError) {
+            sendConflict(res, error);
+            return;
+          }
+      sendJSON(res, error.statusCode || (error.code ? 500 : 400), { error: error instanceof Error ? error.message : '冲突处理失败' });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
       return;
     }
 
@@ -1345,7 +2326,10 @@ function createServer(options = {}) {
         try {
           const id = decodeURIComponent(noteMatch[1]);
           const item = { ...(body?.item || body || {}), id };
-          const note = writeNote(context.dataDir, item, { baseRevision: body?.baseRevision });
+          const note = writeNote(context.dataDir, item, {
+            baseRevision: body?.baseRevision,
+            baseToken: body?.baseToken
+          });
           sendJSON(res, 200, { ok: true, item: note });
         } catch (error) {
           if (error instanceof ConflictError) {
@@ -1359,18 +2343,27 @@ function createServer(options = {}) {
     }
 
     if (noteMatch && req.method === 'DELETE') {
-      try {
-        moveNoteToTrash(context.dataDir, decodeURIComponent(noteMatch[1]));
-        sendJSON(res, 200, { ok: true });
-      } catch (error) {
-        sendJSON(res, 500, { error: error instanceof Error ? error.message : '删除失败' });
-      }
+      readRequestBody(req).then(body => {
+        try {
+          moveNoteToTrash(context.dataDir, decodeURIComponent(noteMatch[1]), {
+            baseRevision: body?.baseRevision,
+            baseToken: body?.baseToken,
+            item: body?.item
+          });
+          sendJSON(res, 200, { ok: true });
+        } catch (error) {
+          if (error instanceof ConflictError) {
+            sendConflict(res, error);
+            return;
+          }
+          sendJSON(res, error.statusCode || 500, { error: error instanceof Error ? error.message : '删除失败' });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
       return;
     }
 
     if (pathname === '/api/info' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(readJSON(context.dataDir, INFO_FILE, [])));
+      sendJSON(res, 200, readJSON(context.dataDir, INFO_FILE, []));
       return;
     }
 
@@ -1400,8 +2393,7 @@ function createServer(options = {}) {
     }
 
     if (pathname === '/api/projects' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(readCollection(context.dataDir, 'projects')));
+      sendJSON(res, 200, readCollection(context.dataDir, 'projects'));
       return;
     }
 
@@ -1412,6 +2404,26 @@ function createServer(options = {}) {
 
     if (pathname === '/api/projects/order' && req.method === 'POST') {
       handleJsonPost(req, res, body => updateCollectionOrder(context.dataDir, 'projects', body?.ids));
+      return;
+    }
+
+    if (pathname === '/api/projects/editor-state' && req.method === 'GET') {
+      try {
+        sendJSON(res, 200, readProjectEditorState(context.dataDir));
+      } catch (error) {
+        sendJSON(res, 500, { error: error instanceof Error ? error.message : '读取页面记录失败' });
+      }
+      return;
+    }
+
+    if (pathname === '/api/projects/editor-state' && req.method === 'POST') {
+      readRequestBody(req).then(body => {
+        try {
+          sendJSON(res, 200, { ok: true, state: saveProjectEditorState(context.dataDir, body) });
+        } catch (error) {
+          sendJSON(res, error.statusCode || 500, { error: error.message || '保存页面记录失败' });
+        }
+      }).catch(() => sendJSON(res, 400, { error: 'Invalid JSON' }));
       return;
     }
 
@@ -1605,6 +2617,13 @@ function createServer(options = {}) {
     const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
     fs.createReadStream(filePath).pipe(res);
+    } catch (error) {
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
+      sendJSON(res, 500, { error: error instanceof Error ? error.message : '服务器处理失败' });
+    }
   });
 
   return { server, context };
