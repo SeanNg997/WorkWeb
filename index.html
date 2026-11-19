@@ -1493,6 +1493,20 @@ body:not([data-theme="dark"]) input[type="radio"]:focus-visible {
 .project-panel-heading { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text); font-size: 17px; font-weight: 800; letter-spacing: 1px; }
 .project-panel-heading .project-panel-add { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--text-light); font-size: 20px; cursor: pointer; transition: background var(--transition), color var(--transition); }
 .project-panel-heading .project-panel-add:hover { background: var(--surface-muted); color: var(--accent-hover); }
+.project-panel-actions { display: flex; gap: 4px; }
+.project-panel-add svg { width: 18px; height: 18px; }
+.project-panel-heading .project-panel-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.project-panel-heading .project-panel-add:active { background: var(--accent-soft); color: var(--accent-hover); transform: scale(0.96); }
+.project-page-management-list { display: grid; gap: 8px; }
+.project-page-management-row { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card-bg); color: var(--text); transition: transform 180ms ease, background var(--transition); }
+.project-page-management-row:has(input:checked) { background: var(--accent-soft); }
+.project-page-management-row.sort-drag-proxy { transition: none; }
+.project-page-management-row input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: var(--accent); cursor: pointer; }
+.project-page-drag-handle { display: grid; place-items: center; width: 24px; height: 28px; flex: 0 0 auto; color: var(--text-light); cursor: grab; touch-action: none; border-radius: 4px; }
+.project-page-drag-handle:hover { background: var(--surface-muted); color: var(--accent-hover); }
+.project-page-drag-handle:active { cursor: grabbing; }
+.project-page-drag-handle svg { width: 18px; height: 18px; pointer-events: none; }
+#projectPagesDeleteBtn { margin-right: auto; }
 
 .project-right-page {
   display: flex;
@@ -3600,7 +3614,7 @@ body[data-theme="dark"] .project-book-card.drag-over {
         <div class="project-book-view" id="projectBookView">
           <div class="project-book-spread" id="projectBookSpread">
             <section class="project-left-page">
-              <nav class="project-page-manager" aria-label="页面管理">
+              <nav class="project-page-manager" aria-label="页面">
                 <div class="project-page-find" id="projectFindBar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
                   <input type="text" id="projectFindInput" placeholder="查找项目中的内容" aria-label="查找项目内容" autocomplete="off" oninput="updateProjectFind(this.value)">
@@ -3608,12 +3622,12 @@ body[data-theme="dark"] .project-book-card.drag-over {
                   <button type="button" aria-label="上一个匹配项" title="上一个匹配项" onclick="moveProjectFind(-1)">&#8249;</button>
                   <button type="button" aria-label="下一个匹配项" title="下一个匹配项" onclick="moveProjectFind(1)">&#8250;</button>
                 </div>
-                <div class="project-panel-heading"><span>页面管理</span><button class="project-panel-add" type="button" onclick="addProjectPage()" aria-label="新增页面" title="新增页面">+</button></div>
+                <div class="project-panel-heading"><span>页面</span><div class="project-panel-actions"><button class="project-panel-add" id="projectPagesManageButton" type="button" onclick="openProjectPagesManager()" aria-label="管理页面" title="管理页面"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4L14 12l-2-2z"/></svg></button><button class="project-panel-add" type="button" onclick="addProjectPage()" aria-label="新增页面" title="新增页面">+</button></div></div>
                 <div class="project-page-tabs" id="projectPageTabs" aria-label="项目页面"></div>
               </nav>
-              <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整页面管理和本页大纲的高度" aria-label="调整面板高度"></div>
+              <div class="project-outline-resizer" id="projectOutlineResizer" role="separator" aria-orientation="horizontal" title="拖动调整页面和大纲的高度" aria-label="调整面板高度"></div>
               <nav class="project-outline" aria-label="项目标题索引">
-                <div class="project-outline-title">本页大纲</div>
+                <div class="project-outline-title">大纲</div>
                 <div class="project-outline-list" id="projectOutlineList"></div>
               </nav>
             </section>
@@ -3916,6 +3930,23 @@ body[data-theme="dark"] .project-book-card.drag-over {
     </div>
     <div class="modal-body">
       <div class="project-manager-list" id="projectManagerList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="projectPagesManagerModal" onclick="if(event.target===this)closeProjectPagesManager()">
+  <div class="modal project-manager-modal" role="dialog" aria-modal="true" aria-labelledby="projectPagesManagerTitle" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="projectPagesManagerTitle">页面管理</h3>
+      <button class="modal-close" type="button" onclick="closeProjectPagesManager()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="project-page-management-list" id="projectPagesManagerList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger-solid" id="projectPagesDeleteBtn" type="button" onclick="deleteSelectedProjectPages()" disabled>删除</button>
+      <button class="btn btn-secondary" type="button" onclick="closeProjectPagesManager()">取消</button>
+      <button class="btn btn-primary" id="projectPagesConfirmBtn" type="button" onclick="saveProjectPagesManager()">确认</button>
     </div>
   </div>
 </div>
@@ -5234,6 +5265,8 @@ let pendingProjectOutlineTarget = null;
 let projectOutlineScrollRevision = 0;
 const projectOutlineCollapsedKeys = new Set();
 let projectPageManagerHeight = null;
+let projectPagesDraft = null;
+let projectPagesSaving = false;
 const PROJECT_PAGE_MANAGER_MIN_HEIGHT = 112;
 const PROJECT_OUTLINE_MIN_HEIGHT = 96;
 const PROJECT_EDITOR_SCROLL_RETRY_DELAYS = [0, 80, 180, 320, 520, 800, 1200, 1700];
@@ -8778,6 +8811,110 @@ function getProjectPageTitle(page) {
   return title || `未命名页面`;
 }
 
+function openProjectPagesManager() {
+  const project = getProjectById(activeProjectId);
+  if (!project) return;
+  projectPagesDraft = { projectId: project.id, ids: [...project.pageIds], selected: new Set() };
+  renderProjectPagesManager();
+  document.getElementById('projectPagesManagerModal').classList.add('active');
+  document.querySelector('#projectPagesManagerModal .modal-close').focus();
+}
+
+function closeProjectPagesManager() {
+  if (projectPagesSaving) return;
+  document.getElementById('projectPagesManagerList')._workwebSortableAbort?.abort();
+  document.getElementById('projectPagesManagerModal').classList.remove('active');
+  projectPagesDraft = null;
+  document.getElementById('projectPagesManageButton').focus();
+}
+
+function renderProjectPagesManager() {
+  const draft = projectPagesDraft;
+  const project = getProjectById(draft?.projectId);
+  if (!project) return;
+  const list = document.getElementById('projectPagesManagerList');
+  list.innerHTML = draft.ids.map((id, index) => {
+    const title = getProjectPageTitle(project.pages[project.pageIds.indexOf(id)]);
+    return `<div class="project-page-management-row" data-id="${escAttr(id)}">
+      <input type="checkbox" aria-label="选择第 ${index + 1} 页：${escAttr(title)}" ${draft.selected.has(id) ? 'checked' : ''} onchange="selectProjectManagedPage(this.closest('[data-id]').dataset.id, this.checked)">
+      <span class="project-page-drag-handle" role="button" tabindex="0" aria-label="调整第 ${index + 1} 页顺序" title="拖动排序，或使用上下方向键" onkeydown="handleProjectManagedPageKey(event, this.closest('[data-id]').dataset.id)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></span>
+      <span class="project-page-title" title="${escAttr(title)}">${escHtml(title)}</span>
+      <span class="project-page-number" aria-label="第 ${index + 1} 页">${index + 1}</span>
+    </div>`;
+  }).join('') || '<div class="project-manager-empty">确认后将保留一张空白页</div>';
+  document.getElementById('projectPagesDeleteBtn').disabled = !draft.selected.size;
+  bindPointerSortable(list, '.project-page-management-row', {
+    excludedSelector: 'input, .project-page-title, .project-page-number',
+    onReorder: reorderProjectManagedPages
+  });
+}
+
+function selectProjectManagedPage(id, checked) {
+  if (!projectPagesDraft || projectPagesSaving) return;
+  if (checked) projectPagesDraft.selected.add(id);
+  else projectPagesDraft.selected.delete(id);
+  document.getElementById('projectPagesDeleteBtn').disabled = !projectPagesDraft.selected.size;
+}
+
+function reorderProjectManagedPages(id, toIndex) {
+  const draft = projectPagesDraft;
+  if (!draft || projectPagesSaving) return;
+  const fromIndex = draft.ids.indexOf(id);
+  if (fromIndex < 0 || toIndex < 0 || toIndex >= draft.ids.length || fromIndex === toIndex) return;
+  draft.ids.splice(toIndex, 0, ...draft.ids.splice(fromIndex, 1));
+  renderProjectPagesManager();
+}
+
+function handleProjectManagedPageKey(event, id) {
+  if (!['ArrowUp', 'ArrowDown'].includes(event.key) || !projectPagesDraft) return;
+  event.preventDefault();
+  reorderProjectManagedPages(id, projectPagesDraft.ids.indexOf(id) + (event.key === 'ArrowUp' ? -1 : 1));
+  document.querySelector(`#projectPagesManagerList [data-id="${CSS.escape(id)}"] .project-page-drag-handle`)?.focus();
+}
+
+function deleteSelectedProjectPages() {
+  const draft = projectPagesDraft;
+  if (!draft || projectPagesSaving || !draft.selected.size) return;
+  const selected = new Set(draft.selected);
+  const emptyNotice = selected.size === draft.ids.length ? '确认保存后将保留一张空白页。' : '';
+  openConfirm(`确定删除选中的 ${selected.size} 个页面吗？项目内的页面删除后不可恢复。${emptyNotice}`, () => {
+    if (projectPagesDraft !== draft) return;
+    draft.ids = draft.ids.filter(id => !selected.has(id));
+    draft.selected.clear();
+    renderProjectPagesManager();
+  });
+}
+
+async function saveProjectPagesManager() {
+  const draft = projectPagesDraft;
+  const project = getProjectById(draft?.projectId);
+  if (!project || projectPagesSaving) return;
+  projectPagesSaving = true;
+  const modal = document.getElementById('projectPagesManagerModal');
+  modal.inert = true;
+  try {
+    clearTimeout(projectPersistTimer);
+    projectPersistTimer = null;
+    await persistProjectPageByIndex(project.id, activeProjectPageIndex, projectSaveRevision);
+    const activePageId = project.pageIds[activeProjectPageIndex];
+    const pageIds = draft.ids.length ? [...draft.ids] : [genId('pg')];
+    const candidate = { ...project, pageIds, pages: pageIds.map(id => project.pages[project.pageIds.indexOf(id)] || ''), updatedAt: Date.now() };
+    await persistProject(candidate);
+    Object.assign(project, candidate);
+    if (!serverOnline) saveLocalData('wb_projects', projects);
+    activeProjectPageIndex = Math.max(0, pageIds.indexOf(activePageId));
+    recordProjectEditorPage(project, activeProjectPageIndex);
+    renderProjectBook();
+    projectPagesSaving = false;
+    closeProjectPagesManager();
+  } catch {
+    // Keep the draft open so failed saves can be retried or cancelled.
+  } finally {
+    projectPagesSaving = false;
+    modal.inert = false;
+  }
+}
+
 function renderProjectPageTabs(previousRects = null, pageKeys = null) {
   const tabs = document.getElementById('projectPageTabs');
   const project = getProjectById(activeProjectId);
@@ -9921,6 +10058,7 @@ document.addEventListener('keydown', e => {
     const confirmModal = document.getElementById('confirmOverlay');
 
     if (confirmModal.classList.contains('active')) { closeConfirm(); return; }
+    if (document.getElementById('projectPagesManagerModal').classList.contains('active')) { closeProjectPagesManager(); return; }
     if (trashModal.classList.contains('active')) { closeTrashRestore(); return; }
     if (settingsModal.classList.contains('active')) { closeSettings(); return; }
     if (reminderModal.classList.contains('active')) { closeReminderEditor(); return; }

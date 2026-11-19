@@ -342,11 +342,79 @@ async function run() {
     assert.equal(pageTabState.transform, 'none');
     assert.ok(pageTabState.parentTransforms.every(value => value === 'none'), JSON.stringify(pageTabState.parentTransforms));
     assert.equal(pageTabState.fontFamily, pageTabState.panelFontFamily);
-    assert.equal(pageTabState.title, '页面管理');
+    assert.equal(pageTabState.title, '页面');
+    assert.equal(await evaluate(window, "document.querySelector('.project-outline-title').textContent"), '大纲');
     assert.deepEqual(pageTabState.headingStyles, pageTabState.outlineStyles);
     assert.ok(Math.abs(pageTabState.managerHeight / (pageTabState.managerHeight + pageTabState.outlineHeight) - 0.75) < 0.05,
       `page manager should use about 75% of available height: ${JSON.stringify(pageTabState)}`);
     log(`PASS project page tab stable styles ${JSON.stringify(pageTabState)}`);
+    log('START page management draft, drag, and deletion');
+    const managedFixture = await api(origin, 'projects/p_page_manager_test', {
+      method: 'PUT', body: { item: {
+        id: 'p_page_manager_test', title: 'Page manager test',
+        pages: ['# First', '# Second', '# Third'], pageIds: ['pg_manage_1', 'pg_manage_2', 'pg_manage_3']
+      } }
+    });
+    await evaluate(window, `projects.push(normalizeProject(${JSON.stringify(managedFixture.item)})); openProjectBook('p_page_manager_test'); switchProjectPage(1); document.getElementById('projectPagesManageButton').click()`);
+    await wait(250);
+    assert.equal(await evaluate(window, 'document.getElementById("projectPagesDeleteBtn").disabled'), true);
+    assert.deepEqual(await evaluate(window, `[...document.querySelectorAll('#projectPagesManagerList .project-page-title')].map(el => el.textContent)`), ['First', 'Second', 'Third']);
+    const dragPoints = await evaluate(window, `(() => {
+      const handle = document.querySelector('#projectPagesManagerList .project-page-drag-handle').getBoundingClientRect();
+      const row = document.querySelectorAll('#projectPagesManagerList .project-page-management-row')[2].getBoundingClientRect();
+      return { x: Math.round(handle.left + handle.width / 2), y: Math.round(handle.top + handle.height / 2), targetY: Math.round(row.bottom + 12) };
+    })()`);
+    window.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, x: dragPoints.x, y: dragPoints.y });
+    await sendMouseMove(window, dragPoints.x, dragPoints.targetY);
+    assert.equal(await evaluate(window, "!!document.querySelector('.project-page-management-row.sort-drag-proxy') && !!document.querySelector('#projectPagesManagerList .sortable-placeholder')"), true, 'drag uses floating proxy and moving placeholder');
+    window.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, x: dragPoints.x, y: dragPoints.targetY });
+    await waitFor(async () => evaluate(window, "projectPagesDraft.ids[2] === 'pg_manage_1'"), 'page manager drag reorder');
+    assert.deepEqual((await api(origin, 'projects')).find(project => project.id === 'p_page_manager_test').pageIds, ['pg_manage_1', 'pg_manage_2', 'pg_manage_3'], 'drag is staged');
+    await evaluate(window, 'closeProjectPagesManager(); openProjectPagesManager()');
+    assert.deepEqual(await evaluate(window, 'projectPagesDraft.ids'), ['pg_manage_1', 'pg_manage_2', 'pg_manage_3'], 'cancel discards sorting');
+    await evaluate(window, `document.querySelector('#projectPagesManagerList input').click(); deleteSelectedProjectPages()`);
+    assert.match(await evaluate(window, 'document.getElementById("confirmText").textContent'), /项目内的页面删除后不可恢复/);
+    assert.equal(await evaluate(window, 'projectPagesDraft.ids.length'), 3, 'deletion waits for confirmation');
+    await evaluate(window, 'closeConfirm()');
+    assert.equal(await evaluate(window, 'projectPagesDraft.ids.length'), 3, 'cancel deletion retains rows');
+    await evaluate(window, 'deleteSelectedProjectPages(); confirmAction()');
+    assert.equal(await evaluate(window, 'projectPagesDraft.ids.length'), 2);
+    await evaluate(window, 'closeProjectPagesManager(); openProjectPagesManager()');
+    assert.equal(await evaluate(window, 'projectPagesDraft.ids.length'), 3, 'cancel manager discards deletion');
+    await evaluate(window, `reorderProjectManagedPages('pg_manage_1', 2); selectProjectManagedPage('pg_manage_3', true); deleteSelectedProjectPages(); confirmAction();`);
+    await evaluate(window, `(async () => {
+      const persist = persistProject;
+      persistProject = async () => { throw new Error('simulated save failure'); };
+      try { await saveProjectPagesManager(); } finally { persistProject = persist; }
+    })()`);
+    assert.equal(await evaluate(window, "document.getElementById('projectPagesManagerModal').classList.contains('active') && !document.getElementById('projectPagesManagerModal').inert"), true, 'failed save retains an editable draft');
+    assert.deepEqual(await evaluate(window, "getProjectById(activeProjectId).pageIds"), ['pg_manage_1', 'pg_manage_2', 'pg_manage_3'], 'failed save retains original pages');
+    await evaluate(window, 'saveProjectPagesManager()');
+    let managedSaved = (await api(origin, 'projects')).find(project => project.id === 'p_page_manager_test');
+    assert.deepEqual(managedSaved.pageIds, ['pg_manage_2', 'pg_manage_1']);
+    assert.deepEqual(managedSaved.pages, ['# Second', '# First']);
+    assert.equal(await evaluate(window, 'activeProjectPageIndex'), 0, 'active page follows stable ID');
+    await evaluate(window, `openProjectPagesManager(); reorderProjectManagedPages('pg_manage_1', 0); serverOnline = false;`);
+    await evaluate(window, 'saveProjectPagesManager()');
+    assert.deepEqual(await evaluate(window, "JSON.parse(localStorage.getItem('wb_projects')).find(project => project.id === activeProjectId).pageIds"), ['pg_manage_1', 'pg_manage_2'], 'offline ordering is cached after applying the draft');
+    await evaluate(window, 'serverOnline = true');
+    await evaluate(window, `openProjectPagesManager(); projectPagesDraft.ids.forEach(id => selectProjectManagedPage(id, true)); deleteSelectedProjectPages(); confirmAction();`);
+    await evaluate(window, 'saveProjectPagesManager()');
+    managedSaved = (await api(origin, 'projects')).find(project => project.id === 'p_page_manager_test');
+    assert.deepEqual(managedSaved.pages, [''], 'deleting all pages retains a persisted blank page');
+    assert.equal(managedSaved.pageIds.length, 1);
+    await evaluate(window, `openProjectPagesManager(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
+    assert.equal(await evaluate(window, 'activeProjectId'), 'p_page_manager_test', 'Escape closes manager without closing project');
+    assert.equal(await evaluate(window, 'projectPagesDraft'), null);
+    await evaluate(window, "closeProjectBook(); projects = projects.filter(project => project.id !== 'p_page_manager_test'); renderProjects(); openProjectBook('p_beta')");
+    await api(origin, 'projects/p_page_manager_test', { method: 'DELETE' });
+    // This fixture must not change the later trash-restore assertions.
+    const fixtureTrashDir = path.join(dataDir, 'trash', 'projects');
+    for (const file of fs.readdirSync(fixtureTrashDir)) {
+      const filePath = path.join(fixtureTrashDir, file);
+      if (fs.readFileSync(filePath, 'utf8').includes('p_page_manager_test')) fs.unlinkSync(filePath);
+    }
+    log('PASS page management drag, cancel, confirmation, batch delete, active page, and empty fallback');
     await evaluate(window, 'closeProjectBook()');
     await waitFor(async () => evaluate(window, 'activeProjectId === null'), 'project book close');
 
