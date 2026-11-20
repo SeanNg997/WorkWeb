@@ -12,11 +12,6 @@
 
 随手记下今天的事，把长期项目写成一本书，也为运动和日常留一点位置。WorkWeb 将这些收在同一个个人面板里，让记录有去处，让注意力回到手头的事。
 
-<p align="center">
-  <a href="promo/workweb-promo-24s-1080p.mp4"><img src="promo/poster.jpg" width="720" alt="WorkWeb 宣传片封面，点击观看"></a><br>
-  <sub>点击封面观看 24 秒宣传片</sub>
-</p>
-
 ## 从一张便笺，到一本项目书
 
 | 你的日常 | WorkWeb 的安排 |
