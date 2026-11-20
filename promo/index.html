@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkWeb 宣传短片</title>
+<style>
+  /* 主题变量注册为可插值颜色：整支片子随「软件皮肤」一起换色 */
+  @property --bg-start{syntax:'<color>';inherits:true;initial-value:#f8faf9}
+  @property --bg-end{syntax:'<color>';inherits:true;initial-value:#eef3f0}
+  @property --sidebar-bg{syntax:'<color>';inherits:true;initial-value:#f6f8f7}
+  @property --sidebar-active{syntax:'<color>';inherits:true;initial-value:#e2f1e8}
+  @property --sidebar-text{syntax:'<color>';inherits:true;initial-value:#5b625e}
+  @property --card-bg{syntax:'<color>';inherits:true;initial-value:#ffffff}
+  @property --surface-muted{syntax:'<color>';inherits:true;initial-value:#f3f6f4}
+  @property --line{syntax:'<color>';inherits:true;initial-value:#e1e8e3}
+  @property --text{syntax:'<color>';inherits:true;initial-value:#202521}
+  @property --text-light{syntax:'<color>';inherits:true;initial-value:#768079}
+  @property --accent{syntax:'<color>';inherits:true;initial-value:#59ad82}
+  @property --accent-soft{syntax:'<color>';inherits:true;initial-value:#e3f2e9}
+  @property --success{syntax:'<color>';inherits:true;initial-value:#4b9e78}
+  @property --pl-start{syntax:'<color>';inherits:true;initial-value:#eef5f0}
+  @property --pl-end{syntax:'<color>';inherits:true;initial-value:#e3eee6}
+  @property --shadow-c{syntax:'<color>';inherits:true;initial-value:rgba(39,57,47,.08)}
+
+  :root{
+    --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Segoe UI","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    --brand-navy:#263357; --brand-blue:#3B82F6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;background:#0e0f0f;overflow:hidden}
+  body{font-family:var(--font);-webkit-font-smoothing:antialiased}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1920px;height:1080px;flex:none;overflow:hidden;transform-origin:center;color:var(--text);
+    background:linear-gradient(160deg,var(--bg-start) 0%,var(--bg-end) 100%)}
+  .blob{position:absolute;border-radius:50%}
+  .b1{width:1300px;height:1300px;left:-420px;top:-560px;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%)}
+  .b2{width:1400px;height:1400px;right:-520px;bottom:-700px;background:radial-gradient(circle,rgba(59,130,246,.09),rgba(59,130,246,0) 62%)}
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.045;mix-blend-mode:multiply;z-index:90;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+  /* ===== 镜头：#zoom 负责推拉与俯仰，#world / #para 负责平移（视差） ===== */
+  #zoom{position:absolute;inset:0;transform-origin:960px 540px}
+  #para,#world{position:absolute;left:0;top:0;transform-origin:0 0}
+  #world{width:12800px;height:1800px}
+  .num{position:absolute;font-size:440px;line-height:1;font-weight:800;letter-spacing:-.04em;color:transparent;
+    -webkit-text-stroke:1.5px color-mix(in srgb,var(--text) 9%,transparent);white-space:nowrap}
+  .frame{position:absolute;width:1920px;height:1080px}
+  .frame>*{position:absolute}
+  .probe{position:absolute;width:0;height:0}
+  .olab{font-size:96px;font-weight:760;color:var(--text);white-space:nowrap;letter-spacing:.02em;opacity:0}
+  .olab em{font-style:normal;color:var(--brand-blue);margin-right:.4em}
+
+  /* ===== 取自 WorkWeb 3.6 的界面元件 ===== */
+  .card{background:var(--card-bg);border:1px solid color-mix(in srgb,var(--line) 78%,transparent);border-radius:18px;box-shadow:0 10px 28px var(--shadow-c)}
+  .lift{box-shadow:0 34px 70px -24px color-mix(in srgb,var(--text) 26%,transparent),0 10px 28px var(--shadow-c)}
+  .btnp{height:38px;padding:0 20px;border-radius:999px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;line-height:38px;white-space:nowrap}
+  .note{padding:20px 22px}
+  .note .t{position:relative;font-size:16px;font-weight:700;color:var(--text);height:24px;white-space:nowrap}
+  .note .ph-t{position:absolute;left:0;top:0;color:color-mix(in srgb,var(--text-light) 70%,transparent);font-weight:500}
+  .note .c{margin-top:12px;font-size:14.5px;line-height:1.85;color:var(--text)}
+  .note ol,.note ul{padding-left:22px}
+  .note blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--text-light);margin-top:4px}
+  .ch{opacity:0}
+  #caret{position:absolute;left:0;top:0;width:2px;height:22px}
+
+  .cover{width:150px;height:188px;border-radius:5px;overflow:hidden;background-color:#dce9df;
+    background-image:url('assets/project-covers.png');background-repeat:no-repeat;background-size:400% 500%;box-shadow:4px 8px 18px rgba(28,42,35,.2)}
+  .cover::before{content:"";position:absolute;inset:0 auto 0 0;width:11px;border-right:1px solid rgba(255,255,255,.34);background:linear-gradient(90deg,rgba(30,40,34,.2),rgba(255,255,255,.14) 44%,transparent)}
+  .btitle{width:190px;text-align:center;font-size:14px;font-weight:700;color:var(--text);white-space:nowrap}
+
+  /* 打开的项目：封面翻开 = 左侧页面栏，右侧 = 编辑区 */
+  #book{left:1000px;top:300px;width:720px;height:450px;transform-origin:0 0;perspective:2000px}
+  .bpage{position:absolute;left:360px;top:0;width:360px;height:450px;border-radius:0 8px 8px 0;background:var(--card-bg);padding:30px 28px;color:var(--text);
+    box-shadow:0 30px 60px -26px color-mix(in srgb,var(--text) 30%,transparent),0 0 0 1px color-mix(in srgb,var(--line) 80%,transparent)}
+  .bpage h2{font-size:22px;line-height:1.3;margin-bottom:10px}
+  .bpage p{font-size:13px;line-height:1.75;color:var(--text)}
+  .bpage .math{position:relative;margin:16px 0 16px;padding:8px 0;text-align:center;font-family:"Times New Roman","STIX Two Math",Times,serif;font-size:19px;border-radius:8px}
+  .math .hl{position:absolute;inset:0;border-radius:8px;background:var(--accent-soft);transform-origin:left;transform:scaleX(0)}
+  .math span.f{position:relative}
+  .math i{font-style:italic}
+  .math sub{font-size:12px}
+  .math .eqn{position:absolute;right:2px;top:10px;font-size:14px;font-style:normal}
+  .bpage table{width:100%;border-collapse:collapse;font-size:12px}
+  .bpage th,.bpage td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+  .bpage th{background:var(--surface-muted);font-weight:600}
+  .flip{position:absolute;left:360px;top:0;width:360px;height:450px;transform-origin:0 50%;transform-style:preserve-3d}
+  .flip>div{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+  .flip .front{width:360px;height:450px}
+  .flip .back{transform:rotateY(180deg);border-radius:8px 0 0 8px;background:linear-gradient(180deg,var(--pl-start),var(--pl-end));padding:26px 22px;
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--line) 80%,transparent)}
+  .back .lab{font-size:14px;font-weight:700;color:var(--text);margin:4px 0 8px}
+  .back .it{position:relative;height:30px;line-height:30px;font-size:13px;color:var(--text);padding-left:14px;border-radius:8px}
+  .back .it.on{color:var(--accent);font-weight:600;background:color-mix(in srgb,var(--card-bg) 70%,transparent)}
+  .back .it i{position:absolute;right:10px;font-style:normal;font-size:12px;color:var(--text-light)}
+  .back .srch{height:32px;border-radius:999px;background:var(--card-bg);font-size:12px;line-height:32px;color:var(--text-light);padding-left:14px;margin-bottom:18px}
+
+  /* 常用个人信息 */
+  .igh{font-size:14.5px;font-weight:700;color:var(--text);padding-left:20px;white-space:nowrap}
+  .igh::before{content:"";position:absolute;left:3px;top:6px;border:5px solid transparent;border-top:7px solid var(--text-light);border-bottom:0}
+  .igh em{font-style:normal;font-weight:400;font-size:12px;color:var(--text-light);margin-left:10px}
+  .icard{overflow:hidden;border-radius:16px}
+  .icard .ih{position:absolute;left:0;right:0;top:0;height:54px;line-height:54px;padding-left:46px;font-size:16px;font-weight:700;color:var(--text);white-space:nowrap}
+  .caret{position:absolute;left:21px;top:22px;width:0;height:0;border:5px solid transparent;border-left:7px solid var(--text-light);border-right:0}
+  .irow{position:absolute;left:20px;right:20px;height:46px;line-height:46px;font-size:14px;color:var(--text);border-bottom:1px solid var(--line);white-space:nowrap;opacity:0}
+  .irow.last{border-bottom:0}
+  .irow b{font-weight:400;color:var(--text-light);font-size:12.5px;display:inline-block;width:66px}
+  .cp{position:absolute;right:2px;top:13px;width:20px;height:20px}
+  .cp svg{position:absolute;inset:0;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .cp .ok{stroke:var(--success);stroke-width:2.4;opacity:0}
+  .chip{height:46px;line-height:46px;padding:0 20px 0 46px;border-radius:999px;background:var(--card-bg);font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;opacity:0;
+    box-shadow:0 22px 46px -18px color-mix(in srgb,var(--text) 30%,transparent),0 0 0 1px color-mix(in srgb,var(--line) 80%,transparent)}
+  .chip svg{position:absolute;left:16px;top:13px;width:20px;height:20px;fill:none;stroke:var(--success);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .chip small{font-weight:400;color:var(--text-light);font-size:13px;margin-left:10px}
+
+  /* 运动日志 */
+  .seg{width:300px;height:40px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--surface-muted) 84%,transparent)}
+  .seg .pill{position:absolute;top:4px;left:4px;width:96px;height:30px;border-radius:999px;background:var(--card-bg);border:1px solid var(--line);box-shadow:0 8px 20px var(--shadow-c)}
+  .seg span{position:absolute;top:4px;width:96px;height:30px;line-height:30px;text-align:center;font-size:13.5px;color:var(--text-light)}
+  .wd{width:44px;text-align:center;font-size:13px;color:var(--text-light)}
+  .day{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--text)}
+  .day.o{color:color-mix(in srgb,var(--text-light) 60%,transparent);font-weight:500}
+  .day.today{box-shadow:0 0 0 1.6px var(--success) inset}
+  .day .f{position:absolute;inset:0;border-radius:50%;background:var(--success)}
+  .day span{position:relative}
+  .chartbox{left:1385px;top:300px;width:440px;height:400px}
+  .ttl{position:absolute;left:22px;top:22px}
+  .ttl b{display:block;font-size:16px;color:var(--text)}
+  .ttl small{display:block;margin-top:2px;font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--text-light)}
+  .chartbox svg{position:absolute;left:22px;top:100px;overflow:visible}
+  .chartbox text{font-size:11px;fill:var(--text-light);font-family:var(--font)}
+
+  /* 迷你主界面（皮肤） */
+  .mini{left:980px;top:200px;width:820px;height:500px;border-radius:20px;overflow:hidden;
+    background:linear-gradient(135deg,var(--bg-start),var(--bg-end));
+    box-shadow:0 50px 100px -40px color-mix(in srgb,var(--text) 35%,transparent),0 0 0 1px color-mix(in srgb,var(--line) 90%,transparent)}
+  .mini .sb{position:absolute;left:0;top:0;bottom:0;width:190px;background:color-mix(in srgb,var(--sidebar-bg) 70%,transparent);border-right:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+  .mini .sb h3{position:absolute;left:0;right:0;top:20px;text-align:center;font-size:21px;font-weight:700;color:var(--text)}
+  .mini .sb p{position:absolute;left:0;right:0;top:50px;text-align:center;font-size:10.5px;color:var(--text-light)}
+  .mini .nv{position:absolute;left:10px;width:170px;height:32px;border-radius:10px;font-size:12.5px;line-height:32px;padding-left:36px;color:var(--sidebar-text);white-space:nowrap}
+  .mini .nv.on{background:var(--sidebar-active);color:var(--text);font-weight:650}
+  .mini .nv svg{position:absolute;left:11px;top:8px;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mini .mh{position:absolute;left:214px;top:22px;font-size:18px;font-weight:700;color:var(--text)}
+  .mini .btnp{position:absolute;right:22px;top:20px;height:28px;line-height:28px;padding:0 14px;font-size:12px}
+  .mini .tg{position:absolute;top:66px;height:24px;line-height:22px;padding:0 11px;border-radius:999px;border:1px solid var(--line);font-size:11.5px;color:var(--text-light)}
+  .mini .tg.on{background:var(--accent-soft);color:var(--accent);font-weight:700;border-color:transparent}
+  .mini .cv{position:absolute;top:112px;width:96px;height:120px;border-radius:4px;background-image:url('assets/project-covers.png');background-size:400% 500%;box-shadow:3px 6px 12px rgba(28,42,35,.16)}
+  .mini .ct{position:absolute;top:240px;width:120px;text-align:center;font-size:11px;font-weight:700;color:var(--text);white-space:nowrap}
+  .mini .nt{position:absolute;top:290px;height:180px;padding:14px 16px;font-size:11.5px;line-height:1.8;color:var(--text);border-radius:14px}
+  .mini .nt b{display:block;font-size:12.5px;margin-bottom:4px}
+  .sw{width:46px;height:46px;border-radius:50%;border:3px solid var(--card-bg);box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 14%,transparent),0 10px 20px -8px rgba(0,0,0,.3)}
+  .swr{width:60px;height:60px;border-radius:50%;border:2px solid var(--accent);opacity:0}
+  .swl{width:120px;text-align:center;font-size:14px;color:var(--text-light);font-weight:600}
+
+  /* ===== 叠加层：大字排版 ===== */
+  .type{position:absolute;left:128px;top:350px;z-index:40;pointer-events:none}
+  .type .eb{display:flex;align-items:center;gap:14px;font-size:18px;font-weight:700;letter-spacing:.2em;color:var(--text-light)}
+  .type .eb i{width:10px;height:10px;border-radius:50%;background:var(--brand-blue)}
+  .type .eb em{font-style:normal;color:var(--text)}
+  .type .hl{margin-top:26px}
+  .type .ln{overflow:hidden;font-size:110px;line-height:1.16;font-weight:760;letter-spacing:-.01em;white-space:nowrap;padding:0 .04em}
+  .type .ln.acc{color:var(--accent)}
+  .type .ln>span{display:inline-block}
+  .type .sub{margin-top:30px;font-size:24px;letter-spacing:.06em;color:var(--text-light)}
+  .hud{position:absolute;top:52px;z-index:40;display:flex;align-items:center;gap:12px;font-size:19px;font-weight:700;color:var(--text);opacity:0}
+  .hud.l{left:64px}
+  .hud.r{right:64px;font-weight:600;font-size:16px;letter-spacing:.14em;color:var(--text-light)}
+  .hud svg{width:30px;height:26px;overflow:visible}
+  .idx{position:relative;display:inline-block;width:1.6em;height:1.3em;overflow:hidden;vertical-align:-.28em;color:var(--text)}
+  .idx span{position:absolute;left:0;top:0}
+
+  /* 片头 / 收尾（都在 F0 画格内） */
+  .logo .w{fill:none;stroke:var(--brand-navy);stroke-width:104;stroke-linecap:round;stroke-linejoin:round}
+  .draw{stroke-dasharray:1;stroke-dashoffset:1}
+  #introLogo{overflow:visible;transform-origin:0 0}
+  .wordmark{font-size:124px;font-weight:700;letter-spacing:-.035em;color:var(--brand-navy);line-height:1;white-space:nowrap;opacity:0}
+  .mask{overflow:hidden;padding-bottom:.12em}
+  .mask>span{display:inline-block}
+  .tagline{font-size:36px;color:#2b3550;letter-spacing:.14em;white-space:nowrap}
+  .meta{display:flex;align-items:center;gap:18px;font-size:20px;color:#7d8696;letter-spacing:.12em;opacity:0;white-space:nowrap}
+  .meta i{width:4px;height:4px;border-radius:50%;background:#b4bac6}
+  #trail{position:absolute;left:0;top:0;overflow:visible}
+
+  /* 主角：Logo 的蓝点（舞台坐标，位于所有图层之上） */
+  #fx{position:absolute;inset:0;z-index:70;pointer-events:none}
+  #actor,#actorR{position:absolute;left:0;top:0;width:0;height:0}
+  #actorS{position:absolute;left:-10px;top:-10px;width:20px;height:20px}
+  #actorS i{position:absolute;inset:0;border-radius:50%;background:var(--brand-blue);box-shadow:0 3px 8px rgba(59,130,246,.38)}
+  #stars{position:absolute;inset:0;transform-origin:960px 540px}
+  #stars i{position:absolute;border-radius:50%;background:#e8f0ff;opacity:0}
+  #orbits{position:absolute;left:0;top:0;overflow:visible;z-index:5}
+  #orbits .ob{fill:none;stroke:rgba(255,255,255,.16);stroke-width:1.6}
+  #orbits .tr{fill:none;stroke:#8ab8ff;stroke-width:2.6;stroke-linecap:round}
+  #halo{position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;opacity:0;
+    background:radial-gradient(circle,rgba(147,190,255,.75) 0,rgba(59,130,246,.32) 22%,rgba(59,130,246,.08) 48%,rgba(59,130,246,0) 70%)}
+  #bloom{position:absolute;left:0;top:0;width:2400px;height:2400px;margin:-1200px 0 0 -1200px;border-radius:50%;opacity:0;
+    background:radial-gradient(circle,#fff 0,rgba(255,255,255,.97) 30%,rgba(248,250,249,.6) 52%,rgba(248,250,249,0) 72%)}
+  .ripple{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:2px solid rgba(59,130,246,.55);opacity:0}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div id="stars"></div>
+
+  <div id="zoom">
+    <div id="para"></div>
+    <div id="world">
+      <div class="probe" id="pr0" style="left:0;top:0"></div><div class="probe" id="pr1" style="left:1000px;top:1000px"></div>
+      <div class="probe" id="core"></div>
+      <svg id="orbits" width="1" height="1"></svg>
+
+      <!-- F0 片头 / 收尾 -->
+      <div class="frame" id="F0">
+        <svg class="logo" id="introLogo" viewBox="150 200 680 590" style="left:830px;top:427px;width:260px;height:225.59px">
+          <polyline class="w draw" id="introW" pathLength="1" points="228,366 343,668 470,366 590,668 690,420"/></svg>
+        <div class="wordmark" id="wordmark">WorkWeb</div>
+        <div class="mask tagline" id="tagWrap"><span id="tagline">科研个人工作台</span></div>
+        <div class="meta" id="meta"><span>本地存储</span><i></i><span>免费开源</span><i></i><span>无需注册</span></div>
+      </div>
+
+      <!-- F1 TODO 便笺 -->
+      <div class="frame" id="F1">
+        <div class="card note" id="nA" style="left:980px;top:236px;width:290px;height:200px;transform:rotate(-3deg)"><div class="t">本周三件事</div>
+          <div class="c"><ol><li>整理第三章实验数据</li><li>回复合作者的意见</li><li>周五组会汇报</li></ol></div></div>
+        <div class="card note" id="nB" style="left:1310px;top:168px;width:290px;height:206px;transform:rotate(2.5deg)"><div class="t">组会要点</div>
+          <div class="c"><ul><li>样本量补到 120</li><li>统一图表配色</li></ul><blockquote>少即是多，先删再加。</blockquote></div></div>
+        <div class="card note" id="nC" style="left:1010px;top:566px;width:290px;height:170px;transform:rotate(1.6deg)"><div class="t">灵感</div>
+          <div class="c">把方法部分拆成三步，每一步配一张示意图。</div></div>
+        <div class="btnp" id="newBtn" style="left:1556px;top:428px">+ 新建便笺</div>
+        <div class="card note lift" id="newNote" style="left:1360px;top:500px;width:330px;height:214px;transform-origin:85% 0">
+          <div class="t"><span class="ph-t" id="notePh">输入标题...</span><span id="noteTitle" data-type="投稿前检查"></span><i id="caret"></i></div>
+          <div class="c"><ol id="noteList"><li data-type="核对参考文献格式"></li><li data-type="图表不低于 300 dpi"></li><li data-type="补充数据可用性声明"></li></ol></div>
+        </div>
+      </div>
+
+      <!-- F2 项目书架 -->
+      <div class="frame" id="F2">
+        <div id="shelf"></div>
+        <div id="book">
+          <div class="bpage" id="bpage">
+            <h2>3.2 实验设计</h2>
+            <p>在三个站点开展对照实验，比较不同处理下的地表温度变化。</p>
+            <div class="math" id="math"><div class="hl" id="mathHl"></div><span class="f"><i>T</i><sub>s</sub> = <i>β</i><sub>0</sub> + <i>β</i><sub>1</sub>·NDVI + <i>β</i><sub>2</sub>·ISA + <i>ε</i></span><span class="eqn">(3.1)</span></div>
+            <table><tr><th>站点</th><th>样本数</th><th>均值 (°C)</th></tr><tr><td>A</td><td>42</td><td>27.6</td></tr><tr><td>B</td><td>40</td><td>29.1</td></tr><tr><td>C</td><td>38</td><td>31.4</td></tr></table>
+          </div>
+          <div class="flip" id="flip">
+            <div class="back">
+              <div class="srch">查找项目中的内容</div>
+              <div class="lab">页面</div>
+              <div class="it">3.1 研究区概况<i>1</i></div>
+              <div class="it on">3.2 实验设计<i>2</i></div>
+              <div class="it">3.3 结果与分析<i>3</i></div>
+              <div class="lab" style="margin-top:22px">大纲</div>
+              <div class="it">3.2 实验设计</div>
+              <div class="it" style="padding-left:28px;color:var(--text-light)">模型设定</div>
+            </div>
+            <div class="front cover" id="bookCover"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F3 常用个人信息 -->
+      <div class="frame" id="F3">
+        <div class="igh g3" style="left:1060px;top:330px">邮箱及授权码<em>2</em></div>
+        <div class="card icard lift g3" id="gmail" style="left:1060px;top:364px;width:400px;height:54px">
+          <div class="ih"><span class="caret" id="gmailCaret"></span>Gmail</div>
+          <div class="irow" id="g1" style="top:58px"><b>账号</b>name@gmail.com<span class="cp" id="cp1"></span></div>
+          <div class="irow last" id="g2" style="top:104px"><b>授权码</b>••••••••••••<span class="cp" id="cp2"></span></div>
+        </div>
+        <div class="card icard g3" id="school" style="left:1060px;top:430px;width:400px;height:54px"><div class="ih"><span class="caret"></span>学校邮箱</div></div>
+        <div class="g3" id="addrGrp" style="left:1060px;top:520px;width:400px"><div class="igh" style="position:relative">常用地址<em>1</em></div>
+          <div class="card icard" style="position:relative;margin-top:10px;height:54px"><div class="ih"><span class="caret"></span>办公室</div></div></div>
+        <div class="igh g3" style="left:1500px;top:330px">账号<em>1</em></div>
+        <div class="card icard lift g3" id="vpn" style="left:1500px;top:364px;width:340px;height:54px">
+          <div class="ih"><span class="caret" id="vpnCaret"></span>校园 VPN</div>
+          <div class="irow" id="v1" style="top:58px"><b>账号</b>student01<span class="cp"></span></div>
+          <div class="irow last" id="v2" style="top:104px"><b>密码</b>••••••••<span class="cp"></span></div>
+        </div>
+        <div class="g3" id="sciGrp" style="left:1500px;top:440px;width:340px"><div class="igh" style="position:relative">科研<em>1</em></div>
+          <div class="card icard" style="position:relative;margin-top:10px;height:54px"><div class="ih"><span class="caret"></span>ORCID</div></div></div>
+        <div class="chip" id="chip1" style="left:1100px;top:250px"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></svg>name@gmail.com<small>已复制</small></div>
+        <div class="chip" id="chip2" style="left:1150px;top:250px"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></svg>授权码<small>已复制</small></div>
+      </div>
+
+      <!-- F4 运动日志 -->
+      <div class="frame" id="F4">
+        <div class="seg" id="seg" style="left:900px;top:246px"><div class="pill" id="segPill"></div>
+          <span style="left:4px;color:var(--text)" id="seg0">运动日历</span><span style="left:102px" id="seg1">运动天数</span><span style="left:200px" id="seg2">指标趋势</span></div>
+        <div id="cal" style="left:900px;top:318px"></div>
+        <div class="card chartbox" id="chartbox">
+          <div class="ttl" id="ttl1"><b>运动天数</b><small>TRAINING RECORD · 每月</small></div>
+          <div class="ttl" id="ttl2" style="opacity:0"><b>指标趋势</b><small>GROWTH RECORD · 深蹲</small></div>
+          <svg width="396" height="240" viewBox="0 0 396 240">
+            <g stroke="var(--line)" stroke-width="1"><line x1="0" y1="20" x2="396" y2="20"/><line x1="0" y1="110" x2="396" y2="110"/><line x1="0" y1="200" x2="396" y2="200"/></g>
+            <g id="gTrain">
+              <path id="tarea" d="M14,200 L14,116 L88,104 L162,128 L236,80 L310,68 L384,56 L384,200 Z" fill="var(--success)" opacity="0"/>
+              <path id="tline" pathLength="1" class="draw" d="M14,116 L88,104 L162,128 L236,80 L310,68 L384,56" fill="none" stroke="var(--success)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+              <g id="tpts" fill="var(--card-bg)" stroke="var(--success)" stroke-width="2.2"></g>
+              <text x="4" y="226">6月</text><text x="152" y="226">8月</text><text x="296" y="226">10月</text><text x="366" y="226">11月</text>
+            </g>
+            <g id="gGrow" opacity="0">
+              <path id="band" d="M14,214 L384,58 L384,28 L14,180 Z" fill="var(--success)" opacity="0"/>
+              <path id="reg" d="M14,198 L384,44" stroke="var(--success)" stroke-width="1.5" stroke-dasharray="5 6" fill="none" opacity="0"/>
+              <path id="gline" pathLength="1" class="draw" d="M14,186 L88,182 L162,150 L236,128 L310,92 L384,42" fill="none" stroke="var(--success)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+              <g id="gpts" fill="var(--card-bg)" stroke="var(--success)" stroke-width="2.2"></g>
+              <text x="0" y="226">10/22</text><text x="170" y="226">11/6</text><text x="356" y="226">11/19</text>
+            </g>
+          </svg></div>
+      </div>
+
+      <!-- F5 软件皮肤 -->
+      <div class="frame" id="F5">
+        <div class="mini">
+          <div class="sb"><h3>WorkWeb</h3><p>11月20日 星期五</p><div id="miniNav"></div></div>
+          <div class="mh">项目书架</div><div class="btnp">+ 添加项目</div>
+          <div class="tg on" style="left:214px">全部</div><div class="tg" style="left:270px">科研</div><div class="tg" style="left:326px">工作</div><div class="tg" style="left:382px">生活</div>
+          <div id="miniCovers"></div>
+          <div class="card nt" style="left:214px;width:280px"><b>本周三件事</b>1. 整理第三章实验数据<br>2. 回复合作者的意见<br>3. 周五组会汇报</div>
+          <div class="card nt" style="left:510px;width:286px"><b>读 20 分钟文献</b>每天 · 1 次<div style="margin-top:14px;height:5px;border-radius:4px;background:var(--success)"></div></div>
+        </div>
+        <div id="swatches"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="types"></div>
+  <div class="hud l" id="hudL"><svg class="logo" viewBox="150 200 680 590"><polyline class="w" points="228,366 343,668 470,366 590,668 690,420"/><circle cx="735" cy="280" r="62" fill="#3B82F6"/></svg>WorkWeb</div>
+  <div class="hud r" id="hudR"><span class="idx" id="idx"></span>/ 05</div>
+
+  <div id="fx"><div id="bloom"></div><div id="ripples"></div><div id="actor"><div id="halo"></div><div id="actorR"><div id="actorS"><i></i></div></div></div></div>
+  <div class="grain"></div>
+</div></div>
+
+<script>
+(() => {
+  const DURATION = 24400, FPS = 60;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const E = {
+    out: 'cubic-bezier(.16,1,.3,1)', soft: 'cubic-bezier(.33,0,.15,1)', inOut: 'cubic-bezier(.65,0,.35,1)',
+    cam: 'cubic-bezier(.62,0,.22,1)', in: 'cubic-bezier(.55,0,.75,.2)', lin: 'linear', sym: 'cubic-bezier(.45,0,.55,1)',
+  };
+  function track(el, prop, pts, ease = E.out) { // 一个元素的一个属性 = 一条轨道（秒）
+    pts = pts.slice().sort((a, b) => a[0] - b[0]);
+    const t0 = pts[0][0], t1 = pts[pts.length - 1][0], span = Math.max(t1 - t0, .001);
+    const kf = pts.map(([t, v, e]) => ({ offset: Math.min(1, (t - t0) / span), [prop]: v, easing: e || ease }));
+    return el.animate(kf, { delay: t0 * 1000, duration: span * 1000, fill: 'both' });
+  }
+  const fade = (el, a, b, dy = 16, d = .6) => { // 入场 a，出场 b（可省略）
+    const op = [[a, 0], [a + d * .8, 1]], tf = [[a, `translateY(${dy}px)`], [a + d, 'translateY(0px)']];
+    if (b) { op.push([b, 1, E.in], [b + .35, 0]); tf.push([b, 'translateY(0px)', E.in], [b + .35, `translateY(${-dy * .6}px)`]); }
+    track(el, 'opacity', op, E.soft); track(el, 'transform', tf);
+  };
+  const off = (el, root) => { let x = 0, y = 0; while (el && el !== root) { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; } return [x, y]; };
+  const ICON = {
+    todo: '<path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h12"/><path d="M15 19l2 2l4 -4"/>',
+    shelf: '<path d="M5 5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -14"/><path d="M9 5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -14"/><path d="M5 8h4"/><path d="M9 16h4"/><path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219z"/>',
+    info: '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/>',
+    fit: '<path d="M11.007 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21v-4l-4 -3l1 -6"/><path d="M7 12v-3l5 -1l3 3l3 1"/>',
+    rem: '<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/>',
+  };
+  const COPY = '<svg viewBox="0 0 24 24" class="ic" style="stroke:var(--text-light)"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V3.5h6V5"/><path d="M9 11h6M9 15h4"/></svg><svg viewBox="0 0 24 24" class="ok"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
+  $$('.cp').forEach(c => c.innerHTML = COPY);
+  const coverPos = i => `${(i % 4) * (100 / 3)}% ${Math.floor(i / 4) * 25}%`;
+  const stg = $('#stage'); stg.style.transform = 'none';
+
+  // ===== 世界：六个画格沿一条起伏的路径排开 =====
+  const FR = [[0, 300], [1800, 660], [3600, 140], [5400, 560], [7200, 200], [9000, 600]];
+  // 每格镜头：焦点（画格内坐标）与缩放；焦点偏左，让元件填满右侧
+  const FOC = [[960, 540, 1], [1058, 452, 1.3], [1042, 525, 1.25], [1162, 482, 1.25], [1029, 473, 1.08], [1069, 525, 1.12]];
+  FR.forEach(([x, y], i) => { const f = $('#F' + i); f.style.left = x + 'px'; f.style.top = y + 'px'; });
+  const C = FOC.map(([fx, fy], i) => [FR[i][0] + fx, FR[i][1] + fy]);
+
+  // 视差层：描边大号序号
+  const K = .55, para = $('#para');
+  for (let i = 1; i <= 5; i++) {
+    const n = document.createElement('div'); n.className = 'num'; n.textContent = '0' + i;
+    n.style.left = (C[i][0] * K - 960 + 60) + 'px'; n.style.top = (C[i][1] * K - 540 + 100) + 'px';
+    para.appendChild(n);
+  }
+
+  // ===== 动态内容（演示文字为虚构，界面元件与软件一致）=====
+  const SHELF = [['文献综述', 2], ['基金申请书', 1], ['博士论文 · 第三章', 0], ['组会汇报', 3], ['写作计划', 6]];
+  const slots = SHELF.map((_, i) => [940 + i * 166, 386 + [26, 8, 0, 8, 26][i]]);
+  const shelf = $('#shelf');
+  SHELF.forEach(([t, ci], i) => {
+    const [x, y] = slots[i];
+    if (i !== 2) { const c = document.createElement('div'); c.className = 'cover sc'; c.style.cssText = `position:absolute;left:${x}px;top:${y}px;background-position:${coverPos(ci)}`; shelf.appendChild(c); }
+    const tt = document.createElement('div'); tt.className = 'btitle'; tt.textContent = t; tt.style.cssText = `position:absolute;left:${x - 20}px;top:${y + 204}px`; shelf.appendChild(tt);
+  });
+  $('#bookCover').style.backgroundPosition = coverPos(0);
+  const BK = { x: 1000, y: 300, s: 150 / 360 };
+  const bookAt = dy => `translate(${slots[2][0] - 360 * BK.s - BK.x}px,${slots[2][1] - BK.y + dy}px) scale(${BK.s})`;
+  // 日历：2026 年 11 月（周一起始）
+  const cal = $('#cal');
+  '一二三四五六日'.split('').forEach((d, c) => { const w = document.createElement('div'); w.className = 'wd'; w.textContent = d; w.style.cssText = `position:absolute;left:${c * 62}px;top:0`; cal.appendChild(w); });
+  const days = [];
+  for (let d = 26; d <= 31; d++) days.push(['o', d]);
+  for (let d = 1; d <= 30; d++) days.push(['n', d]);
+  for (let d = 1; d <= 6; d++) days.push(['d', d]);
+  const trained = new Set(['o27', 'o29', 'o31', 'n2', 'n3', 'n5', 'n6', 'n9', 'n10', 'n12', 'n13', 'n16', 'n17', 'n19']);
+  const fills = []; let todayEl;
+  days.forEach(([m, d], k) => {
+    const el = document.createElement('div');
+    const today = m === 'n' && d === 20;
+    el.className = 'day' + (m !== 'n' ? ' o' : '') + (today ? ' today' : '');
+    el.style.cssText = `position:absolute;left:${(k % 7) * 62}px;top:${34 + Math.floor(k / 7) * 58}px`;
+    const tr = trained.has(m + d);
+    el.innerHTML = (tr || today ? '<i class="f"></i>' : '') + `<span>${d}</span>`;
+    if (tr) fills.push(el);
+    if (today) todayEl = el;
+    cal.appendChild(el);
+  });
+  const dots = (id, P) => { $(id).innerHTML = P.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i === P.length - 1 ? 6 : 4.5}" opacity="0"/>`).join(''); };
+  dots('#tpts', [[14, 116], [88, 104], [162, 128], [236, 80], [310, 68], [384, 56]]);
+  dots('#gpts', [[14, 186], [88, 182], [162, 150], [236, 128], [310, 92], [384, 42]]);
+  // 迷你主界面
+  [['todo', 'TODO'], ['shelf', '项目书架'], ['info', '常用个人信息'], ['fit', '运动日志'], ['rem', '每日提醒']].forEach(([k, l], i) => {
+    const n = document.createElement('div'); n.className = 'nv' + (k === 'shelf' ? ' on' : ''); n.style.top = (84 + i * 38) + 'px';
+    n.innerHTML = `<svg viewBox="0 0 24 24">${ICON[k]}</svg>${l}`; $('#miniNav').appendChild(n);
+  });
+  [['博士论文 · 第三章', 0], ['基金申请书', 1], ['文献综述', 2], ['组会汇报', 3], ['写作计划', 6]].forEach(([t, ci], i) => {
+    const x = 214 + i * 116;
+    $('#miniCovers').insertAdjacentHTML('beforeend', `<div class="cv" style="left:${x}px;background-position:${coverPos(ci)}"></div><div class="ct" style="left:${x - 12}px">${t}</div>`);
+  });
+  // 皮肤色板（取自源码四套主题变量）
+  const THEMES = {
+    light: { '--bg-start': '#f8faf9', '--bg-end': '#eef3f0', '--sidebar-bg': '#f6f8f7', '--sidebar-active': '#e2f1e8', '--sidebar-text': '#5b625e', '--card-bg': '#ffffff', '--surface-muted': '#f3f6f4', '--line': '#e1e8e3', '--text': '#202521', '--text-light': '#768079', '--accent': '#59ad82', '--accent-soft': '#e3f2e9', '--success': '#4b9e78', '--pl-start': '#eef5f0', '--pl-end': '#e3eee6', '--shadow-c': 'rgba(39,57,47,.08)' },
+    paper: { '--bg-start': '#fafbfb', '--bg-end': '#edf2f1', '--sidebar-bg': '#f4f6f6', '--sidebar-active': '#deebea', '--sidebar-text': '#596462', '--card-bg': '#ffffff', '--surface-muted': '#f0f4f3', '--line': '#dfe7e5', '--text': '#222a29', '--text-light': '#737f7c', '--accent': '#5b9d96', '--accent-soft': '#e0efed', '--success': '#4b9e78', '--pl-start': '#edf4f2', '--pl-end': '#e2ece9', '--shadow-c': 'rgba(39,57,47,.08)' },
+    mist: { '--bg-start': '#fafbfd', '--bg-end': '#edf2f6', '--sidebar-bg': '#f1f5f8', '--sidebar-active': '#dce9f1', '--sidebar-text': '#5a6670', '--card-bg': '#ffffff', '--surface-muted': '#f0f4f7', '--line': '#dfe6ec', '--text': '#222a31', '--text-light': '#74808b', '--accent': '#7198b7', '--accent-soft': '#e2edf5', '--success': '#4b9e78', '--pl-start': '#edf3f7', '--pl-end': '#e2ebf2', '--shadow-c': 'rgba(39,57,47,.08)' },
+    dark: { '--bg-start': '#171719', '--bg-end': '#1c1d20', '--sidebar-bg': '#292a2d', '--sidebar-active': '#3b3c40', '--sidebar-text': '#c3c4c7', '--card-bg': '#222326', '--surface-muted': '#2b2c30', '--line': '#3b3c40', '--text': '#ededee', '--text-light': '#a7a8ac', '--accent': '#d2d3d6', '--accent-soft': '#393a3e', '--success': '#a6c9af', '--pl-start': '#292a2d', '--pl-end': '#232427', '--shadow-c': 'rgba(0,0,0,.18)' },
+  };
+  const SK = [['浅绿', 'light'], ['纸白', 'paper'], ['雾蓝', 'mist'], ['深色', 'dark']];
+  SK.forEach(([l, k], i) => {
+    const x = 1010 + i * 150, th = THEMES[k];
+    $('#swatches').insertAdjacentHTML('beforeend',
+      `<div class="swr" id="swr${i}" style="position:absolute;left:${x - 7}px;top:753px"></div>
+       <div class="sw" id="sw${i}" style="position:absolute;left:${x}px;top:760px;background:linear-gradient(135deg,${th['--bg-end']} 50%,${th['--accent']} 50%)"></div>
+       <div class="swl" style="position:absolute;left:${x - 37}px;top:822px">${l}</div>`);
+  });
+  $$('[data-type]').forEach(el => { el.innerHTML = [...el.dataset.type].map(ch => `<span class="ch">${ch === ' ' ? '&nbsp;' : ch}</span>`).join(''); });
+
+  // 收尾版式（F0 内）：W 与字标居中组合
+  const wm = $('#wordmark'), WW = wm.offsetWidth, G = 150 + 34 + WW, BL = 960 - G / 2, BY = 488;
+  wm.style.left = (BL + 184) + 'px'; wm.style.top = (BY - 60) + 'px';
+  const tg = $('#tagWrap'); tg.style.left = (960 - tg.offsetWidth / 2) + 'px'; tg.style.top = (BY + 104) + 'px';
+  const mt = $('#meta'); mt.style.left = (960 - mt.offsetWidth / 2) + 'px'; mt.style.top = (BY + 186) + 'px';
+  const W_END = `translate(${BL - 830}px,${BY - 65 - 427}px) scale(${150 / 260})`;
+
+  // ===== 镜头 =====
+  const Pc = [BL + 129.0, BY - 65 + 17.65 + FR[0][1]]; // 收尾 Logo 蓝点的世界坐标 = 圆环中心
+  const OV = [5800, 800, .167], RING = [Pc[0], Pc[1], .66], RING2 = [Pc[0], Pc[1], .74];
+  const camT = ([x, y, s]) => `translate(${960 - x * s}px,${540 - y * s}px) scale(${s})`;
+  const atF = k => [C[k][0], C[k][1], FOC[k][2]];
+  const camKeys = [[0, 0], [1.85, 0], [2.7, 1], [4.55, 1], [5.4, 2], [8.1, 2], [8.9, 3], [11.95, 3], [12.75, 4], [16.25, 4], [17.05, 5], [19.75, 5]];
+  const world = $('#world');
+  track(world, 'transform', [...camKeys.map(([t, k]) => [t, camT(atF(k)), E.cam]),
+    [20.3, camT(OV), 'cubic-bezier(.45,0,.25,1)'], [21.8, camT(RING), E.lin], [22.92, camT(RING2), E.cam], [23.65, camT(atF(0)), E.soft], [24.4, camT(atF(0))]]);
+  const pT = ([x, y]) => `translate(${960 - x * K}px,${540 - y * K}px)`;
+  track(para, 'transform', camKeys.map(([t, k]) => [t, pT(C[k]), E.cam]));
+  track(para, 'opacity', [[1.9, 0], [2.6, 1], [19.7, 1], [20.2, 0]], E.soft);
+  const zT = (s, rx) => `perspective(1800px) rotateX(${rx}deg) scale(${s})`;
+  const zk = [[0, 1, 0], [1.85, 1.025, 0, E.sym]];
+  for (let i = 1; i < camKeys.length - 1; i += 2) {
+    const a = camKeys[i][0], b = camKeys[i + 1][0];
+    if (i > 1) zk.push([a, 1.025, 0, E.sym]);
+    zk.push([(a + b) / 2, .84, 0, E.sym], [b, 1, 0, E.soft]);
+  }
+  zk.push([19.75, 1.025, 0, E.sym], [20.3, 1, 0, E.soft], [22.92, 1, 0, E.cam], [23.65, 1, 0, E.soft], [24.4, 1.03, 0]);
+  track($('#zoom'), 'transform', zk.map(([t, s, rx, e]) => [t, zT(s, rx), e || E.soft]), E.soft);
+
+  // ===== 大字排版 =====
+  const TYPES = [
+    [2.4, 4.45, 'TODO 便笺', ['琐碎事项，', '记录待办'], '卡片内直接编辑 · 支持 Markdown'],
+    [5.25, 7.95, '项目书架', ['科研项目，', '分册整理'], '封面与标签 · 多页笔记 · 表格与 LaTeX 公式'],
+    [8.75, 11.8, '常用个人信息', ['常用信息，', '快捷复制'], '按标签归类 · 自定义字段 · 一键复制'],
+    [12.6, 16.1, '运动日志', ['记录运动，', '展示趋势'], '训练日历 · 运动天数 · 指标趋势'],
+    [16.9, 19.6, '软件皮肤', ['四款皮肤，', '随心切换'], '浅绿 · 纸白 · 雾蓝 · 深色'],
+  ];
+  TYPES.forEach(([a, b, eb, lines, sub], i) => {
+    const el = document.createElement('div'); el.className = 'type';
+    el.innerHTML = `<div class="eb"><i></i><em>0${i + 1}</em>${eb}</div><div class="hl">${lines.map((l, j) =>
+      `<div class="ln${j ? ' acc' : ''}">${[...l].map(c => `<span>${c}</span>`).join('')}</div>`).join('')}</div><div class="sub">${sub}</div>`;
+    $('#types').appendChild(el);
+    fade($('.eb', el), a, b - .05, 14, .6);
+    fade($('.sub', el), a + .35, b, 14, .7);
+    $$('.ln', el).forEach((ln, j) => [...ln.children].forEach((c, k) => {
+      const ti = a + .08 + j * .14 + k * .028, to = b + j * .05 + k * .012;
+      track(c, 'transform', [[ti, 'translateY(108%)'], [ti + .75, 'translateY(0%)'], [to, 'translateY(0%)', E.in], [to + .32, 'translateY(-108%)']]);
+    }));
+  });
+  track($('#hudL'), 'opacity', [[2.3, 0], [2.9, 1], [19.55, 1], [19.95, 0]], E.soft);
+  track($('#hudR'), 'opacity', [[2.3, 0], [2.9, 1], [19.55, 1], [19.95, 0]], E.soft);
+  TYPES.forEach(([a], i) => {
+    const s = document.createElement('span'); s.textContent = '0' + (i + 1); $('#idx').appendChild(s);
+    const p = i === 0 ? [[0, 'translateY(0%)']] : [[a - .15, 'translateY(110%)'], [a + .4, 'translateY(0%)']];
+    if (i < TYPES.length - 1) p.push([TYPES[i + 1][0] - .15, 'translateY(0%)', E.in], [TYPES[i + 1][0] + .2, 'translateY(-110%)']);
+    track(s, 'transform', p, E.out);
+  });
+
+  // ===== 片头 =====
+
+  // ===== 01 便笺 =====
+  ['#nA', '#nB', '#nC'].forEach((s, i) => {
+    const r = [-3, 2.5, 1.6][i], t = 1.95 + i * .1;
+    track($(s), 'opacity', [[t, 0], [t + .5, 1]], E.soft);
+    track($(s), 'transform', [[t, `translateY(40px) rotate(${r * 2}deg)`], [t + .9, `translateY(0px) rotate(${r}deg)`]]);
+  });
+  fade($('#newBtn'), 2.2, 0, 12, .6);
+  track($('#newBtn'), 'scale', [[2.5, '1'], [2.58, '.94', E.soft], [2.85, '1']]);
+  const nn = $('#newNote');
+  track(nn, 'opacity', [[2.6, 0], [2.85, 1]], E.soft);
+  track(nn, 'transform', [[2.6, 'translateY(-26px) scale(.86)'], [3.2, 'translateY(0px) scale(1)']]);
+  track($('#notePh'), 'opacity', [[3.2, 1], [3.25, 0]], E.lin);
+  let tt = 3.28; const caretPts = [[tt, 'translateX(0px)']];
+  $$('#noteTitle .ch').forEach(c => { track(c, 'opacity', [[tt, 0], [tt + .05, 1]], E.lin); tt += .1; caretPts.push([tt, `translateX(${c.offsetLeft + c.offsetWidth}px)`, E.lin]); });
+  track($('#caret'), 'transform', caretPts, E.lin);
+  tt += .08;
+  $$('#noteList li').forEach(li => {
+    track(li, 'opacity', [[tt - .02, 0], [tt, 1]], E.lin);
+    $$('.ch', li).forEach(c => { track(c, 'opacity', [[tt, 0], [tt + .04, 1]], E.lin); tt += .028; }); tt += .05;
+  });
+
+  // ===== 02 项目书架：轻点封面 → 取出 → 翻开 =====
+  const scs = $$('.sc'), titles = $$('#shelf .btitle');
+  [scs[0], scs[1], null, scs[2], scs[3]].forEach((c, i) => {
+    const t = 4.75 + i * .07, out = i < 2 ? -1 : 1;
+    if (c) {
+      track(c, 'opacity', [[t, 0], [t + .5, 1], [6.05, 1, E.in], [6.5, 0]], E.soft);
+      track(c, 'transform', [[t, 'translateY(60px)'], [t + .9, 'translateY(0px)'], [6.05, 'translateY(0px)', E.in], [6.6, `translate(${out * 60}px,30px)`]]);
+      track(c, 'filter', [[6.05, 'blur(0px)'], [6.6, 'blur(6px)']], E.soft);
+    }
+    track(titles[i], 'opacity', [[t + .1, 0], [t + .6, 1], [6.0, 1, E.in], [6.3, 0]], E.soft);
+  });
+  [[5.4, 0], [5.62, 1]].forEach(([t, i]) => track(scs[i], 'translate', [[t, '0px 0px'], [t + .07, '0px 5px', E.soft], [t + .35, '0px 0px']]));
+  track($('#book'), 'transform', [[4.89, bookAt(60)], [5.79, bookAt(0)], [5.86, bookAt(0)], [5.93, bookAt(5), E.soft], [6.1, bookAt(0), E.inOut], [6.75, 'translate(0px,0px) scale(1)']]);
+  track($('#bpage'), 'opacity', [[6.4, 0], [6.6, 1]], E.soft);
+  track($('#flip'), 'transform', [[6.8, 'rotateY(0deg)', 'cubic-bezier(.55,0,.25,1)'], [7.55, 'rotateY(-180deg)']]);
+  track($('#bookCover'), 'opacity', [[4.89, 0], [5.4, 1]], E.soft);
+  track($('#mathHl'), 'transform', [[7.25, 'scaleX(0)'], [7.75, 'scaleX(1)']], E.inOut);
+
+  // ===== 03 常用个人信息：展开 → 复制两项 → 展开另一张 =====
+  $$('#F3 .g3').forEach((g, i) => fade(g, 8.3 + i * .05, 0, 22, .75));
+  const expand = (card, caret, rows, t, push) => {
+    track(card, 'height', [[t, '54px'], [t + .45, '160px']], E.out);
+    track(caret, 'transform', [[t, 'rotate(0deg)'], [t + .3, 'rotate(90deg)']]);
+    rows.forEach((r, i) => track(r, 'opacity', [[t + .1 + i * .1, 0], [t + .4 + i * .1, 1]], E.soft));
+    push.forEach(p => track(p, 'translate', [[t, '0px 0px'], [t + .45, '0px 106px']], E.out));
+  };
+  expand($('#gmail'), $('#gmailCaret'), [$('#g1'), $('#g2')], 8.85, [$('#school'), $('#addrGrp')]);
+  expand($('#vpn'), $('#vpnCaret'), [$('#v1'), $('#v2')], 11.12, [$('#sciGrp')]);
+  const F3 = $('#F3');
+  const copied = (cp, chip, t) => {
+    track($('.ic', cp), 'opacity', [[t, 1], [t + .1, 0]], E.soft);
+    track($('.ok', cp), 'opacity', [[t + .05, 0], [t + .2, 1]], E.soft);
+    track($('.ok', cp), 'transform', [[t + .05, 'scale(.6)'], [t + .35, 'scale(1)']]);
+    const [cx, cy] = off(cp, F3), [hx, hy] = off(chip, F3);
+    const dx = cx - hx - 20, dy = cy - hy;
+    track(chip, 'opacity', [[t, 0], [t + .18, 1], [t + .85, 1, E.in], [t + 1.1, 0]], E.soft);
+    track(chip, 'transform', [[t, `translate(${dx}px,${dy}px) scale(.25)`], [t + .55, 'translate(0px,0px) scale(1)'], [t + 1.1, 'translate(20px,-36px) scale(.96)', E.in]]);
+  };
+  copied($('#cp1'), $('#chip1'), 9.6);
+  copied($('#cp2'), $('#chip2'), 10.32);
+
+  // ===== 04 运动日志：日历点亮 → 运动天数 → 指标趋势 =====
+  fade($('#seg'), 12.2, 0, 14, .6);
+  $$('#cal > *').forEach((d, i) => { const t = 12.15 + (i % 7) * .025 + Math.floor(i / 7) * .03; track(d, 'opacity', [[t, 0], [t + .4, 1]], E.soft); });
+  const fillDay = (el, t) => { track($('.f', el), 'transform', [[t, 'scale(0)'], [t + .45, 'scale(1)']]); track($('span', el), 'color', [[t + .05, 'var(--text)'], [t + .3, '#fff']], E.soft); };
+  fills.forEach((el, j) => fillDay(el, 12.45 + j * .035));
+  fillDay(todayEl, 12.75);
+  track($('#segPill'), 'translate', [[13.58, '0px 0px', E.inOut], [13.93, '98px 0px'], [15.33, '98px 0px', E.inOut], [15.68, '196px 0px']]);
+  track($('#seg0'), 'color', [[13.58, 'var(--text)'], [13.83, 'var(--text-light)']], E.soft);
+  track($('#seg1'), 'color', [[13.68, 'var(--text-light)'], [13.93, 'var(--text)'], [15.33, 'var(--text)'], [15.58, 'var(--text-light)']], E.soft);
+  track($('#seg2'), 'color', [[15.43, 'var(--text-light)'], [15.68, 'var(--text)']], E.soft);
+  track($('#cal'), 'opacity', [[13.6, 1], [14.0, .4]], E.soft);
+  fade($('#chartbox'), 13.62, 0, 30, .8);
+  track($('#tline'), 'strokeDashoffset', [[13.85, 1], [14.5, 0]], E.inOut);
+  track($('#tarea'), 'opacity', [[14.0, 0], [14.5, .14]], E.soft);
+  $$('#tpts circle').forEach((c, i) => track(c, 'opacity', [[13.85 + i * .11, 0], [13.97 + i * .11, 1]], E.soft));
+  track($('#gTrain'), 'opacity', [[15.38, 1], [15.6, 0]], E.soft);
+  track($('#gGrow'), 'opacity', [[15.5, 0], [15.75, 1]], E.soft);
+  track($('#ttl1'), 'opacity', [[15.38, 1], [15.58, 0]], E.soft);
+  track($('#ttl2'), 'opacity', [[15.5, 0], [15.75, 1]], E.soft);
+  track($('#gline'), 'strokeDashoffset', [[15.55, 1], [16.15, 0]], E.inOut);
+  track($('#reg'), 'opacity', [[15.85, 0], [16.15, .8]], E.soft);
+  track($('#band'), 'opacity', [[15.8, 0], [16.2, .14]], E.soft);
+  $$('#gpts circle').forEach((c, i) => track(c, 'opacity', [[15.55 + i * .1, 0], [15.67 + i * .1, 1]], E.soft));
+
+  // ===== 05 软件皮肤 =====
+  fade($('#F5 .mini'), 16.35, 0, 40, .9);
+  SK.forEach((_, i) => { fade($('#sw' + i), 16.5 + i * .07, 0, 16, .6); fade($$('#swatches .swl')[i], 16.55 + i * .07, 0, 12, .6); });
+  const skinT = [17.0, 17.72, 18.52, 19.32];
+  skinT.forEach((t, i) => {
+    const on = [[t - .02, 0], [t + .2, 1]]; if (i < 3) on.push([skinT[i + 1] - .02, 1], [skinT[i + 1] + .2, 0]); else on.push([19.8, 1], [20.1, 0]);
+    track($('#swr' + i), 'opacity', on, E.soft);
+    track($('#swr' + i), 'transform', [[t - .02, 'scale(.8)'], [t + .45, 'scale(1)']]);
+  });
+  const seq = [['light', 0], ['light', 17.75], ['paper', 18.15], ['paper', 18.55], ['mist', 18.95], ['mist', 19.35], ['dark', 19.75], ['dark', 22.86], ['light', 22.98]];
+  Object.keys(THEMES.light).forEach(v => track(stg, v, seq.map(([th, t]) => [t, THEMES[th][v], E.soft]), E.soft));
+
+  // ===== 收尾：拉远看全程 → 回到起点 → 品牌 =====
+  // 片头的 W 离开画面后移到收尾位置并擦除，结尾重新书写
+  track($('#introLogo'), 'transform', [[3.0, 'translate(0px,0px) scale(1)', 'steps(1,end)'], [3.01, W_END]]);
+  track($('#introW'), 'strokeDashoffset', [[.5, 1, 'cubic-bezier(.45,0,.2,1)'], [1.3, 0, E.lin], [3.0, 0, 'steps(1,end)'], [3.01, 1, E.lin], [23.04, 1, 'cubic-bezier(.45,0,.2,1)'], [23.65, 0]]);
+  track(wm, 'opacity', [[23.25, 0], [23.6, 1]], E.soft);
+  track(wm, 'clipPath', [[23.25, 'inset(-20% 100% -20% 0%)'], [23.85, 'inset(-20% 0% -20% 0%)']], E.inOut);
+  track(wm, 'transform', [[23.25, 'translateX(-40px)'], [23.9, 'translateX(0px)']]);
+  track($('#tagline'), 'transform', [[23.4, 'translateY(105%)'], [23.98, 'translateY(0%)']]);
+  track($('#tagline'), 'opacity', [[23.4, 0], [23.75, 1]], E.soft);
+  fade(mt, 23.62, 0, 10, .5);
+
+  // ===== 主角：蓝点 =====
+  // 位置与大小每帧实测目标元素在舞台上的位置，镜头、俯仰、元件位移都会被自动跟随
+  const R0 = 10;
+  const logoR = w => w * 62 / 680;
+  const T = (el, fx, fy, dx = 0, dy = 0, r = null) => ({ el, fx, fy, dx, dy, r });
+  const LX = (735 - 150) / 680, LY = (280 - 200) / 590;
+  const tIntro = T($('#introLogo'), LX, LY, 0, 0, logoR), tCore = T($('#core'), 0, 0, 0, 0, () => 16);
+  const swR = w => Math.min(9, w * .2);
+  const SEG = [ // [起跳, 落地, 目标, 弧高上限, 类型]
+    [1.8, 2.5, T($('#newBtn'), .82, 0, 0, -10), 260],
+    [2.86, 3.18, T($('#caret'), 0, 0, 6, -12), 120],
+    [4.45, 5.25, T(scs[0], .5, 0, 0, -12), 260],
+    [5.38, 5.6, T(scs[1], .5, 0, 0, -12), 90],
+    [5.65, 5.88, T($('#bookCover'), .5, 0, 0, -12), 90],
+    [6.82, 7.22, T($('#math'), 1, 0, -10, -4), 140],
+    [8.05, 8.82, T($('#gmail'), 1, 0, -30, 27), 260],
+    [9.3, 9.58, T($('#cp1'), .5, 0, 0, -10, () => 8), 110],
+    [10.02, 10.3, T($('#cp2'), .5, 0, 0, -10, () => 8), 90],
+    [10.75, 11.1, T($('#vpn'), 1, 0, -30, 27), 160],
+    [11.9, 12.7, T(todayEl, .5, 0, 0, -9), 260],
+    [13.25, 13.55, T($('#seg1'), .5, 0, 0, -8), 130],
+    [14.25, 14.55, T($$('#tpts circle')[5], .5, .5, 0, -15), 130],
+    [15.0, 15.3, T($('#seg2'), .5, 0, 0, -8), 130],
+    [16.25, 17.0, T($('#sw0'), .5, .5, 0, 0, swR), 260],
+    [17.45, 17.72, T($('#sw1'), .5, .5, 0, 0, swR), 110],
+    [18.25, 18.52, T($('#sw2'), .5, .5, 0, 0, swR), 110],
+    [19.05, 19.32, T($('#sw3'), .5, .5, 0, 0, swR), 110],
+    [20.3, 21.0, tCore, 300],
+    [22.92, 23.65, tIntro, 0, 'glide'],
+  ];
+  const DROP = [.3, .82];
+  const sine = u => .5 - .5 * Math.cos(Math.PI * u);
+  // 收尾：拉远后五个画格依次起飞，从各自轨道的左上方切入，逆时针滑行到各自位置（内快外慢）；
+  // 再由内到外逐颗螺旋坠入蓝点（轨迹线留在原轨道上渐隐），每收一颗蓝点脉动、光晕增强；最后蓄力迸发成白光，转入品牌
+  const core = $('#core'); core.style.left = Pc[0] + 'px'; core.style.top = Pc[1] + 'px';
+  const CC = [[1335, 452], [1330, 525], [1450, 489], [1362, 473], [1390, 525]]; // 各格内容中心（画格内坐标）
+  const clamp = v => Math.max(0, Math.min(1, v));
+  const io = u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+  const ORB = [290, 380, 470, 560, 650], Q = .32, TILT = -9, KS = .17, W0D = 80;
+  const OM = ORB.map(r => W0D * Math.pow(ORB[0] / r, 1.5));               // 巡航角速度（度/秒，逆时针）
+  const TH_E = 210, PRE = 140;                                            // 切入角：轨道左上方
+  const LAG = .24, EI = ORB.map((_, i) => 20.75 + i * LAG);                // 切入轨道的时刻（左起第一颗先入）
+  const T0 = 20.15, JDs = EI.map(e => e - T0);                            // 同时起飞，远的飞得久
+  const SP = 64, TAU = 1.0;                                               // 最后一颗入轨时的目标间距（度）、减速时间常数
+  // 切入后角速度 ω(τ) = OM + (W − OM)·e^(−τ/TAU)：不骤停，逐渐减速到巡航；W 由"最后一颗入轨时间距≈SP"反解
+  const WE = ORB.map((_, i) => { const tau = (4 - i) * LAG; if (!tau) return 150; return OM[i] + ((4 - i) * SP - OM[i] * tau) / (TAU * (1 - Math.exp(-tau / TAU))); });
+  const TS = EI[4];
+  const AS = ORB.map((_, i) => 21.8 + i * .14), AD = .36;                // 坠入：开始时刻、时长
+  const ARR = AS.map(t => t + AD);                                        // 收进蓝点的时刻
+  const thAt = (i, t) => t < EI[i] ? TH_E + PRE * (1 - Math.exp(-WE[i] * (EI[i] - t) / PRE))
+    : TH_E - OM[i] * (t - EI[i]) - (WE[i] - OM[i]) * TAU * (1 - Math.exp(-(t - EI[i]) / TAU));
+  const fly = u => { const v = u < .25 ? u * u / .5 : u - .125; return 1 - Math.pow(1 - v / .875, 3); }; // 起步柔和，随后快速飞行并减速并入轨道
+  // 椭圆弧长比例表（参数角 → 周长占比），用于让轨迹拖尾精确跟随卫星
+  const ARC = [0]; for (let k = 1; k <= 720; k++) { const a = k / 720 * 2 * Math.PI; ARC.push(ARC[k - 1] + Math.hypot(Math.sin(a), Q * Math.cos(a))); }
+  const arcF = deg => { const u = ((deg % 360) + 360) % 360 / 360 * 720, k = Math.floor(u); return (ARC[k] + (ARC[Math.min(k + 1, 720)] - ARC[k]) * (u - k)) / ARC[720]; };
+  const ct = Math.cos(TILT * Math.PI / 180), st = Math.sin(TILT * Math.PI / 180);
+  const camS = t => t < 21.8 ? .167 + (.66 - .167) * io(clamp((t - 20.3) / 1.5)) : .66 + .08 * clamp((t - 21.8) / 1.12);
+  const svg = $('#orbits'), NS = 'http://www.w3.org/2000/svg';
+  ORB.forEach((R, i) => {
+    const g = document.createElementNS(NS, 'g'); g.setAttribute('transform', `rotate(${TILT} ${Pc[0]} ${Pc[1]})`);
+    g.innerHTML = `<ellipse class="ob" cx="${Pc[0]}" cy="${Pc[1]}" rx="${R}" ry="${R * Q}" pathLength="1"/><ellipse class="tr" cx="${Pc[0]}" cy="${Pc[1]}" rx="${R}" ry="${R * Q}" pathLength="1"/>`;
+    svg.appendChild(g);
+    const [ob, tr] = g.children, fr = $('#F' + (i + 1)), [cx, cy] = CC[i];
+    fr.style.transformOrigin = `${cx}px ${cy}px`;
+    const W0 = [FR[i + 1][0] + cx, FR[i + 1][1] + cy];
+    const K = { tf: [], op: [], fi: [], z: [], obD: [], obO: [], trR: [], trO: [], trA: [] };
+    const s0 = arcF(TH_E + 30);                                           // 轨道线从切入点稍前处开始画
+    let th = 0, prev = null, sFreeze = null;
+    for (let n = 0, t = T0; t <= ARR[i] + .8; n++, t = T0 + n / 60) {
+      const dt = 1 / 60, ja = clamp((t - T0) / JDs[i]), f = fly(ja), pa = clamp((t - AS[i]) / AD);
+      const r = ORB[i] * (1 - Math.pow(pa, 2.2)), rr = r / ORB[i];
+      if (t < AS[i]) th = thAt(i, t);
+      else th -= OM[i] * Math.pow(1 / Math.max(rr, .14), 1.5) * dt;       // 角动量守恒：越近越快
+      const a = th * Math.PI / 180, lx = r * Math.cos(a), ly = Q * r * Math.sin(a), d = Math.sin(a);
+      const ox = Pc[0] + lx * ct - ly * st, oy = Pc[1] + lx * st + ly * ct;
+      const x = W0[0] + (ox - W0[0]) * f, y = W0[1] + (oy - W0[1]) * f;
+      const ko = KS * (1 + .18 * d) * Math.pow(Math.max(rr, 1e-3), .7), k = Math.exp(Math.log(ko) * f);
+      // 运动模糊（按屏幕速度）+ 远侧景深模糊；坠入时变亮
+      const cs = camS(t), v = prev ? Math.hypot(x - prev[0], y - prev[1]) / dt * cs : 0; prev = [x, y];
+      const bS = Math.min(3.5, v / 600) + f * Math.max(0, -d) * 1.1, bL = bS / Math.max(k * cs, .02), gL = 7 / Math.max(k * cs, .02);
+      const br = (1 + f * (.3 + .12 * d)) * (1 + 1.6 * pa * pa);
+      const o = (1 - f * (1 - (.72 + .28 * (d + 1) / 2))) * (rr < .3 ? rr / .3 : 1);
+      if (t <= ARR[i] + .05) {
+        K.tf.push([t, `translate(${(x - W0[0]).toFixed(2)}px,${(y - W0[1]).toFixed(2)}px) scale(${k.toFixed(4)})`, E.lin]);
+        K.op.push([t, +o.toFixed(3), E.lin]);
+        K.fi.push([t, `blur(${bL.toFixed(1)}px) brightness(${br.toFixed(3)}) drop-shadow(0px 0px ${gL.toFixed(1)}px rgba(120,170,255,${(.55 * f).toFixed(3)}))`, E.lin]);
+        K.z.push([t, String(Math.round(10 + 5 * d * f)), E.lin]);
+      }
+      // 轨道线：从切入点沿逆时针方向画出；坠入开始后整条渐隐
+      const dr = io(clamp((t - EI[i] + .12) / 1.1)) * .999;
+      K.obD.push([t, `${dr.toFixed(4)} ${(1 - dr + .0005).toFixed(4)}`, E.lin]); K.obO.push([t, (dr - s0).toFixed(4), E.lin]);
+      // 拖尾：切入后在卫星身后伸长；坠入时停在原轨道上，随轨道一起渐隐
+      if (t < AS[i]) sFreeze = arcF(th);
+      const L = .16 * clamp((t - EI[i]) / .45);
+      K.trR.push([t, `${L.toFixed(4)} ${(1 - L).toFixed(4)}`, E.lin]); K.trO.push([t, (-sFreeze).toFixed(4), E.lin]);
+    }
+    track(fr, 'transform', K.tf, E.lin); track(fr, 'opacity', K.op, E.lin); track(fr, 'filter', K.fi, E.lin); track(fr, 'zIndex', K.z, E.lin);
+    track(ob, 'strokeDasharray', K.obD, E.lin); track(ob, 'strokeDashoffset', K.obO, E.lin);
+    track(ob, 'opacity', [[EI[i] - .12, 0], [EI[i] + .2, 1], [AS[i], 1, E.soft], [AS[i] + .75, 0]], E.soft);
+    track(tr, 'strokeDasharray', K.trR, E.lin); track(tr, 'strokeDashoffset', K.trO, E.lin);
+    track(tr, 'opacity', [[AS[i], 1, E.soft], [AS[i] + .6, 0]], E.soft);
+  });
+  // 星空：拉远时零星亮起，越来越多，持续到坠入结束，白光前淡出；整体缓慢向镜头漂移
+  const stars = $('#stars'); let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let n = 0; n < 170; n++) {
+    const s = document.createElement('i'), big = rnd() < .12, sz = big ? 2.2 + rnd() * 1.4 : .9 + rnd() * 1.1;
+    s.style.cssText = `left:${(rnd() * 2100 - 90).toFixed(0)}px;top:${(rnd() * 1260 - 90).toFixed(0)}px;width:${sz.toFixed(2)}px;height:${sz.toFixed(2)}px` + (big ? ';box-shadow:0 0 6px 1px rgba(160,195,255,.55)' : '');
+    stars.appendChild(s);
+    const on = 19.8 + Math.pow(rnd(), 1.6) * 1.3, peak = (big ? .9 : .35 + rnd() * .45);
+    const tw = [[on, 0], [on + .9, peak]];
+    if (rnd() < .35) { const p = .5 + rnd() * .6; for (let t = on + 1.1; t < 22.4; t += p) tw.push([t, peak * .45, E.sym], [t + p / 2, peak, E.sym]); }
+    tw.push([22.77, peak, E.soft], [22.97, 0]);
+    track(s, 'opacity', tw.sort((a, b) => a[0] - b[0]).filter((h, k, A) => !k || h[0] > A[k - 1][0]), E.soft);
+  }
+  track(stars, 'transform', [[19.8, 'scale(1)'], [22.97, 'scale(1.07)']], E.lin);
+  // 蓝点光晕：落到中心后亮起，每收一颗增强一级，迸发时扩散
+  const hk = [[20.8, 0, E.soft], [21.2, .22, E.soft]], hs = [[20.8, 'scale(.6)'], [21.2, 'scale(.8)']];
+  ARR.forEach((tA, k) => { hk.push([tA - .02, .22 + .13 * k, E.soft], [tA + .06, .5 + .13 * k, E.soft], [tA + .14, .22 + .13 * (k + 1), E.soft]);
+    hs.push([tA - .02, `scale(${.8 + .1 * k})`, E.soft], [tA + .14, `scale(${.8 + .1 * (k + 1)})`, E.soft]); });
+  hk.push([22.85, .6, E.soft], [22.96, 1, E.soft], [23.42, 0]); hs.push([22.85, 'scale(1.1)', E.in], [22.96, 'scale(4)', E.out], [23.42, 'scale(5)']);
+  track($('#halo'), 'opacity', hk.filter((h, i, A) => !i || h[0] > A[i - 1][0]), E.soft);
+  track($('#halo'), 'transform', hs.filter((h, i, A) => !i || h[0] > A[i - 1][0]), E.soft);
+  let pre = document.getAnimations(); pre.forEach(a => a.pause());
+  const seekPre = s => { for (const a of pre) a.currentTime = s * 1000; };
+  const SR = stg.getBoundingClientRect();
+  const meas = tg => {
+    const r = tg.el.getBoundingClientRect();
+    return [r.left - SR.left + r.width * tg.fx + tg.dx, r.top - SR.top + r.height * tg.fy + tg.dy, tg.r ? tg.r(r.width, r.height) : R0];
+  };
+  const chain = [tIntro, ...SEG.map(h => h[2])];
+  const arcs = [];
+  SEG.forEach(([t0, t1, tg, hmax], i) => {
+    seekPre(t0); const p0 = meas(chain[i]); seekPre(t1); const p1 = meas(tg);
+    const d = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
+    arcs[i] = { h: Math.max(0, Math.min(hmax, 34 + d * .3, Math.min(p0[1], p1[1]) - 60)), r0: p0[2], r1: p1[2], p1 };
+  });
+
+  // 逐帧采样位置与半径
+  const posKf = [], radKf = [];
+  for (let f = 0; f <= DURATION / 1000 * FPS; f++) {
+    const t = f / FPS; seekPre(t);
+    let x, y, r;
+    if (t < DROP[1]) {
+      const p = meas(tIntro), u = Math.max(0, (t - DROP[0]) / (DROP[1] - DROP[0]));
+      x = p[0]; y = p[1] - 260 * (1 - u * u); r = p[2];
+    } else {
+      let i = -1; SEG.forEach((h, k) => { if (h[0] <= t) i = k; });
+      if (i >= 0 && t < SEG[i][1]) {
+        const [t0, t1] = SEG[i], e = sine((t - t0) / (t1 - t0));
+        const a = meas(chain[i]), b = meas(chain[i + 1]);
+        x = a[0] + (b[0] - a[0]) * e; y = a[1] + (b[1] - a[1]) * e - arcs[i].h * 4 * e * (1 - e); r = a[2] + (b[2] - a[2]) * e;
+      } else [x, y, r] = meas(chain[i + 1]);
+    }
+    posKf.push([t, `translate(${x.toFixed(2)}px,${y.toFixed(2)}px)`, E.lin]);
+    radKf.push([t, `scale(${(r / R0).toFixed(4)})`, E.lin]);
+  }
+  seekPre(0);
+  const actorS = $('#actorS');
+  track($('#actor'), 'transform', posKf, E.lin);
+  track($('#actorR'), 'transform', radKf, E.lin);
+  track(actorS, 'opacity', [[DROP[0], 0], [DROP[0] + .12, 1]], E.soft);
+  // 形变：起跳蓄力 → 腾空拉伸 → 落地轻压 → 回稳（无回弹振荡）
+  const scl = [[0, 'scale(.8,1.2)'], [DROP[1] - .02, 'scale(.85,1.15)', E.soft], [DROP[1] + .07, 'scale(1.18,.82)', E.soft], [DROP[1] + .32, 'scale(1,1)']];
+  const hops = SEG.map((_, i) => i).filter(i => SEG[i][4] !== 'glide');
+  hops.forEach((i, n) => {
+    const [t0, t1] = SEG[i], nx = n + 1 < hops.length ? SEG[hops[n + 1]][0] - .1 : 99;
+    const settle = Math.min(t1 + .3, nx - .01), land = Math.min(t1 + .07, settle - .02);
+    scl.push([t0 - .1, 'scale(1,1)', E.soft], [t0, 'scale(1.1,.9)', E.soft], [t0 + (t1 - t0) * .35, 'scale(.93,1.08)', E.soft],
+      [t1 - .02, 'scale(.96,1.05)', E.soft], [land, 'scale(1.14,.86)', E.soft], [settle, 'scale(1,1)']);
+  });
+  // 每收进一颗卫星，蓝点脉动一次并略微变大；最后一颗后蓄力 → 迸发
+  ARR.forEach((tA, k) => { const b0 = 1 + .07 * k, b1 = 1 + .07 * (k + 1), pk = k < 4 ? b0 + .3 : 1.7;
+    scl.push([tA - .03, `scale(${b0},${b0})`, E.soft], [tA + .05, `scale(${pk},${pk})`, E.soft]); if (k < 4) scl.push([tA + .11, `scale(${b1},${b1})`, E.soft]); });
+  scl.push([22.85, 'scale(.85,.85)', E.in], [22.96, 'scale(2.1,2.1)', E.soft], [23.45, 'scale(1,1)']);
+  track(actorS, 'transform', scl, E.soft);
+  // 落点涟漪
+  seekPre(DROP[1]); const pd = meas(tIntro); seekPre(0);
+  const rpEv = ARR.map(tA => { seekPre(tA); const q = meas(tCore); return [tA, [q[0], q[1], 22]]; });
+  seekPre(22.92); const pf = meas(tCore); seekPre(0);
+  const bl = $('#bloom'); bl.style.left = pf[0] + 'px'; bl.style.top = pf[1] + 'px';
+  track(bl, 'transform', [[22.84, 'scale(.04)'], [23.12, 'scale(1.7)']], E.out);
+  track(bl, 'opacity', [[22.84, 0], [22.95, 1], [23.04, 1, E.soft], [23.42, 0]], E.soft);
+  [[DROP[1], pd], ...rpEv, ...hops.filter(i => SEG[i][2] !== tCore).map(i => [SEG[i][1], arcs[i].p1])].forEach(([t1, p]) => {
+    const rp = document.createElement('div'); rp.className = 'ripple';
+    rp.style.left = p[0] + 'px'; rp.style.top = p[1] + 'px'; $('#ripples').appendChild(rp);
+    const b = p[2] / R0;
+    track(rp, 'opacity', [[t1, 0], [t1 + .02, .7], [t1 + .65, 0]], E.soft);
+    track(rp, 'transform', [[t1, `scale(${.3 * b})`], [t1 + .65, `scale(${1.6 * Math.max(b, .6)})`]]);
+  });
+
+  // ===== 时间轴：预览与渲染共用 =====
+  const anims = document.getAnimations();
+  anims.forEach(a => a.pause());
+  const seek = ms => { for (const a of anims) a.currentTime = ms; };
+  window.__seek = seek; window.__duration = DURATION;
+  seek(0);
+  if (new URLSearchParams(location.search).has('render')) { window.__ready = true; return; }
+  const fit = () => { stg.style.transform = `scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; };
+  addEventListener('resize', fit); fit();
+  let t0 = performance.now(), paused = false, pausedAt = 0;
+  const loop = now => { if (!paused) seek((now - t0) % (DURATION + 1000)); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  addEventListener('keydown', e => { if (e.code === 'Space') { paused = !paused; if (paused) pausedAt = performance.now() - t0; else t0 = performance.now() - pausedAt; } });
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
